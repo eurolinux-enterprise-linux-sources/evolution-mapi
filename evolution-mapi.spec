@@ -1,6 +1,6 @@
 %define evo_version 2.28.0
 %define eds_version 2.28.0
-%define libmapi_version 0.9-7
+%define libmapi_version 1.0
 %define intltool_version 0.35.5
 
 %define evo_major 2.28
@@ -12,7 +12,7 @@
 
 Name: evolution-mapi
 Version: 0.28.3
-Release: 7%{?dist}
+Release: 12%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
@@ -79,6 +79,18 @@ Patch16: evolution-mapi-0.28.3-el6-translation-updates-2.patch
 # RH bug #666492
 Patch17: evolution-mapi-0.28.3-bookview-crash.patch
 
+# RH bug #680061
+Patch18: evolution-mapi-0.28.3-crash-setting-props.patch
+
+# RH bug #767678
+Patch19: evolution-mapi-0.28.3-openchange-1.0.patch
+
+# RH bug #902932
+Patch20: evolution-mapi-0.28.3-samba4-corrections.patch
+
+# RH bug #903241
+Patch21: evolution-mapi-0.28.3-copymove-doublefree.patch
+
 ### Build Dependencies ###
 
 BuildRequires: evolution-data-server-devel >= %{eds_version}
@@ -88,6 +100,10 @@ BuildRequires: intltool >= %{intltool_version}
 BuildRequires: libtalloc-devel
 BuildRequires: openchange-devel >= %{libmapi_version}
 BuildRequires: samba4-devel
+
+# Obsolete multilib version of this package,
+# since openchange is no longer multilib.
+Obsoletes: evolution-mapi < 0.28.3-9.el6
 
 %description
 This package allows Evolution to interact with MS Exchange 2007 servers.
@@ -122,6 +138,10 @@ Development files needed for building things which link against %{name}.
 %patch15 -p1 -b .gn569631
 %patch16 -p1 -b .el6-translation-updates-2
 %patch17 -p1 -b .bookview-crash
+%patch18 -p1 -b .crash-setting-props
+%patch19 -p1 -b .openchange-1.0
+%patch20 -p1 -b .samba4-corrections
+%patch21 -p1 -b .copymove-doublefree
 
 %build
 
@@ -179,6 +199,21 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/libexchangemapi-1.0.pc
 
 %changelog
+* Wed Jan 23 2013 Milan Crha <mcrha@redhat.com> - 0.28.3-12
+- Add patch for RH bug #903241 (Double-free on message copy/move)
+
+* Tue Jan 22 2013 Milan Crha <mcrha@redhat.com> - 0.28.3-11
+- Add patch for RH bug #902932 (Cannot connect with latest samba)
+
+* Mon Jan 07 2013 Matthew Barnes <mbarnes@redhat.com> - 0.28.3-10
+- Drop multilib by obsoleting evolution-mapi < 0.28.3-9 (RH bug #886914).
+
+* Wed Oct 03 2012 Matthew Barnes <mbarnes@redhat.com> - 0.28.3-9
+- Adapt to OpenChange 1.0 (RH bug #767678).
+
+* Fri Sep 07 2012 Matthew Barnes <mbarnes@redhat.com> - 0.28.3-8
+- Add patch for RH bug #680061 (crash while setting props).
+
 * Tue Jan 18 2011 Milan Crha <mcrha@redhat.com> - 0.28.3-7
 - Add patch for RH bug #666492 (crash with EDataBookView)
 

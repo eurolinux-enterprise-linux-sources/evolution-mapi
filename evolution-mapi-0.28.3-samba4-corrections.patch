@@ -1,0 +1,54 @@
+diff -up evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-connection.c.samba4-corrections evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-connection.c
+--- evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-connection.c.samba4-corrections	2013-01-22 18:48:26.412156068 +0100
++++ evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-connection.c	2013-01-22 18:50:13.579410372 +0100
+@@ -3079,6 +3079,25 @@ manage_mapi_error (const char *context,
+ 	}
+ }
+ 
++static int
++create_profile_fallback_callback (struct SRowSet *rowset, gconstpointer data)
++{
++	guint32	ii;
++	const gchar *username = (const gchar *) data;
++
++	/* If we can find the exact username, then find & return its index. */
++	for (ii = 0; ii < rowset->cRows; ii++) {
++		const gchar *account_name;
++
++		account_name = exchange_mapi_util_find_row_propval (&(rowset->aRow[ii]), PR_ACCOUNT_UNICODE);
++
++		if (account_name && g_strcmp0 (username, account_name) == 0)
++			return ii;
++	}
++
++	/* cancel it, do authenticate again */
++	return rowset->cRows + 1;
++}
+ 
+ gboolean
+ exchange_mapi_create_profile (const char *username, const char *password, const char *domain,
+@@ -3091,6 +3110,11 @@ exchange_mapi_create_profile (const char
+ 	gchar *profname = NULL;
+ 	struct mapi_session *session = NULL;
+ 
++	if (!callback) {
++		callback = create_profile_fallback_callback;
++		data = (gpointer) username;
++	}
++
+ 	/*We need all the params before proceeding.*/
+ 	g_return_val_if_fail (username && *username && password && *password &&
+ 			      domain && *domain && server && *server, FALSE);
+@@ -3125,9 +3149,9 @@ exchange_mapi_create_profile (const char
+ 
+ 	
+ 	/* This is only convenient here and should be replaced at some point */
+-	mapi_profile_add_string_attr (global_mapi_context, profname, "codepage", "0x4e4");
+-	mapi_profile_add_string_attr (global_mapi_context, profname, "language", "0x409");
+-	mapi_profile_add_string_attr (global_mapi_context, profname, "method", "0x409");
++	mapi_profile_add_string_attr (global_mapi_context, profname, "codepage", "1252");
++	mapi_profile_add_string_attr (global_mapi_context, profname, "language", "1033");
++	mapi_profile_add_string_attr (global_mapi_context, profname, "method", "1033");
+ 	
+ 	/* Login now */
+ 	d(g_print("Logging into the server... "));

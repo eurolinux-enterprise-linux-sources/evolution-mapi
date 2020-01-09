@@ -1,0 +1,64 @@
+diff -up evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-cal-utils.c.crash-setting-props evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-cal-utils.c
+--- evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-cal-utils.c.crash-setting-props	2012-09-07 14:40:48.974892297 -0400
++++ evolution-mapi-0.28.3/src/libexchangemapi/exchange-mapi-cal-utils.c	2012-09-07 14:50:55.820872496 -0400
+@@ -1236,6 +1236,8 @@ check_server_for_object (struct mapi_SPr
+ 	fid = exchange_mapi_get_default_folder_id (olFolderCalendar);
+ 
+ 	array = exchange_mapi_util_resolve_named_prop (olFolderCalendar, fid, 0x0023, PSETID_Meeting);
++	if (!array)
++		return;
+ 	proptag = array->aulPropTag[0];
+ 
+ 	res.rt = RES_PROPERTY;
+@@ -1243,6 +1245,8 @@ check_server_for_object (struct mapi_SPr
+ 	res.res.resProperty.ulPropTag = proptag;
+ 
+ 	sb = (const struct SBinary *)find_mapi_SPropValue_data(properties, PROP_TAG(PT_BINARY, 0x0023));
++	if (!sb)
++		return;
+ 
+ 	set_SPropValue_proptag (&sprop, proptag, (const void *) sb);
+ 	cast_mapi_SPropValue (&(res.res.resProperty.lpProp), &sprop);
+@@ -1683,18 +1687,17 @@ exchange_mapi_cal_util_build_props (stru
+ 	flag32 = prop ? get_imp_prop_from_priority (icalproperty_get_priority (prop)) : IMPORTANCE_NORMAL;
+ 	set_SPropValue_proptag(&props[i++], PR_IMPORTANCE, (const void *) &flag32); 		/* propcount++ */
+ 
+-	set_SPropValue_proptag(&props[i++], PR_SENT_REPRESENTING_NAME_UNICODE, 
+-		(const void *) cbdata->ownername); 						/* propcount++ */
+-	set_SPropValue_proptag(&props[i++], PR_SENT_REPRESENTING_ADDRTYPE_UNICODE, 
+-		(const void *) cbdata->owneridtype); 						/* propcount++ */
+-	set_SPropValue_proptag(&props[i++], PR_SENT_REPRESENTING_EMAIL_ADDRESS_UNICODE, 
+-		(const void *) cbdata->ownerid); 						/* propcount++ */
+-	set_SPropValue_proptag(&props[i++], PR_SENDER_NAME_UNICODE, 
+-		(const void *) cbdata->username); 						/* propcount++ */
+-	set_SPropValue_proptag(&props[i++], PR_SENDER_ADDRTYPE_UNICODE, 
+-		(const void *) cbdata->useridtype); 						/* propcount++ */
+-	set_SPropValue_proptag(&props[i++], PR_SENDER_EMAIL_ADDRESS_UNICODE, 
+-		(const void *) cbdata->userid); 						/* propcount++ */
++	if (cbdata->ownername && cbdata->owneridtype && cbdata->ownerid) {
++		set_SPropValue_proptag(&props[i++], PR_SENT_REPRESENTING_NAME_UNICODE, (const void *) cbdata->ownername);
++		set_SPropValue_proptag(&props[i++], PR_SENT_REPRESENTING_ADDRTYPE_UNICODE, (const void *) cbdata->owneridtype);
++		set_SPropValue_proptag(&props[i++], PR_SENT_REPRESENTING_EMAIL_ADDRESS_UNICODE, (const void *) cbdata->ownerid);
++	}
++
++	if (cbdata->username && cbdata->useridtype && cbdata->userid) {
++		set_SPropValue_proptag(&props[i++], PR_SENDER_NAME_UNICODE, (const void *) cbdata->username);
++		set_SPropValue_proptag(&props[i++], PR_SENDER_ADDRTYPE_UNICODE, (const void *) cbdata->useridtype);
++		set_SPropValue_proptag(&props[i++], PR_SENDER_EMAIL_ADDRESS_UNICODE, (const void *) cbdata->userid);
++	}
+ 
+ 	flag32 = cbdata->msgflags;
+ 	set_SPropValue_proptag(&props[i++], PR_MESSAGE_FLAGS, (const void *) &flag32); 		/* propcount++ */
+@@ -1876,8 +1879,10 @@ exchange_mapi_cal_util_build_props (stru
+ 		flag32 = cbdata->appt_seq;
+ 		set_SPropValue_proptag(&props[i++],  proptag_array->aulPropTag[I_APPT_SEQ], (const void *) &flag32);
+ 
+-		set_SPropValue_proptag(&props[i++], proptag_array->aulPropTag[I_MEET_CLEANGUID], (const void *) cbdata->cleanglobalid);
+-		set_SPropValue_proptag(&props[i++], proptag_array->aulPropTag[I_MEET_GUID], (const void *) cbdata->globalid);
++		if (cbdata->cleanglobalid)
++			set_SPropValue_proptag(&props[i++], proptag_array->aulPropTag[I_MEET_CLEANGUID], (const void *) cbdata->cleanglobalid);
++		if (cbdata->globalid)
++			set_SPropValue_proptag(&props[i++], proptag_array->aulPropTag[I_MEET_GUID], (const void *) cbdata->globalid);
+ 
+ 		flag32 = cbdata->resp;
+ 		set_SPropValue_proptag(&props[i++], proptag_array->aulPropTag[I_APPT_RESPONSESTATUS], (const void *) &flag32);

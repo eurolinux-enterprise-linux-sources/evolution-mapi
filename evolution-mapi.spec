@@ -1,4 +1,4 @@
-%define openchange_version 2.0
+%define openchange_version 2.3
 %define intltool_version 0.35.5
 
 %define evo_base_version 3.12
@@ -9,13 +9,24 @@
 
 Name: evolution-mapi
 Version: 3.12.10
-Release: 3%{?dist}
+Release: 5%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
 URL: https://wiki.gnome.org/Apps/Evolution
 Source: http://ftp.gnome.org/pub/gnome/sources/evolution-mapi/3.12/evolution-mapi-%{version}.tar.xz
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+
+### Patches ###
+
+# RH bug #1314261
+Patch01: evolution-mapi-3.12.10-openchange-2.3.patch
+
+# RH bug #1366206
+Patch02: evolution-mapi-3.12.10-freebusy-time-calc.patch
+
+# RH bug #1367455
+Patch03: evolution-mapi-3.12.10-book-recognize-offline.patch
 
 ### Dependencies ###
 
@@ -69,6 +80,9 @@ Development files needed for building things which link against %{name}.
 
 %prep
 %setup -q
+%patch01 -p1 -b .openchange-2.3
+%patch02 -p1 -b .freebusy-time-calc
+%patch03 -p1 -b .book-recognize-offline
 
 %build
 
@@ -133,6 +147,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/libexchangemapi-1.0.pc
 
 %changelog
+* Tue Aug 16 2016 Milan Crha <mcrha@redhat.com> - 3.12.10-5
+- Add patch for RH bug #1366206 (Free/Busy Information returns wrong time)
+- Add patch for RH bug #1367455 (No contacts are displayed until search is started)
+
+* Fri Mar 04 2016 Milan Crha <mcrha@redhat.com> - 3.12.10-4
+- Add patch for RH bug #1314261 (Rebuild against OpenChange 2.3)
+
 * Wed Jul 08 2015 Milan Crha <mcrha@redhat.com> - 3.12.10-3
 - Rebuild against updated libical
 

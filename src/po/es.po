@@ -1,0 +1,359 @@
+# translation of evolution-mapi.HEAD.po to Español
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Jorge González <jorgegonz@svn.gnome.org>, 2009.
+msgid ""
+msgstr ""
+"Project-Id-Version: evolution-mapi.HEAD\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
+"product=evolution-mapi\n"
+"POT-Creation-Date: 2009-08-31 09:55+0000\n"
+"PO-Revision-Date: 2009-08-31 20:36+0200\n"
+"Last-Translator: Jorge González <jorgegonz@svn.gnome.org>\n"
+"Language-Team: Español <gnome-es-list@gnome.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: UTF-8\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-listener.c:616
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:204
+#, c-format
+msgid "Enter Password for %s@%s"
+msgstr "Introduzca la contraseña para %s@%s"
+
+#. NOTE: A good way would be display the list of username entries
+#. using GtkEntryCompletion in the username gtkentry. But plugins
+#. as of now does not have access to it
+#. TODO : Fix strings
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:125
+msgid "Select username"
+msgstr "Seleccionar el usuario"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:135
+msgid "Full name"
+msgstr "Nombre completo"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:140
+msgid "User name"
+msgstr "Nombre de usuario"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:194
+msgid ""
+"Server, username and domain name cannot be empty. Please fill them with "
+"correct values."
+msgstr ""
+"El servidor, nombre de usuario y nombre de dominio no pueden estar vacíos. "
+"Rellénelos con valores correctos."
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:231
+msgid "Authentication finished successfully."
+msgstr "La autenticación finalizó correctamente."
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:237
+msgid "Authentication failed."
+msgstr "Falló la autenticación."
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:299
+msgid "_Domain name:"
+msgstr "_Dominio:"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:309
+msgid "_Authenticate"
+msgstr "_Autenticar"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:411
+msgid "Personal Folders"
+msgstr "Carpetas personales"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-setup.c:473
+msgid "_Location:"
+msgstr "_Lugar:"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:78
+msgid "_Folder size"
+msgstr "Tamaño de la _carpeta"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:133
+msgid "Folder"
+msgstr "Carpeta"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:138
+msgid "Size"
+msgstr "Tamaño"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:158
+msgid "Unable to retrieve folder size information"
+msgstr "No se pudo obtener la información del tamaño de la carpeta"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:182
+msgid "Folder Size"
+msgstr "Tamaño de la carpeta"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:190
+msgid "Fetching folder list ..."
+msgstr "Obteniendo la lista de carpetas…"
+
+#. Miscellaneous settings
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:250
+msgid "Miscellaneous"
+msgstr "Misceláneo"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:263
+msgid "View the size of all Exchange folders"
+msgstr "Ver el tamaño de todas las carpetas Exchange"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:265
+msgid "Folders Size"
+msgstr "Tamaño de las carpetas"
+
+#: ../src/account-setup-eplugin/exchange-mapi-account-settings.c:276
+#: ../src/account-setup-eplugin/org-gnome-exchange-mapi.eplug.xml.h:1
+msgid "Exchange Settings"
+msgstr "Configuración de Exchange"
+
+#: ../src/calendar/e-cal-backend-mapi.c:115
+#: ../src/calendar/e-cal-backend-mapi.c:1053
+#: ../src/camel/camel-mapi-store.c:472
+msgid "Authentication failed"
+msgstr "Falló la autenticación"
+
+#. To translators: This message is displayed on the status bar when calendar/tasks/memo items are being fetched from the server.
+#: ../src/calendar/e-cal-backend-mapi.c:391
+#, c-format
+msgid "Loading items in folder %s"
+msgstr "Cargando los elementos en la carpeta %s "
+
+#. FIXME: String : We need to restart evolution-data-server
+#: ../src/calendar/e-cal-backend-mapi.c:581
+#: ../src/calendar/e-cal-backend-mapi.c:592
+#: ../src/calendar/e-cal-backend-mapi.c:618
+msgid "Error fetching changes from the server."
+msgstr "Error al obtener los cambios desde el servidor."
+
+#: ../src/calendar/e-cal-backend-mapi.c:973
+#: ../src/calendar/e-cal-backend-mapi.c:983
+#: ../src/calendar/e-cal-backend-mapi.c:1088
+#: ../src/calendar/e-cal-backend-mapi.c:1170
+msgid "Could not create cache file"
+msgstr "No se pudo crear el archivo de caché"
+
+#: ../src/calendar/e-cal-backend-mapi.c:1099
+msgid "Could not create thread for populating cache"
+msgstr "No se pudo crear el hilo para la llenar la caché"
+
+#: ../src/calendar/e-cal-backend-mapi.c:1513
+msgid ""
+"Support for modifying single instances of a recurring appointment is not yet "
+"implemented. No change was made to the appointment on the server."
+msgstr ""
+"Aún no está implementado el soporte para modificar instancias aisladas de "
+"una cita recurrente. No se realizó ningún cambio en la cita del servidor."
+
+#: ../src/camel/camel-mapi-folder.c:478
+#, c-format
+msgid "Updating local summary cache for new messages in %s"
+msgstr "Actualizando la caché de resumen local para los mensajes nuevos en %s"
+
+#: ../src/camel/camel-mapi-folder.c:702
+#, c-format
+msgid "Retrieving message IDs from server for %s"
+msgstr "Obteniendo los ID de los mensajes del servidor para %s"
+
+#: ../src/camel/camel-mapi-folder.c:724
+#, c-format
+msgid "Removing deleted messages from cache in %s"
+msgstr "Quitando los borrados mensajes de la caché en %s"
+
+#: ../src/camel/camel-mapi-folder.c:1029 ../src/camel/camel-mapi-folder.c:1643
+#: ../src/camel/camel-mapi-folder.c:1651
+msgid "This message is not available in offline mode."
+msgstr "Este mensaje no está disponible en modo desconectado."
+
+#: ../src/camel/camel-mapi-folder.c:1038
+#, c-format
+msgid "Fetching summary information for new messages in %s"
+msgstr "Obteniendo recopilación de información sobre los mensajes nuevos en %s"
+
+#: ../src/camel/camel-mapi-folder.c:1048
+msgid "Fetching items failed"
+msgstr "Falló al obtener los elementos"
+
+#: ../src/camel/camel-mapi-folder.c:1607
+#, c-format
+msgid ""
+"Cannot get message: %s\n"
+"  %s"
+msgstr ""
+"No se puede obtener el mensaje: %s\n"
+"  %s"
+
+#: ../src/camel/camel-mapi-folder.c:1607
+msgid "No such message"
+msgstr "No existe ese mensaje"
+
+#: ../src/camel/camel-mapi-folder.c:1619
+msgid "Message fetching cancelled by user."
+msgstr "El usuario canceló la obtención de mensajes."
+
+#: ../src/camel/camel-mapi-folder.c:1626
+#, c-format
+msgid "Cannot get message %s: %s"
+msgstr "No se puede obtener el mensaje %s: %s"
+
+#: ../src/camel/camel-mapi-folder.c:1672 ../src/camel/camel-mapi-folder.c:1684
+msgid "Could not get message"
+msgstr "No se puede obtener el mensaje"
+
+#: ../src/camel/camel-mapi-folder.c:1964
+#, c-format
+msgid "Cannot append message to folder '%s'"
+msgstr "No se pude anexar el mensaje a la carpeta «%s»"
+
+#: ../src/camel/camel-mapi-folder.c:1971
+#, c-format
+#| msgid "Offline."
+msgid "Offline. '%s'"
+msgstr "Desconectado. «%s»"
+
+#: ../src/camel/camel-mapi-folder.c:2091
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "No se pudo cargar el resumen para %s"
+
+#: ../src/camel/camel-mapi-provider.c:51
+msgid "Checking for new mail"
+msgstr "Comprobando si hay correo nuevo"
+
+#: ../src/camel/camel-mapi-provider.c:53
+msgid "C_heck for new messages in all folders"
+msgstr "_Comprobar si hay mensajes nuevos en todas las carpetas"
+
+#: ../src/camel/camel-mapi-provider.c:57
+msgid "Options"
+msgstr "Opciones"
+
+#: ../src/camel/camel-mapi-provider.c:59
+msgid "Automatically synchroni_ze account locally"
+msgstr "_Sincronizar automáticamente la cuenta localmente"
+
+#. i18n: copy from evolution:camel-imap-provider.c
+#: ../src/camel/camel-mapi-provider.c:62
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr ""
+"_Aplicar filtros en mensajes nuevos en la Bandeja de entrada en este servidor"
+
+#: ../src/camel/camel-mapi-provider.c:64
+msgid "Check new messages for _Junk contents"
+msgstr "Comprobar si el contenido de los mensajes nuevos es _SPAM"
+
+#: ../src/camel/camel-mapi-provider.c:66
+msgid "Only check for Junk messag_es in the Inbox folder"
+msgstr "Sólo comprobar _mensajes de SPAM en la carpeta de entrada"
+
+#: ../src/camel/camel-mapi-provider.c:78
+msgid "For accessing Microsoft Exchange / OpenChange servers using MAPI"
+msgstr "Para acceder a servidores Microsoft Exchange / OpenChange usando MAPI"
+
+#: ../src/camel/camel-mapi-provider.c:93
+msgid "Password"
+msgstr "Contraseña"
+
+#: ../src/camel/camel-mapi-provider.c:94
+msgid ""
+"This option will connect to the Openchange server using a plaintext password."
+msgstr ""
+"Esta opción conectará con el servidor Openchange usando una contraseña en "
+"texto plano."
+
+#: ../src/camel/camel-mapi-store.c:61
+msgid "Favorites"
+msgstr "Favoritos"
+
+#: ../src/camel/camel-mapi-store.c:62
+msgid "All Public Folders"
+msgstr "Todas las carpetas públicas"
+
+#: ../src/camel/camel-mapi-store.c:273 ../src/camel/camel-mapi-transport.c:128
+#, c-format
+msgid "Exchange MAPI server %s"
+msgstr "Servidor MAPI Exchange %s"
+
+#. To translators : Example string : Exchange MAPI service for
+#. _username_ on _server host name__
+#: ../src/camel/camel-mapi-store.c:277 ../src/camel/camel-mapi-transport.c:130
+#, c-format
+msgid "Exchange MAPI service for %s on %s"
+msgstr "Servidor MAPI Exchange para %s en %s"
+
+#. To translators : First %s : is the error text or the reason
+#. for prompting the user if it is available.
+#. Second %s is : Username.
+#. Third %s is : Server host name.
+#: ../src/camel/camel-mapi-store.c:315
+#, c-format
+msgid "%s Please enter the MAPI password for %s@%s"
+msgstr "%s introduzca la contraseña MAPI para %s@%s"
+
+#: ../src/camel/camel-mapi-store.c:328
+msgid "You did not enter a password."
+msgstr "No introdujo una contraseña."
+
+#: ../src/camel/camel-mapi-store.c:336
+#, c-format
+msgid "Unable to authenticate to Exchange MAPI server."
+msgstr "No se pudo autenticar contra el servidor MAPI Exchange."
+
+#: ../src/camel/camel-mapi-store.c:456
+msgid "Cannot create MAPI folders in offline mode."
+msgstr "No se pueden crear carpetas MAPI en modo desconectado."
+
+#: ../src/camel/camel-mapi-store.c:461
+#, c-format
+msgid "Cannot create new folder `%s'"
+msgstr "No se pude crear la carpeta nueva «%s»"
+
+#: ../src/camel/camel-mapi-store.c:670
+#, c-format
+msgid "Cannot rename MAPI folder `%s'. Folder does not exist."
+msgstr "No se puede renombrar la carpeta MAPI «%s». La carpeta no existe."
+
+#: ../src/camel/camel-mapi-store.c:681
+#, c-format
+msgid "Cannot rename MAPI default folder `%s' to `%s'."
+msgstr "No se puede renombrar la carpeta predeterminada MAPI «%s» a «%s»"
+
+#: ../src/camel/camel-mapi-store.c:699
+#, c-format
+msgid "Cannot rename MAPI folder `%s' to `%s'"
+msgstr "No se puede renombrar la carpeta MAPI «%s» a «%s»"
+
+#: ../src/camel/camel-mapi-store.c:1227
+msgid "Folder list not available in offline mode."
+msgstr "La lista de carpetas no está disponible en modo desconectado."
+
+#. Fixme : Set a better error message. Would be helful in troubleshooting.
+#: ../src/camel/camel-mapi-transport.c:116
+msgid "Could not send message."
+msgstr "No se pudo enviar el mensaje."
+
+#~ msgid "Global Address List / Active Directory"
+#~ msgstr "Lista de acceso global / Directorio activo"
+
+#~ msgid "_Global Catalog server name:"
+#~ msgstr "Nombre del servidor de Catálogo _Global:"
+
+#~ msgid "_Limit number of GAL responses: %s"
+#~ msgstr "_Limitar el número de respuestas GAL: %s"
+
+#~ msgid "Cannot rename MAPI folder `%s' to `%s'. Default folder."
+#~ msgstr ""
+#~ "No se puede renombrar la carpeta MAPI «%s» a «%s». Carpeta predeterminada."
+
+#~ msgid "MAPI server %s"
+#~ msgstr "Servidor MAPI %s"
+
+#~ msgid "MAPI service for %s on %s"
+#~ msgstr "Servicio MAPI para %s en %s"

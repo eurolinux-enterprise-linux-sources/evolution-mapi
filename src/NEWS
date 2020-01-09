@@ -1,0 +1,1717 @@
+evolution-mapi 3.12.10 2015-01-12
+---------------------------------
+
+Translations:
+	Shankar Prasad (kn)
+
+evolution-mapi 3.12.9 2014-12-08
+--------------------------------
+
+Translations:
+	Tom Tryfonidis (el)
+
+evolution-mapi 3.12.8 2014-11-10
+--------------------------------
+
+Bug Fixes:
+	Bug 738512 - Build break with OpenChange 2.2 (Milan Crha)
+	Bug 683552 - Cannot receive recurring meetings (Milan Crha)
+
+Miscellaneous:
+	Always update local calendar content after successfully connected (Milan Crha)
+
+Translations:
+	Rafael Ferreira (pt_BR)
+	Marek Černocký (cs)
+
+evolution-mapi 3.12.7 2014-10-13
+--------------------------------
+
+Miscellaneous:
+	Add evolution-mapi.metainfo.xml file (Milan Crha)
+	Use INTLTOOL_XML_RULE for appdata files (Milan Crha)
+
+Translations:
+	Gábor Kelemen (hu)
+	Piotr Drąg (pl)
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+	Andika Triwidada (id)
+
+evolution-mapi 3.12.5 2014-08-11
+--------------------------------
+
+Miscellaneous:
+	Add missing chain-up to parent's constructed() method (Milan Crha)
+
+Translations:
+	Inaki Larranaga Murgoitio (eu)
+
+evolution-mapi 3.12.2 2014-05-12
+--------------------------------
+
+Bugs:
+	Bug #729028 - Adapt to OpenChange 2.1 API changes (Jordi Mallach)
+
+evolution-mapi 3.12.1 2014-04-14
+--------------------------------
+
+Bugs:
+	Bug #684425 - Do not pass NULL text to gtk_entry_set_text() (Milan Crha)
+
+evolution-mapi 3.12.0 2014-03-24
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.11.92 2014-03-17
+---------------------------------
+
+Miscellaneous:
+	mapi_store_get_folder_sync: Remove CAMEL_STORE_FOLDER_CREATE branch. (Matthew Barnes)
+
+evolution-mapi 3.11.91 2014-03-03
+---------------------------------
+
+Miscellaneous:
+	libexchangemapi.pc: Remove evolution-plugin requirement. (Matthew Barnes)
+	Replace 'interface' with 'iface' in the code (Milan Crha)
+
+evolution-mapi 3.11.90 2014-02-17
+---------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.11.5 2014-02-03
+--------------------------------
+
+Miscellaneous:
+	Improve the timezone tables (Fabiano Fidêncio)
+	Remove mapi_store_noop_sync(). (Matthew Barnes)
+	Memo does not support Start Date property (Fabiano Fidêncio)
+
+evolution-mapi 3.11.4 2014-01-13
+--------------------------------
+
+Miscellaneous:
+	Update project homepage URL (Matthew Barnes)
+	Update INSTALL file (automatically regenerated) (Milan Crha)
+
+evolution-mapi 3.11.3 2013-12-16
+--------------------------------
+
+Miscellaneous:
+	Adapt to new CamelSession "user-alert" signal. (Matthew Barnes)
+	configure.ac: Do not define EDS_DISABLE_DEPRECATED. (Matthew Barnes)
+
+
+evolution-mapi 3.11.2 2013-11-18
+--------------------------------
+
+Miscellaneous:
+	Adapt to CamelDataCache API changes. (Matthew Barnes)
+	Adapt to libemail-engine header changes. (Matthew Barnes)
+	Fix/mute issues found by Coverity scan (Milan Crha)
+
+evolution-mapi 3.11.1 2013-10-21
+--------------------------------
+
+Miscellaneous:
+	Adapt to Camel API changes. (Matthew Barnes)
+	Book/Cal backends - do not call g_propagate_error() when there is no error (Milan Crha)
+	Recurring events not shown on Exchange 2010 servers (Milan Crha)
+	Fix a copy&paste error, found by a Coverity Scan (Milan Crha)
+
+evolution-mapi 3.10.0 2013-09-23
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.9.92 2013-09-16
+--------------------------------
+
+Miscellaneous:
+	Do not encode message/rfc822 attachments into base64 (Milan Crha)
+
+evolution-mapi 3.9.90 2013-08-19
+--------------------------------
+
+Bugs:
+	Bug #700885 - Message size is 0 when downloading for offline (Milan Crha)
+
+Miscellaneous:
+	Remove a reference to dropped CamelOfflineJournal (Milan Crha)
+	Fix an ESourceRegistry leak (Fabiano Fidêncio)
+	Adapt to CamelStoreSummary API changes. (Matthew Barnes)
+	Avoid camel_store_summary_index(). (Matthew Barnes)
+	Really do not use deprecated camel_store_summary_info_free() (Milan Crha)
+
+evolution-mapi 3.9.5 2013-07-29
+-------------------------------
+
+Bugs:
+	Bug #704618 - Missing detached instances in get_object() response (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Christian Kirbach (de)
+
+evolution-mapi 3.9.3 2013-06-17
+-------------------------------
+
+Bugs:
+	Bug #702276 - Deadlock when connecting to a server (Milan Crha)
+
+Translations:
+	Kjartan Maraas (nb)
+	Marián Čavojský (sk)
+	Dimitris Spingos (el)
+
+evolution-mapi 3.9.2 2013-05-27
+-------------------------------
+
+Translations:
+	Yuri Myasoedov (ru)
+
+evolution-mapi 3.9.1 2013-04-29
+-------------------------------
+
+Miscellaneous:
+	EBookBackendMAPI: Convert get_backend_property() method. (Matthew Barnes)
+	ECalBackendMAPI: Convert get_backend_property() method. (Matthew Barnes)
+	Replace removed error-return macros (Milan Crha)
+	EMapiBackend: Remove resources with e_source_remove_sync(). (Matthew Barnes)
+	Fix a compiler warning about unused variable (Milan Crha)
+
+Translations:
+	Sweta Kothari (gu)
+	ManojKumar Giri (or)
+
+evolution-mapi 3.7.92 2013-03-18
+--------------------------------
+
+Bugs:
+	Bug #690433 - Do not refresh folder on every message transfer (Milan Crha)
+
+Miscellaneous:
+	Drop GTK_DOC_CHECK from configure.ac (Milan Crha)
+	e_mapi_subscribe_foreign_folder: Add an EClientCache parameter. (Matthew Barnes)
+
+evolution-mapi 3.7.91 2013-03-04
+--------------------------------
+
+Bugs:
+	Bug #685882 - NspiGetIDsFromNames failure with MAPI_E_NO_SUPPORT (Milan Crha)
+	Bug #693345 - dngettext should be used instead of ngettext (Milan Crha)
+	Bug #694786 - Ref count issue on a book view update (Milan Crha)
+	Bug #694786 - Do not use unknown property tags in restrictions (Milan Crha)
+
+Miscellanous:
+	Listen for EBackend::online property changes (Milan Crha)
+	Listen and act on EBackend's online state changes (Milan Crha)
+	Unref connection in a dedicated thread on EBackend::online change (Milan Crha)
+	Claim sources even when in offline (Milan Crha)
+	Teach collection backend about Kerberos authentication (Milan Crha)
+	Allow debugging of an account Authenticate process (Milan Crha)
+	e-mapi-backend: Remove display-name synchronization on mail sources. (Matthew Barnes)
+
+Translations:
+	Alexandre Franke (fr)
+
+evolution-mapi 3.7.90 2013-02-18
+--------------------------------
+
+Bugs:
+	Bug #692373 - Crash when using finalizing connection (Milan Crha)
+	Bug #693181 - Does not ask for password after its change (Milan Crha)
+
+Miscellanous:
+	Use camel_service_ref_session(). (Matthew Barnes)
+	Call OpenProfile() with talloc-allocated 'profile' parameter (Milan Crha)
+	Bump OpenChange dependency to 2.0 and adapt code to API changes (Milan Crha)
+
+Translations:
+	Piotr Drąg (pl)
+
+evolution-mapi 3.7.5 2013-02-04
+-------------------------------
+
+Bugs:
+	Bug #691772 - Long text/html message constructed as text/plain only (Milan Crha)
+	Bug #691834 - Body of attached message not shown (Milan Crha)
+	Bug #692371 - Crash under e_mapi_connection_connected() (Milan Crha)
+
+Miscellanous:
+	Adapt to recent EBookBackendSQLiteDB API changes (deprecated symbols) (Milan Crha)
+	Fix a build break caused by CalObjModType => ECalObjModType (Milan Crha)
+	Fix a build break caused by EBook/CalBackend API deprecation (Milan Crha)
+
+evolution-mapi 3.7.4 2013-01-14
+-------------------------------
+
+Miscellanous:
+	Adapt to libedata-cal API changes. (Matthew Barnes)
+	Save changes before finalizing ECalBackendStore. (Matthew Barnes)
+	Revert "Save changes before finalizing ECalBackendStore." (Matthew Barnes)
+	Avoid deprecated libedataserver APIs. (Matthew Barnes)
+	Bump minimum GLib requirement to 2.34 to match E-D-S. (Matthew Barnes)
+	Avoid deprecated libedataserver APIs. (Matthew Barnes)
+	Remove redundant type casts and fix newly introduced compiler warnings (Milan Crha)
+
+Translations:
+	Rafael Ferreira (pt_BR)
+
+evolution-mapi 3.7.3 2012-12-17
+-------------------------------
+
+Bugs:
+	Bug #671053 - Lock CamelStoreSummary on folder list update (Milan Crha)
+
+Miscellanous:
+	Use version-based GLib/GDK/GTK+ warnings. (Matthew Barnes)
+	Use EDS_DISABLE_DEPRECATED for --enable-strict. (Matthew Barnes)
+	Do not generate a ChangeLog file from 'git log' (Milan Crha)
+	Adapt to Evolution library consolidation. (Matthew Barnes)
+	Adapt to camel_session_alert_user() prototype change (Milan Crha)
+
+Translations:
+	Krishnababu Krothapalli (te)
+	Sayak Sarkar (bn_IN)
+	Dr.T.Vasudevan (ta)
+
+evolution-mapi 3.7.2 2012-11-19
+-------------------------------
+
+Miscellanous:
+	Avoid re-add of a GAL ESource (Milan Crha)
+	Replace e_flag_timed_wait() with e_flag_wait_until() (Milan Crha)
+	Replace deprecated GLib symbols (as of GLib 2.34.x) (Milan Crha)
+	Introduce --enable-strict configure option (Milan Crha)
+	Drop check for BOOK_BACKEND_PROPERTY_SUPPORTED_AUTH_METHODS. (Matthew Barnes)
+
+Translations:
+	Christian Kirbach (de)
+	Shankar Prasad (kn)
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+
+evolution-mapi 3.7.1 2012-10-22
+-------------------------------
+
+Miscellanous:
+	EBookBackendMAPI: Remove the remove() implementation. (Matthew Barnes)
+	ECalBackendMAPI: Remove the remove() implementation. (Matthew Barnes)
+	Adapt to EBookBackend API changes. (Matthew Barnes)
+	Adapt to EDataBookView and EDataCalView API changes. (Matthew Barnes)
+
+evolution-mapi 3.6.0 2012-09-24
+-------------------------------
+
+Translations:
+	Nilamdyuti Goswami (as)
+	Rajesh Ranjan (hi)
+	Gabor Kelemen (hu)
+	Ani Peter (ml)
+
+
+evolution-mapi 3.5.92 2012-09-17
+--------------------------------
+
+Bugs:
+	Bug #681069 - Crash under e_mapi_util_copy_binary_r() (Milan Crha)
+	Bug #682914 - Some messages won't show translated strings (Jiro Matsuzawa)
+	Bug #680921 - e_shell_window_get_action_group() doesn't return reffed pointer (Milan Crha)
+	Bug #678952 - Meeting invitation reply causes crash of Outlook 2010 (Milan Crha)
+	Bug #678952 - Meeting invitation causes crash of Outlook 2010 (Milan Crha)
+
+Miscellanous:
+	Make translations work in respective modules (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Sandeep Sheshrao Shedmake (mr)
+	Andika Triwidada (id)
+	Sweta Kothari (gu)
+	Chris Leonard (en_GB)
+	Aurimas Černius (lt)
+
+evolution-mapi 3.5.91 2012-09-03
+--------------------------------
+
+Miscellanous:
+	Fix a compiler warning (variable may be used uninitialized) (Milan Crha)
+	Delete user's remote folders on delete of its local ESource (Milan Crha)
+	Be able to create book/calendar/task/memo folders (Milan Crha)
+	Install ESource::changed listener in mapi_backend_constructed() (Milan Crha)
+
+Translations:
+	Daniel Mustieles (es)
+ 	Piotr Drąg (pl)
+	Matej Urbančič (sl)
+
+evolution-mapi 3.5.90 2012-08-20
+--------------------------------
+
+Miscellanous:
+	Update git.mk. (Matthew Barnes)
+	Adapt to CamelSession API changes. (Matthew Barnes)
+	Adapt to CamelService API changes. (Matthew Barnes)
+	Fix a build break after recent API changes in eds (Milan Crha)
+	Partially implement add/remove of ESource-s (Milan Crha)
+
+Translations:
+	Aurimas Černius (lt)
+	Matej Urbančič (sl)
+	Mario Blättermann (de)
+
+evolution-mapi 3.5.5  2012-08-06
+--------------------------------
+
+Bugs:
+	Bug #608327 - Cannot recover after connection lost (Milan Crha)
+
+Miscellanous:
+	Could leave EBookBackend local cache locked for updates (Milan Crha)
+	Fix runtime check error return values (Milan Crha)
+	Adapt to ESourceRegistryServer API changes. (Matthew Barnes)
+	Declare UI definitions as static (Milan Crha)
+	Use e_backend_authenticate_sync() in backends. (Matthew Barnes)
+
+Translations:
+	Daniel Mustieles (es)
+
+evolution-mapi 3.5.4  2012-07-16
+--------------------------------
+
+Bugs:
+	Bug #637291 - Can't send to both internal and external recipients (Milan Crha)
+	Bug #678952 - Not all named properties are converted to server tags (Milan Crha)
+	Bug #679041 - Incorrect date in Sent Items folder (Milan Crha)
+
+Miscellanous:
+	Avoid possible memory leak (Milan Crha)
+	Use SetProps if write property as stream failed (Milan Crha)
+	Add spinner to wait dialog (Milan Crha)
+	Kerberos authentication did not work (Milan Crha)
+	Prefill Kerberos Realm from /etc/krb5.conf, if possible (Milan Crha)
+	Add support for E_CONTACT_PHOTO property (Milan Crha)
+	Remove redundant method implementations. (Matthew Barnes)
+	Use cancellable rec mutex for connection operations (Milan Crha)
+	Could free uninitialized memory in e_mapi_connection_close_folder() (Milan Crha)
+
+Translations:
+	Matej Urbančič (sl)
+	Daniel Mustieles (es)
+	Bruno Brouard (fr)
+
+evolution-mapi 3.5.3  2012-06-25
+--------------------------------
+
+Bugs:
+	Bug #677266 - Memory leaks when synchronizing for offline (Milan Crha)
+	Bug #677684 - Addressbook doesn't return matched contacts (Milan Crha)
+
+Miscellanous:
+	Do not call g_object_notify() when property didn't change (Milan Crha)
+	Make it work with API changes for 3.5.3 (Milan Crha)
+	Do not set GError on E_SOURCE_AUTHENTICATION_REJECTED return value (Milan Crha)
+	Fix build failure due to rename of E_CONTACT_BOOK_URI to E_CONTACT_BOOK_UID (Milan Crha)
+
+evolution-mapi 3.5.2  2012-06-04
+--------------------------------
+
+Bugs:
+	Bug #675283 - Fails to parse recurring blob (Milan Crha)
+	Bug #675871 - Hide gnu make extensions warnings for automake 1.12
+
+Miscellanous:
+	CamelMapiSettings: Add thread-safe accessors for string properties. (Matthew Barnes)
+	Remove camel_folder_has_search_capability() (Milan Crha)
+	Adapt to CamelService API changes. (Matthew Barnes)
+	Replace/remove deprecated GLib functions (Milan Crha)
+
+Translations:
+	Bruno Brouard (fr)
+	Marek Černocký (cs)
+	Rudolfs Mazurs (lv)
+	Matej Urbančič (sl)
+	Andika Triwidada (id)
+
+evolution-mapi 3.5.1  2012-04-27
+--------------------------------
+
+Bugs:
+	Bug #672175 - Make CamelFolderSearch cancellable (Milan Crha)
+	Bug #670457 - Add bulk methods to ECalClient (Milan Crha)
+	Bug #246255 - "Other User's Folder" - avoid this genitive construction (Milan Crha)
+	Bug #668819 - Set error when no folder found (Milan Crha)
+
+Miscellanous:
+	Explicitly enable/disable kerberos in MAPI profile (Milan Crha)
+	Adapt to API change in ESourceSelector (Milan Crha)
+	Change GAL named-id property fetching and GAL listing (Milan Crha)
+
+Translations:
+	Matej Urbančič (sl)
+	Daniel Mustieles (es)
+	Daniel Nylander (sv)
+	Marek Černocký (cs)
+
+evolution-mapi 3.4.0  2012-03-26
+--------------------------------
+
+Translations:
+	Leandro Toledo (pt_BR)
+	Djavan Fagundes (pt_BR)
+	Jiri Eischmann (cs)
+
+evolution-mapi 3.3.92 2012-03-19
+--------------------------------
+
+Bugs:
+	Bug #671638 - Trouble reading S/MIME messages (Milan Crha)
+
+Miscellanous:
+	Fix typo in LIBEBOOK variable (Milan Crha)
+	Update store<=>folder summaries connection on folder rename (Milan Crha)
+	Fix possible use of uninitialized variable (Milan Crha)
+	Bump OpenChange dependency to 1.0 (Milan Crha)
+
+Translations:
+	Mario Blättermann (de)
+	Piotr Drąg (pl)
+
+evolution-mapi 3.3.91 2012-03-05
+--------------------------------
+
+Bugs:
+	Bug #669817 - Events using incorrect timezone (Milan Crha)
+	Bug #668810 - Crash in g_str_hash, mapi_store_delete_folder_sync (Milan Crha)
+
+Miscellanous:
+	Debug object properties from outside and change env variable names (Milan Crha)
+	Report connection errors, instead of ignore them (Milan Crha)
+	Failed to fetch content of large folders (Milan Crha)
+	Fix typo in a conditionally compiled code (Milan Crha)
+
+Translations:
+	Martin Srebotnjak (sl)
+	Gabriel Speckhahn (pt_BR)
+	Kjartan Maraas (nb)
+
+evolution-mapi 3.3.90 2012-02-20
+--------------------------------
+
+Miscellanous:
+	Fix issues found by Coverity Scan (Milan Crha)
+	Generate ChangeLog from git log (Milan Crha)
+	Populate .gitignore with more files and create default COPYING file (Milan Crha)
+	Differentiate between user and system folders in local cache (Milan Crha)
+
+Translations:
+	Mario Blättermann (de)
+	Matej Urbančič (sl)
+
+evolution-mapi 3.3.5 2012-02-06
+-------------------------------
+
+Bugs:
+	Bug #601382 - Support for subscribe to other user's folder (Milan Crha)
+	Bug #568391 - Public folders having same name shown only once (Milan Crha)
+	Bug #667714 - Support for setting user's folder permissions (Milan Crha)
+	Bug #561658 - Unread count not shown against public folders (Milan Crha)
+	Bug #586353 - Implement message read-receipt and importance flags (Milan Crha)
+	Bug #668631 - Folder->Subscriptions cannot be managed in offline (Milan Crha)
+	Bug #668633 - Newly created folder even shown under Favorites (Milan Crha)
+	Bug #668634 - Warn user with folder create error (Milan Crha)
+	Bug #668635 - Better offline mode error handling (Milan Crha)
+	Bug #668630 - Error while assigning permissions (Milan Crha)
+	Bug #668641 - Doesn't fetch mails with Exchange 2010 server (Milan Crha)
+	Bug #668816 - Contact search fails in GAL after certain limit (Milan Crha)
+	Bug #668637 - May not be able to create books/calendars in offline (Milan Crha)
+	Bug #668825 - Read-receipt info set event when not requested (Milan Crha)
+	Bug #668820 - Subscribed public calendar/task are shown in mail view (Milan Crha)
+	Bug #668804 - Crash in ecbm_connect_user() (Milan Crha)
+	Bug #601483 - Support for quota message service (Milan Crha)
+	Bug #669226 - Crash when removing calendar component (Milan Crha)
+
+Miscellanous:
+	Replace more obsolete code (Milan Crha)
+	Adapt to libemail-engine. (Matthew Barnes)
+	Be able to search GAL users from "Subscribe other user's folder" dialog (Milan Crha)
+	Recognize Replied and Forwarded mail messages (Milan Crha)
+	Misplaced PidTagImportance with PidTagPriority (Milan Crha)
+	Cache calendars/books locally by default, except of GAL (Milan Crha)
+	Could not create new MAPI account (Milan Crha)
+	Message size in message list not shown (always zero bytes) (Milan Crha)
+	Cannot read/write large attachments (Milan Crha)
+	Add debugging for bin-to-rrule converter (Milan Crha)
+	Fixed singular form (Marek Černocký)
+
+Translations:
+	Daniel Mustieles (es)
+	Marek Černocký (cs)
+	Matej Urbančič (sl)
+	Mario Blättermann (de)
+
+evolution-mapi 3.3.4 2012-01-16
+-------------------------------
+
+Bugs:
+	Bug #666952 - Wrong date in message list (Milan Crha)
+	Bug #667185 - Menu items from plugins not translated (Milan Crha)
+	Bug #644817 - Slow addressbook cache (Milan Crha)
+
+Miscellanous:
+	Rewrite GAL to support restrictions and partial search results (Milan Crha)
+	Decode attached book/calendar objects in a downloaded message (Milan Crha)
+	[GAL] Do not use partial updates when marked for offline (Milan Crha)
+
+Translations:
+	Daniel Mustieles (es)
+	Marek Černocký (cs)
+	Matej Urbančič (sl)
+	Joe Hansen (da)
+	Jiro Matsuzawa (ja)
+
+evolution-mapi 3.3.3 2011-12-19
+-------------------------------
+
+Bugs:
+	Bug #663867 - Cannot build against OpenChange svn trunk (Milan Crha)
+	Bug #664572 - Change e_cal_backend_notify_component* to use ECalComponent (Milan Crha)
+	Bug #664062 - Profile name not saved in transport URL (Milan Crha)
+	Bug #664626 - Missing KOI-8R codepage support (patch by Vladislav) (Milan Crha)
+	Bug #665250 - Map GMT Standard Time to Europe/Dublin (Milan Crha)
+
+Miscellanous:
+	Implement fast-transfer for address book backend (Milan Crha)
+	At least minfo->last_modified may change, thus mark minfo dirty (Milan Crha)
+	Remove GSEAL_ENABLE macro. (Matthew Barnes)
+	Remove almost all *_DISABLE_DEPRECATED_FLAGS. (Matthew Barnes)
+	Properly propagate Cancelled GError (Milan Crha)
+	Use different way of converting FILETIME to time_t (Milan Crha)
+	Implement SExp parser for contacts backend (Milan Crha)
+	Add "Listen for server notifications" option to mail/book/calendar (Milan Crha)
+	Preselect colors for newly added calendars (Milan Crha)
+	Do not forget to save changes in CamelFolderSummary (Milan Crha)
+	Provide write functions for EMapiObject and use them in Camel (Milan Crha)
+	Drop last usage of e_mapi_connection_fetch_item/s from e-cal-backend-mapi.c (Milan Crha)
+	Use EMapiObject API for writing in book and calendar (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Matej Urbančič (sl)
+	Daniel Mustieles (es)
+	Mario Blättermann (de)
+
+evolution-mapi 3.3.2 2011-11-21
+-------------------------------
+
+Bugs:
+	Bug #664016 - Password prompt for Notes, Tasks, etc. on login (Milan Crha)
+
+Miscellanous:
+	Implement CamelFolder::get_message_cached() (Milan Crha)
+	Adapt to CamelNetworkSettings changes. (Matthew Barnes)
+	Various changes around Fast-Transfer implementation (Milan Crha)
+	Updated POTFILES.in (Piotr Drąg)
+	Use one mapi_context for each EMapiConnection (Milan Crha)
+	Avoid usage of talloc_init() (Milan Crha)
+	camel_operation_cancel_check(NULL) returns FALSE. (Matthew Barnes)
+	Adapt to Evolution's EMConfig API changes. (Matthew Barnes)
+	Different approach for CamelMapiFolder's summary fetching (Milan Crha)
+	Adapt to CamelFolderSummary changes. (Matthew Barnes)
+
+Translations:
+	Daniel Mustieles (es)
+	Marek Černocký (cs)
+	Mario Blättermann (de)
+
+evolution-mapi 3.3.1 2011-10-24
+-------------------------------
+
+Bugs:
+	Bug #659555 - Add custom icons in a folder Subscription dialog (Milan Crha)
+	Bug #655252 - Need to escape the comp_uid part of a path (Milan Crha)
+	Bug #656473 - Store server folder cache in user's cache directory (Milan Crha)
+
+Miscellanous:
+	Post-release version bump (Milan Crha)
+	CamelMapiStore: Use camel_service_set_password(). (Matthew Barnes)
+	CamelMapiStore: Remove unused 'base_url' member. (Matthew Barnes)
+	Adapt to CamelURL API changes. (Matthew Barnes)
+	Adapt to libebackend changes. (Matthew Barnes)
+	CamelMapiProvider: Setting "license" field is unnecessary. (Matthew Barnes)
+	Adapt to camel-provider-1.2.pc going away. (Matthew Barnes)
+	Adapt to CamelFolderSummary API changes (Milan Crha)
+	Adapt to EBookBackend API changes (Milan Crha)
+	Adapt to Camel's new authentication API. (Matthew Barnes)
+	Adapt to recent ECalBackend API changes (Milan Crha)
+
+Translations:
+	Petr Kovar (cs)
+	Gabor Kelemen (hu)
+	Joe Hansen (da)
+	Daniel Nylander (sv)
+	Pavol Klačanský (sk)
+	Mario Blättermann (de)
+	Daniel Mustieles (es)
+	Kristjan SCHMIDT (eo)
+	Matej Urbančič (sl)
+
+evolution-mapi 3.2.0 2011-09-26
+-------------------------------
+
+Miscellanous:
+	No code/translation changes
+
+evolution-mapi 3.1.92 2011-09-19
+--------------------------------
+
+Bug Fixes:
+	Bug #659020 - Destination folder not updated after transfer_messages call (Milan Crha)
+
+Miscellanous:
+	Fix error reading from org.gnome.KrbAuthDialog.acquireTgt (Milan Crha)
+
+Translations:
+	Mario Blättermann (de)
+	Matej Urbančič (sl)
+	Marek Černocký (cs)
+	Piotr Drąg (pl)
+	Rudolfs Mazurs (lv)
+
+evolution-mapi 3.1.91 2011-09-05
+--------------------------------
+
+Miscellanous:
+	Create tar.xz files for 'make dist' only (Milan Crha)
+
+evolution-mapi 3.1.90 2011-08-29
+--------------------------------
+
+Bug Fixes:
+	Bug #651709 - Crash on deselect in new calendar folder tree (Milan Crha)
+	Bug #657309 - Cann't send mail (Milan Crha)
+
+Miscellanous:
+	Add CamelMapiSettings. (Matthew Barnes)
+	Adapt to new CamelSubscribable interface. (Matthew Barnes)
+	Stop authentication when user cancels password prompt in mailer (Milan Crha)
+	Too small folder tree in ESource preferences (Milan Crha)
+	Skip account changed signal for MAPI-unknown accounts (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Yuri Myasoedov (ru)
+	Claude Paroz (fr)
+	Daniel Mustieles (es)
+
+evolution-mapi 3.1.5 2011-08-15
+-------------------------------
+
+Bug Fixes:
+	Bug #654474 - Use EBookBackendSqliteDB as a book backend cache (Sean Finney)
+	Bug #620166 - Prefer named constants over property codes (Milan Crha)
+	Bug #655409 - Extra flags in CamelStoreInfo break folder type check (Milan Crha)
+	Bug #655824 - Use StartTimeZone when EndTimeZone is missing (Milan Crha)
+	Bug #655962 - Changed unread state forgotten on message move (Milan Crha)
+	Bug #638821 - Abort in e-addressbook-factory due to freed backend (Milan Crha)
+	Bug #592779 - Authenticate using Kerberos (Sean Finney)
+
+Miscellanous:
+	Do not return error when cannot convert quire into restriction (Milan Crha)
+	Do not set empty values to EContact and use iso time for REV attribute (Milan Crha)
+	Clarify user-visible Description string in Account Editor - evolution-mapi supports 2007, contrary to evolution-exchange (Andre Klapper)
+	Adapt to changes in evolution-data-server from bug #656058 (Milan Crha)
+	Fix read/write of PidNameKeywords property (Milan Crha)
+	Crash on calendar event modification (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Mario Blättermann (de)
+	Daniel Mustieles (es)
+	Yuri Myasoedov (ru)
+
+evolution-mapi 3.1.4 2011-07-25
+-------------------------------
+
+Bug Fixes:
+	Bug #653516 - Depend on openchange's libmapi 0.11 (Milan Crha)
+	Bug #654382 - Drop unnecessary checks after switch to libmapi 0.11 (Sean Finney)
+
+Miscellanous:
+	Adapt to CamelSession and e-passwords changes. (Matthew Barnes)
+	Prefer g_seekable_seek() over camel_stream_reset(). (Matthew Barnes)
+	Remove G_DISABLE_DEPRECATED. (Matthew Barnes)
+
+Translations:
+	Marek Černocký (cs)
+	Мирослав Николић (sr, sr@latin)
+
+evolution-mapi 3.1.3 2011-07-01
+-------------------------------
+
+Bug Fixes:
+	Bug #613209 - Crash after call of ResolveNames (Milan Crha)
+	Bug #652019 - Crash in Select user dialog (Milan Crha)
+	Bug #652857 - Do not use recently deprecated Gtk+ symbols (Milan Crha)
+	Bug #653489 - QueryRows fails on exchange 2010 servers (Milan Crha)
+
+Miscellanous:
+	Do not use deprecated EBook/ECal API (Milan Crha)
+	Remove invalid mapi_object_release() call (Sean Finney)
+	Report readonly and online states from backends in open functions (Milan Crha)
+
+Translations:
+	Daniel Mustieles (es)
+	Mario Blättermann (de)
+	Matej Urbančič (sl)
+
+evolution-mapi 3.1.2 2011-06-13
+-------------------------------
+
+Bug Fixes:
+	Bug #649442 - Meeting responses should contain type prefix in subject (Milan Crha)
+	Bug #649898 - Modified recurrences have incorrect time (Milan Crha)
+
+Miscellanous:
+	Make changes to let it work with samba4 alpha15 (Milan Crha)
+	Adapt to EClient changes in eds master (Milan Crha)
+	Use 'username' instead of 'user' property in ESource (Milan Crha)
+	Do not QueryRows when there is no row available (Milan Crha)
+
+Translations:
+	Daniel Mustieles (es)
+	Matej Urbančič (sl)
+	Mario Blättermann (de)
+	Marek Černocký (cs)
+	Gabor Kelemen (hu)
+	Мирослав Николић (sr, sr@latin)
+
+evolution-mapi 3.1.1 2011-05-09
+-------------------------------
+
+Bug Fixes:
+	Bug #643561 - Better recurrence blob parsing code (Sean Finney)
+	Bug #648175 - Crash in folder_size_actions_update_cb (Milan Crha)
+	Bug #648732 - Meeting invitation response not recognized by Outlook (Milan Crha)
+	Bug #634486 - Crash when receiving message without body (Milan Crha)
+	Bug #629057 - Some events created in evolution are missing in OWA (Sean Finney)
+	Bug #613147 - Recipients should not be discarded (Milan Crha)
+
+Miscellanous:
+	Remove unneeded UseUnicode flag in a GetHierarchyTable call (Milan Crha)
+	Adapt to sealed up CamelService. (Matthew Barnes)
+	Adapt to CamelService changes. (Matthew Barnes)
+	Do not escape forward slashes in full folder name (Milan Crha)
+	Adapt to new CamelSession background job API. (Matthew Barnes)
+	Properly adapt to changes in CamelService status tracking from eds (Milan Crha)
+	Adapt to EMConfigTargetAccount changes. (Matthew Barnes)
+	Fix compiler warnings introduced in gcc 4.6.0 (Milan Crha)
+	Adapt to CamelFolderInfo changes. (Matthew Barnes)
+	Remove dead assignments. (Matthew Barnes)
+	Remove DISTCHECK_CONFIGURE_FLAGS. (Matthew Barnes)
+	Adapt to CamelFolder:name -> display-name. (Matthew Barnes)
+	Forgot to change property name for folder creation. (Matthew Barnes)
+
+Translations:
+	Rudolfs Mazurs (lv)
+	Joe Hansen (da)
+	Daniel Nylander (sv)
+	Mario Blättermann (de)
+	Gabriel F. Vilar (pt_BR)
+	Takayoshi OKANO (ja)
+
+evolution-mapi 2.91.92 2011-03-21
+---------------------------------
+
+Bug Fixes:
+	Bug #643791 - Duplicate events from outlook / OWA meetings (Sean Finney)
+	Bug #618514 - Forwarded messages as attachments encoded incorrectly (Milan Crha)
+	Bug #641029 - Be able to disable GAL completely (Milan Crha)
+	Bug #632450 - Support sending S/MIME messages (Milan Crha)
+	Bug #644796 - Lookup for display name for recipients in "Sent Items" (Milan Crha)
+	Bug #601529 - Categories are not handled properly (Milan Crha)
+	Bug #611548 - Move/copy to folder doesn't work for many messages (Milan Crha)
+
+Miscellanous:
+	Do not add extra \0 at the end of text mail message bodies (Milan Crha)
+	Allow slash in folder names (Milan Crha)
+	Reprompt password if given wrong (Milan Crha)
+
+Translations:
+	Claude Paroz (fr)
+
+evolution-mapi 2.91.91 2011-03-07
+---------------------------------
+
+Bug Fixes:
+	Bug #642951 - Appointments have incorrect organizer information (Sean Finney)
+	Bug #614480 - Avoid using G_TYPE_INSTANCE_GET_PRIVATE repeatedly (Milan Crha)
+	Bug #641911 - Ignores offline request (Milan Crha)
+	Bug #643781 - Crash accepting meeting requests (Sean Finney)
+
+Translations:
+	Yaron Shahrabani (he)
+	Yinghua Wang (zh_CN)
+
+evolution-mapi 2.91.90 2011-02-21
+---------------------------------
+
+Bug Fixes:
+	Bug #610227 - Failure accepting meeting with 'send reply to sender' (Milan Crha)
+	Bug #641251 - All sent mail containing unicode/utf8 is converted to junk (Milan Crha)
+	Bug #615636 - Meeting requests/responses don't match calendar events (Milan Crha)
+	Bug #641108 - Crash on new folder move when unsubscribing (Milan Crha)
+	Bug #641123 - Not set "folder-id" property on an addressbook source (Milan Crha)
+	Bug #641701 - Use unicode strings when creating folders (Milan Crha)
+	Bug #642450 - Does not build against openchange trunk (Sean Finney)
+	Bug #642022 - Modified instances in a recurrent event disappear (Sean Finney)
+
+Other Changes:
+	Fix for RRULE bin parsing for recurrences with modifications (Sean Finney)
+	Logoff() releases msg_store on its own (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Piotr Drąg (pl)
+	Jorge González (es)
+	Matej Urbančič (sl)
+
+evolution-mapi 2.91.6 2011-01-31
+--------------------------------
+
+Bug Fixes:
+	Bug #632142 - File->Empty Trash does not remove just deleted emails
+		      (Milan Crha)
+	Bug #638340 - Hides modified message after Remove attachments function
+		      (Milan Crha)
+	Bug #638247 - Deadlock when enables an account (Milan Crha)
+	Bug #638337 - All day event created in evolution shows for two days
+		      in owa. (Milan Crha)
+	Bug #634062 - Crash when missing ESource property "public" (Milan Crha)
+	Bug #640066 - Fails to fully download large text/plain messages.
+		      (Milan Crha)
+	Bug #640584 - Crash if mailbox size property is missing (Jelmer Vernooij)
+	Bug #604029 - Modified recurring events are shown as single instance.
+		      (Milan Crha)
+
+Other Changes:
+	* Adapt to Camel API changes. (Matthew Barnes)
+	* Drop the --enable-gtk3 configure option. (Matthew Barnes)
+
+evolution-mapi 2.91.5 2011-01-10
+--------------------------------
+
+Bug Fixes:
+	(none)
+
+Other changes:
+	* Adapt to split E-D-S backend directories. (Matthew Barnes)
+
+Translations:
+	Mattias Põldaru	(et)
+	Gheyret T.Kenji (ug)
+	Torstein Adolf Winterseth (nb)
+
+evolution-mapi 2.91.4 2010-12-20
+--------------------------------
+
+Bug Fixes:
+	Bug #573125 - Use new bdata_extract_ functions instead of own macros (Milan Crha)
+	Bug #636854 - Ensure GAL contacts has filled UID (Milan Crha)
+	Bug #633121 - Fetch also Content-class message header (Milan Crha)
+	Bug #636840 - Fails to build with openchange svn trunk (rev 2377) (Milan Crha)
+
+evolution-mapi 2.91.3 2010-11-29
+--------------------------------
+
+Bug Fixes:
+	Bug #635078 - Do not write unicode markers in UTF16 strings (Milan Crha)
+
+Translations:
+	Gheyret T.Kenji (ug)
+
+evolution-mapi 2.91.2 2010-11-08
+--------------------------------
+
+Bug Fixes:
+	Bug 608388 - Copying a mail from another account loses headers
+	             (Milan Crha)
+	Bug 632449 - Copy message to Inbox tries to send it (Milan Crha)
+	Bug 633182 - Meeting invites sent also to organiser (Milan Crha)
+	Bug 633185 - Can't handle Birthdays before 01/01/1970 (Milan Crha)
+
+Translations:
+	Carles Ferrando (ca@valencia)
+	Gheyret T.Kenji (ug)
+
+evolution-mapi 2.91.1 2010-10-18
+--------------------------------
+
+Bug Fixes:
+	Bug 630698 - Cannot remove just created folder (Punit Jain)
+	Bug 630712 - Crash in add_cal_esource (Milan Crha)
+	Bug 631496 - Crash fetching property (Milan Crha)
+	Bug 631500 - Recursive call when disabling account (Milan Crha)
+	Bug 631621 - Cannot connect after update (Milan Crha)
+
+Translations:
+	Gil Forcada (ca)
+
+evolution-mapi 2.91.0 2010-10-04
+--------------------------------
+
+Bug Fixes:
+	Bug 629481 - Critical warning from mapi_sync function (Milan Crha)
+	Bug 629484 - Do not refresh 'Favourites' folder itself (Milan Crha)
+	Bug 629489 - Could not get attach_file_url (Punit Jain)
+	Bug 629492 - Messages can be without recipients (Milan Crha)
+	Bug 629499 - Runs incoming filters in all folders (Milan Crha)
+	Bug 629507 - gal re-fetches itself (Milan Crha)
+	Bug 629507 - gal re-fetches itself (part ][) (Milan Crha)
+	Bug 629603 - Allow calendar refresh on demand (Milan Crha)
+	Bug 629836 - Crash on an event fetching (Milan Crha)
+
+Misc:
+	Adapt to Camel API changes. (Matthew Barnes)
+	GtkObject is gone in GTK3 (Milan Crha)
+
+Translations:
+	Mattias Põldaru (et)
+	Milo Casagrande (it)
+	Takayuki KUSANO (ja)
+	Žygimantas Beručka (lt)
+	Wouter Bolsterlee (nl)
+	Piotr Drąg (pl)
+	Antonio Fernandes C. Neto (pt_BR)
+
+evolution-mapi 0.31.92 2010-09-13
+---------------------------------
+
+Bug Fixes:
+	Bug #601481 - Calendar not handling attachments properly (Punit Jain)
+	Bug #627999 - Cannot autocomplete with contacts (Milan Crha)
+	Bug #628851 - Cannot delete address book (Bharath Acharya)
+	Bug #629393 - git.mk breaks parallel builds (Matthew Barnes)
+
+Misc:
+	Various memory leaks (Milan Crha)
+	Adapt to the changes for optimization in EDS (Punit Jain)
+
+Translations:
+	Changwoo Ryu (ko)
+	Duarte Loreto (pt)
+	Ivar Smolin (et)
+	Marek Černocký (cs)
+	Mario Blättermann (de)
+	Philip Withnall (en_GB)
+
+evolution-mapi 0.31.91 2010-08-30
+---------------------------------
+
+Bug Fixes:
+	Bug #586199 - Recurrence event modification doesn't get reflected (Milan Crha)
+	Bug #624597 - Opening S/MIME signed and/or encrypted messages fails (Milan Crha)
+	Bug #627255 - Folder deletion doesn't work well (Punit Jain)
+	Bug #627331 - Crash in e_data_book_respond_authenticate_user (Milan Crha)
+	Bug #627703 - Crash on double free while fetching Free/Busy (Milan Crha)
+	Bug #628004 - Forgets 'copy locally for offline' setting (Milan Crha)
+	Bug #628016 - Stack overflow in ebbm_contacts_remove (Milan Crha)
+
+Misc:
+	Two typos fixed (Claude Paroz)
+
+Translations:
+	A S Alam (pa)
+	Ask H. Larsen (da)
+	Chao-Hsiung Liao (zh_HK, zh_TW)
+	Claude Paroz (fr)
+	Gabor Kelemen (hu)
+	Michael Kotsarinis (el)
+	Nils (fr)
+
+evolution-mapi 0.31.90 2010-08-16
+---------------------------------
+
+Bug Fixes:
+	Bug #626173 - Load the store after cache creation (Punit Jain)
+	Bug #626860 - Crash while unsubscribing folder (Punit Jain)
+
+Translations:
+	Daniel Nylander (sv)
+	Dirgita (id)
+	Fran Diéguez (gl)
+	Hideki Yamane (ja)
+	Jorge González (es)
+	Kjartan Maraas (nb)
+	Lucian Adrian Grijincu (ro)
+	Matej Urbančič (sl)
+	Vasudeven (ta)
+	Yaron Shahrabani (he)
+	Yinghua Wang (zh_CN)
+
+evolution-mapi 0.31.6 2010-08-02
+--------------------------------
+
+Bug Fixes:
+	Bug 602395 - Reply to all in meeting pop up doesn't seem to work
+	             (Milan Crha)
+	Bug 623192 - Crash on creating new folder (Punit Jain)
+	Bug 624012 - Calendar backend requires cache for operations
+	             (Milan Crha)
+	Bug 624013 - Free/Busy fetch in offline claims a runtime error
+	             (Milan Crha)
+	Bug 624888 - Build breakage in master with OpenChange 0.9 (Milan Crha)
+	Bug 625069 - Slow message fetching (Milan Crha)
+	Bug 625382 - Migration from ECalBackendCache to ECalBackendStore
+	             (Punit Jain)
+
+Other Changes:
+	* Follow-up fix for breakness after changes for bug #622695
+	  (Milan Crha)
+	* PR_RECIPIENTS_FLAGS renamed to PR_RECIPIENT_FLAGS in openchange
+	  (Milan Crha)
+	* Make calendar backend fully asynchronous (Milan Crha)
+	* Merge common parts of EBookBackend-s and make it more asynchronous
+	  (Milan Crha)
+	* Adapt to libedata-book and libedata-cal API changes. (Matthew Barnes)
+
+Translations:
+	Runa Bhattacharjee (bn_IN)
+	Mario Blättermann (de)
+	Fotis Tsamis (el)
+	Jorge González (es)
+	Fran Diéguez (gl)
+	Yaron Shahrabani (he)
+	Sandeep Shedmake (mr)
+	Kjartan Maraas (nb)
+	krishnababu k (te)
+	Eleanor Chen (zh_CN)
+	Tao Wang (zh_CN)
+	Chao-Hsiung Liao (zh_HK)
+
+evolution-mapi 0.31.5 2010-07-12
+--------------------------------
+
+Bug Fixes:
+	Bug #621761 - Usage of uninitialized variable in fetch_props_to_mail_item_cb (Milan Crha)
+	Bug #623028 - Crash in e_data_book_view_notify_complete (Milan Crha)
+	Bug #623057 - Calls e_book_backend_summary_new with NULL filename (Milan Crha)
+	Bug #623204 - Be able to report detailed errors from backends (Milan Crha)
+	Bug #623280 - Creating new calendar/... not reflected on a server (Punit Jain)
+	Bug #623919 - Error while opening any newly received message (Matthew Barnes)
+
+Misc:
+	Migrate from CamelException to GError (Matthew Barnes)
+	Adapt to recent openchange svn trunk (Milan Crha)
+
+Translations:
+	Matej Urbančič (sl)
+
+evolution-mapi 0.31.4 2010-06-28
+--------------------------------
+
+Feature:
+	Public calendar/task/address book support in mapi (Bug #600661) (Punit Jain)
+
+Bug Fixes:
+	Bug #568424 - Copy/Move mails with public folders fails (Milan Crha)
+	Bug #585353 - Marking Junk doesn't work on mapi account (Milan Crha)
+	Bug #602413 - Crash in get_server_data, e_cal_backend_mapi_send_objects (Milan Crha)
+	Bug #607438 - 'Mark as complete' in task doesn't stick in view (Milan Crha)
+	Bug #611557 - Update calendar/addressbook sources on start (Milan Crha)
+	Bug #612395 - Folder unread count disappears (Milan Crha)
+	Bug #620810 - Crash when opening a meeting invite (Milan Crha)
+	Bug #621072 - Deleted meeting's request mail isn't shown properly (Milan Crha)
+	Bug #621232 - GAL ESource steals previous addressbook (Milan Crha)
+	Bug #621526 - Cann't create meeting in default calendar (Milan Crha)
+	Bug #622567 - Do not search meeting invites in user's calendar (Milan Crha)
+	Bug #622687 - Unnecessary warning in exchange_mapi_util_read_generic_stream (Milan Crha)
+
+Misc:
+	Fix GAL contacts to not display LDAP_DN as name (Bharath Acharya)
+	Added Indonesian translation (Ekasari Nugraheni)
+	Latest openchange svn has mem_ctx param on cast_SPropValue (Milan Crha)
+	Let work "Check for new messages in all folders" as expected (Milan Crha)
+
+Translations:
+	Andika Triwidada (id)
+	Fran Diéguez (gl)
+	Jorge González (es)
+	Kjartan Maraas (nb)
+	Yaron Shahrabani (he)
+
+evolution-mapi 0.31.3 2010-06-07
+--------------------------------
+
+Features:
+	Free/Busy search implementation in MAPI (Bharath Acharya)
+	Setup SSL connection (Bug #579185) (Milan Crha)
+	Support multipart/appledouble attachments (Bug #619741) (Milan Crha)
+
+Bug Fixes:
+	Bug #478840 - Folder size dialog improvements (Milan Crha)
+	Bug #607384 - Replying causes the message to appear as garbage (Milan Crha)
+	Bug #607524 - 'Save as vcard' doesn't work (Bharath Acharya)
+	Bug #618661 - Crashes e-addressbook-factory (Milan Crha)
+	Bug #620095 - Deadlock while filling folder list in Contacts (Oded Arbel)
+	Bug #620257 - Doesn't show all public folders (Milan Crha)
+	Bug #620367 - Cannot subscribe to Public folders (Milan Crha)
+
+Misc:
+	Fixes in exchange_mapi_connection_get_public_folder (Bharath Acharya)
+	Fix rounding issue with convert from double to int (Milan Crha)
+
+Translations:
+	Fran Diéguez (gl)
+	Ivar Smolin (et)
+	Jorge González (es)
+	Kjartan Maraas (nb)
+	Matej Urbančič (sl)
+	Yaron Shahrabani (he)
+
+evolution-mapi 0.31.2 2010-05-24
+--------------------------------
+Bug Fixes:
+	Bug #337479 - Evolution forgets password on any error (Milan Crha)
+	Bug #569631 - Evolution hangs during the initial fetch of calendar items (Milan Crha)
+	Bug #599311 - Doesn't show email attachments (Milan Crha)
+	Bug #600386 - Do not use charset on messages with UNICODE body fetched (Milan Crha)
+	Bug #603006 - Move All Contacts To enabled for read-only address books (Milan Crha)
+	Bug #604498 - Incorrectly decoded message in UI (Milan Crha)
+	Bug #607632 - Marking a message unread doesn't reflect on a server (Johnny Jacob)
+	Bug #608408 - Folder -> Subscription doesn't show sub folders (Punit Jain)
+	Bug #611560 - 'Mark as junk' should be disabled in junk folder (Milan Crha)
+	Bug #617498 - Sometimes account configuration creates only mailer part (Milan Crha)
+	Bug #617509 - File->Empty trash doesn't expunge Deleted items (Milan Crha)
+	Bug #618504 - Meeting request mails are shown as plain text (Milan Crha)
+	Bug #618602 - Prepends an additional "Re: " to message reply (Milan Crha)
+	Bug #618872 - Awfully slow fetching of folder hierarchy (Punit Jain)
+
+Misc:
+	Adapt to Camel API changes (Matthew Barnes)
+	Fix CamelOperation string (add folder name to it) (Milan Crha)
+	Milan and Bharath ordained as maintainers (Johnny Jacob)
+
+Translations:
+	Fran Diéguez (gl)
+	Jorge González (es)
+	Mario Blättermann (de)
+	Thomas Thurman (en@shaw)
+
+evolution-mapi 0.31.1 2010-05-03
+--------------------------------
+Bug Fixes:
+	Bug #565964 - Translation issues (added translator's comments) (Milan Crha)
+	Bug #586096 - Contact list doesn't work at all (Milan Crha)
+	Bug #595914 - Doesn't display the Cyrrilic symbols in folder names (Luf)
+	Bug #592452 - Slow mail message fetching (Milan Crha)
+	Bug #598564 - Has problems encoding mails containing html (Milan Crha)
+	Bug #600389 - UTF8 characters in contacts not shown properly (Milan Crha)
+	Bug #600395 - 'Folder size' option is shown onto each MAPI folder (Johnny Jacob)
+	Bug #600655 - Calendar property doesn't show calendar hierarchy (Milan Crha)
+	Bug #608307 - Renaming a parent folder disappears sub folders (Milan Crha)
+	Bug #608766 - Replace pthread with GLib's GThread (Milan Crha)
+	Bug #608885 - Allow multiple MAPI accounts (Milan Crha)
+	Bug #610229 - Status bar progress goes beyond 100 percentage (Punit Jain)
+	Bug #610697 - GAL addressbook only shows e-mail addresses (Milan Crha)
+	Bug #613146 - Message list shows messages that were deleted externally (Milan Crha)
+	Bug #615265 - Compile with -DGSEAL_ENABLE (Andre Klapper)
+	Bug #615678 - i18n not working (Mario Carrion)
+	Bug #615716 — Miscellaneous string fixes (Philip Withnall)
+	Bug #615776 - Do not use its own copy of camel-private.h (Milan Crha)
+	Bug #615838 - Use _ADDRTYPE_UNICODE properties (Milan Crha)
+	Bug #616319 - Cache named IDs instead of fetching them repeatedly (Milan Crha)
+	Bug #616912 - Undefined symbol mapi_book_get_prop_list on GAL backend (Milan Crha)
+
+Misc:
+	camel/camel-i18n.h and other headers gone, adapt to it properly (Milan Crha)
+	Only #include Camel's top-level header (Matthew Barnes)
+	Adapt to Camel API changes (Matthew Barnes)
+	Whitespace and coding style cleanup (Matthew Barnes)
+	Use GtkSpinner instead of ESpinner (removed) (Matthew Barnes)
+	Connect to the server in mapi_account_added when not connected yet (Milan Crha)
+	Assign CamelStoreClass::free_folder_info (Milan Crha)
+	Check for RegisterNotification function with two params (Milan Crha)
+	Added asturian language (Xandru Armesto)
+	Camel is now GObject based (Matthew Barnes)
+
+Translations:
+	Bruno Brouard (fr)
+	Carles Ferrando (ca@valencia)
+	Francisco Diéguez (gl)
+	Jorge González (es)
+	Kjartan Maraas (nb)
+	Matej Urbančič (sl)
+	Philip Withnall (en_GB)
+	Umarzuki Bin Mochlis Moktar (ms)
+	Xandru Armesto (ast)
+
+evolution-mapi 0.29.92 2010-03-08
+--------------------------------
+Bug Fixes:
+	Bug #576738 - Crash on Authenticate with backslash in user name (Milan Crha)
+    	Bug #604755 - Only shows a small part of all available messages (Milan Crha)
+        Bug #610803 - Do not use session's thread queue for change notifications (Milan Crha)
+
+Translations:
+	Alexander Shopov (bg)
+	Antonio Fernandes C. Neto (pt_BR)
+	Bruce Cowan (en_GB)
+	Chao-Hsiung Liao (zh_HK)
+	Claude Paroz (fr)
+	Daniel Nylander (sv)
+	Duarte Loreto (pt)
+	Fran Diéguez (gl)
+	Gabor Kelemen (hu)
+	Inaki Larranaga Murgoitio (eu)
+	Jorge González (es)
+	Kjartan Maraas (nb)
+	Leonid Kanter (ru)
+	Mario Blättermann (de)
+	Matej Urbančič (sl)
+	Piotr Drąg (pl)
+	Theppitak Karoonboonyanan (th)
+
+evolution-mapi 0.29.91 2010-02-22
+--------------------------------
+Bug Fixes:
+       Bug #571579 - Evolution Core Dumps when creating a MAPI account (Milan Crha)
+       Bug #593176 - winmail.dat sent in outgoing plaintext mail (Milan Crha)
+       Bug #601484 - Cannot accept a meeting request (Milan Crha)
+       Bug #602895 - To field is not shown in sent item folder (Johnny Jacob)
+       Bug #602896 - CC field is shown twice in message (Johnny Jacob)
+       Bug #607422 - Crash while importing a message without From header (Milan Crha)
+       Bug #607637 - empty trash doesn't refresh folder view (Johnny Jacob)
+       Bug #607651 - Crashed with SIGSEGV in get_SPropValue (Milan Crha)
+       Bug #607744 - Crash on MAPI notification close (Milan Crha)
+       Bug #608379 - Re-Fix mail fetching with exchange 2010 (Jonathon Jongsma)
+       Bug #608648 - Do not use uninitialized memory (Milan Crha)
+       Bug #609967 - Crash in camel_mapi_notification_listener_stop (Milan Crha)
+       Bug #610224 - Crash on a meeting forward notification mail (Milan Crha)
+
+Translations
+	Chao-Hsiung Liao (zh_HK)
+	Daniel Nylander (sv)
+	David Planella (ca)
+	Fran Diéguez (gl)
+	Lucian Adrian Grijincu (ro)
+	Mario Blättermann (de)
+	Petr Kovar (cs)
+	Piotr Drąg (pl)
+	Theppitak Karoonboonyanan (th)
+	Vasudeven (ta)
+
+evolution-mapi 0.29.90 2010-02-08
+--------------------------------
+Bug Fixes:
+	Bug #586093 - Text Body larger than 4KB received broken (Milan Crha)
+	Bug #601375 - Fetches folder list more than once (Milan Crha)
+	Bug #603675 - Crash when trying to send a meeting with attachment (Milan Crha)
+	Bug #607744 - Crash on MAPI notification close (Milan Crha)
+	Bug #608320 - Also close Unicode string with \0\0 in a stream (Milan Crha)
+	Bug #608320 - Decode message body from camel stream as expected (Milan Crha)
+	Bug #608662 - multipart/related items are not getting rendered. (Johnny Jacob)
+	Bug #608771 - Crash on new mail notification and disabling mapi account (Milan Crha)
+	Bug #608792 - Push mail notification doesn't seem to work (Part 1) (Johnny Jacob)
+	Bug #608862 - Remove attachments when none specified on item modify (Milan Crha)
+	Bug #609078 - Crash in mapidump_tags at libmapi/mapidump.c (Johnny Jacob)
+
+Others:
+	Fixed for fetching mails and summary  with exchange 2010 (Jonathon Jongsma)
+
+Translations:
+	Jamil Ahmed (bn)
+	Krasimir Chonov (bg)
+	Matej Urbančič (sl)
+	Milan Skočić (sr)
+
+evolution-mapi 0.29.6 2010-01-25
+--------------------------------
+Bug Fixes:
+	Bug #568419 - Crash on "Delete folder"/"Copy to Folder" (Milan Crha)
+	Bug #569321 - Message list strings are missing some symbols. (Milan Crha)
+	Bug #606866 - Initialize 'globalid' in send_objects (Milan Crha)
+	Bug #607429 - Crash on "Move Folder to" within MAPI hierarchy (Milan Crha)
+	Bug #607527 - 100% CPU usage after push notification changes. (Johnny Jacob)
+	Bug #607790 - Crash due to GSlice memory error (Milan Crha)
+
+Misc:
+       Minimum libmapi requirement bumped to version 0.9 
+       Push Notifications integration (Johnny Jacob)
+
+Translations:
+	Kjartan Maraas (nb)
+	Jorge González (es)
+	Krasimir Chonov (bg)
+
+evolution-mapi 0.29.5 2010-01-11
+--------------------------------
+Bug Fixes:
+	Bug #590001 - can't mark book for offline usage. (Bharath Acharya)
+	Bug #606338 - Do not dereference NULL pointer in mapi_append_message. (Milan Crha)
+
+evolution-mapi 0.29.4 2009-12-21
+--------------------------------
+Bug Fixes:
+        Bug #602945 - Avoid code duplication with timezone fetching from backends (Milan Crha)
+        Bug #600560 - Calendar information only up to yesterday (Milan Crha)
+
+Other Fixes:
+        Account Setup : If we can find the username in the list of possible matches, return the index. (Johnny Jacob)
+        Implement mapi_folder_search_by_uids used with search folders (Milan Crha)
+        Remove unnecessary e-error.h include (Jonathon Jongsma)
+        Folder Size EPlugin : Removed nasty progress bar code and replaced it with e-spinner. (Johnny Jacob)
+
+Translations:
+	Kjartan Maraas (nb)
+	Lucian Adrian Grijincu (ro)
+
+evolution-mapi 0.29.3 2009-11-29
+--------------------------------
+
+Bug Fixes:
+    Bug #561794 - Store sent messages in Sent Items, not Outbox (Milan Crha)
+    Bug #568763 - Sending mail fails for cluster setup (Bharath Acharya)
+    Bug #586203 - Meeting timings are shown in UTC (Milan Crha)
+    Bug #592297 - Contacts don't get downloaded. (Bharath Acharya)
+    Bug #595480 - 100% CPU usage fix. (Milan Crha)
+    Bug #601202 - Evo deletes system addressbook (Bharath Acharya)
+
+Translations:
+	Ivar Smolin (et)
+
+evolution-mapi 0.29.2 2009-11-17
+--------------------------------
+
+Bug Fixes:
+    Bug #573736 - Expunge Folder in MAPI INBOX deletes all email messages (Johnny Jacob)
+    Bug #595480 - Stop fetching GAL every time (Bharath Acharya)
+    Bug #596208 - Doesn't remove folders that were deleted/moved on the exchange-server (Johnny Jacob)
+    Bug #600394 - Return also UID when creating a new event (Milan Crha)
+    Bug #601212 - eds crashes when try to delete mapi GAL (Milan Crha)
+
+Translations:
+    David Planella (ca)
+    Matej Urbančič (sl)
+    Thomas Thurman (en@shaw)
+    drtvasudevan (ta)
+
+evolution-mapi 0.29.1 2009-10-26
+---------------------------------
+
+Bug Fixes:
+	#596157 - Use "Message-ID" instead of "Message-Id" (Matthew Barnes) 
+	#595480 - Crash on GAL retrieval (Milan Crha) 
+	#595355 - Crash on header parsing (Milan Crha) 
+	#595260 - crash in mapi_sync_deleted (Milan Crha) 
+	#588453 - Slow retrieval of message IDs (Milan Crha)
+
+Translations:
+	Matej Urbančič (sl)
+	Jorge González (es)
+	Fotis Tsamis (el)
+
+evolution-mapi 0.27.92 2009-09-07
+---------------------------------
+Bug Fixes :
+    Bug #590000 - GAL doesn't fetch email ids properly (Bharath Acharya)
+    Bug #590002 - folder tree doesn't show up after removing cache (Johnny Jacob)
+    Bug #591655 - Contact details are not displayed (Bharath Acharya)
+    Bug #592057 - Headers missing, Date: header corrupt (Johnny Jacob)
+    Bug #593076 - Fixes for build system. (H.Habighorst)
+    Bug #593176 - winmail.dat sent in outgoing plaintext mail (Johnny Jacob)
+    Bug #593611 - Fixed build break (Bharath Acharya)
+    Bug #593637 - Get rid of Bonobo in MAPI (Bharath Acharya)
+    Bug #594345 - Cannot create a new account. (Bharath Acharya)
+
+Translations :
+   Changwoo Ryu (ko)
+   Djavan Fagundes (pt_BR)
+   Duarte Loreto (pt)
+   Gabor Kelemen (hu)
+   I. Felix (ta)
+   Inaki Larranaga Murgoitio (eu)
+   Ivar Smolin (et)
+   Jiri Eischmann (cs)
+   Jorge González (es)
+   Mario Blättermann (de)
+   Petr Kovar (Pe)
+   Runa Bhattacharjee (bn_IN)
+   Tomasz Dominikowski (pl)
+
+evolution-mapi 0.27.91 2009-08-24
+---------------------------------
+Bug Fixes :
+    Bug 585851 – Invalid calendar attachments due to truncation.(Mattias Eriksson)
+    Bug #561791 - The 'Fwd'/'Re' tags are removed for the recieved mails (Milan Crha)
+    Bug #569321 - Mail is in the wrong encoding (Milan Crha)
+    Bug #589999: EDS crashed:clicked on new contact (Bharath Acharya)
+    Typo fixes in user-visible strings (Claude Paroz)
+
+Translations :
+    Jorge González (es)
+    Antón Méixome (gl)
+    Shankar Prasad (kn)
+    Daniel Nylander (sv)
+    Rajesh Ranjan (hi)
+    Carles Ferrando (ca@valencia)
+    Djavan Fagundes (pt_BR)
+    Alexander Shopov (bg)
+    Piotr Drąg (pl)
+    Tomasz Dominikowski (pl)
+    Claude Paroz (fr)
+    Akom C (th)
+    Kjartan Maraas (nb)
+    A S Alam (pa)
+    Chao-Hsiung Liao (zh_HK)
+
+evolution-mapi 0.27.90 2009-08-10
+---------------------------------
+Bug Fixes :
+    Bug 585615 – Exchange MAPI account setup gets wrong userid in database (Johnny Jacob)
+    Bug 590242 – apply filter automatically to new message doesn't work. (Johnny Jacob)
+    Bug 585851 – Invalid calendar attachments due to truncation. (Mattias Eriksson)
+
+Translations :
+    Daniel Nylander (sv)
+    Chao-Hsiung Liao (zh_HK)
+    André Gondim (pt_BR)
+    Kjartan Maraas (nb)
+    Jorge González (es)
+
+evolution-mapi 0.27.5 2009-07-27
+--------------------------------
+
+New :
+    Basic GAL using MAPI (Bharath Acharya)
+    Show folder size (Johnny Jacob)
+
+Bug Fixes:
+    Bug 585972 - EDS crash : trying to create meeting with attachment
+
+Translations :
+    Djavan Fagundes (pt_BR)
+    Chao-Hsiung Liao (zh_HK)
+    Yaron Sharabani (he)
+    Daniel Nylander (sv)
+    Ivar Smolin (et)
+    
+evolution-mapi 0.27.4 2009-07-13
+--------------------------------
+New :
+    Support for message threading (Johnny Jacob)
+
+Bug Fixes :
+    BGO 586924 – Evolution crashed when trying to send mail (Johnny Jacob)
+    BGO 585835 - Leak fixes and invalid read fixes (Milan Crha)
+    BGO 586809 – Enable "silent rules" automake 1.11 option (Matthew Barnes)
+    BGO 585641 – evolution-mapi stores cleartext passwords in a world readable file (Johnny Jacob)
+
+Other Fixes :
+    Automake fixes/updates. (Matthew Barnes)
+
+Translations :
+     Akom C (th)
+     Maxim V. Dziumanenko (uk)
+     Daniel Nylander (sv)
+     Jorge Gonzalez (es)
+     Yaron Shahrabani (he)
+
+evolution-mapi 0.27.3 2009-06-15
+--------------------------------
+
+Bug Fixes :
+    BGO 583490 – evolution-mapi not removing listing of message not on server (Johnny Jacob)
+    BGO 580682 – Scan public folders on-demand. (Johnny Jacob)
+    BGO 584072 - Drafts folder crash. (Bharath Acharya)
+    BGO 578287 - Fix for garbled headers. (Bharath Acharya)
+    BGO 580722 – Search based on recipient doesn't seem to work (Johnny Jacob)
+    BG0 583489 - [Partial Fix] Hide/Disable GAL ui in account configuration. (Johnny Jacob)
+
+Translations :
+    Daniel Nylander (sv)
+    Jorge Gonzalez (es)
+    Marcel Telka (sk)
+
+evolution-mapi 0.27.2 2009-05-26
+--------------------------------
+
+          EDS / EVO minimum requirement versions to bumped to 2.27.2.
+
+Bug Fixes :
+	  Bug 581424 – Personal folder tree appears besides Public folder in subscription editor. (Johnny Jacob)
+
+New Translations:
+	   K.P.Gayan Tharaka (si)
+
+evolution-mapi 0.27.1 2009-05-04
+--------------------------------
+Bug Fixes :
+          Bug 563954 - Define a compare function for UIDs. (Milan Crha)
+	  Bug 553932 - Do not notify about readonly state (Milan Crha)
+
+evolution-mapi 0.26.1 2009-04-14
+--------------------------------
+Bug Fixes :
+    	  Bug 572518 – Reply-to does not work. (Johnny Jacob)
+
+Updated Translations :
+	Manoj Kumar Giri (or)	
+	  
+evolution-mapi 0.26.0.1 2009-03-19
+----------------------------------
+Bug Fixes:
+	#574784 – evolution-mapi can't fetch messages  (Milan Crha)
+
+evolution-mapi 0.26.0 2009-03-16
+---------------------------------
+Bug Fixes:
+        #574395: Do not fetch folders for different source types. (Milan Crha)
+
+New Translations:
+        Sergio Durzu (it)
+	Takeshi AIHANA (ja)
+	Runa Bhattacharjee (bn_IN)
+	Akom C (th)
+	Rajesh Ranjan (hi)
+	Krishnababu K (te)
+	Manoj Kumar Giri (or)
+	Sandeep Shedmake (mr)
+	Shankar Prasad (kn)
+	Ignacio Casal Quinteiro (gl)
+	Nickolay V. Shmyrev (ru)
+
+Updated Translations:
+	Yair Hershkovitz (he)
+	Fabrício Godoy (pt_BR)
+	Jennie Petoumenou (el)
+	Jorge Gonzalez (es)
+	Praveen Arimbrathodiyil (ml)
+	Ani Peter (ml)
+	I. Felix (ta)
+	Jiri Eischmann (cs)
+	Kostas Papadimas (el)
+	Mario Blättermann (de)
+
+evolution-mapi 0.25.92 2009-03-02
+---------------------------------
+
+Bug Fixes:
+	#564899: has compiler warnings (Milan Crha)
+	#565964: translation issues (Johnny Jacob)
+
+New Translations:
+	Adi Roiban (ro)
+	Alexander Shopov (bg)
+	Duarte Loreto (pt)
+	Philip Withnall (en_GB)
+	Wadim Dziedzic (pl)
+
+Updated Translations:
+	Changwoo Ryu (ko)
+	Chao-Hsiung Liao (zh_HK, zh_TW)
+	Claude Paroz (fr)
+	Daniel Nylander (sv)
+	David Planella (ca)
+	Gabor Kelemen (hu)
+	Ilkka Tuohela (fi)
+	Jorge Gonzalez (es)
+	Kenneth Nielsen (da)
+	Sweta Kothari (gu)
+	Wouter Bolsterlee (nl)
+
+evolution-mapi 0.25.91 2009-02-16
+---------------------------------
+Bug Fixes:
+	#569482: Fixes for configure warning. (Milan Crha)
+	#569632: Message list is not shown immediately after summary fetch. (Johnny Jacob)
+	#567861: Partial. MAPI account setup pluing as system plugin (Milan Crha)
+	#567860: Issues when moving items from other calendar (Milan Crha)
+	#571413: Use G_STRLOC and G_STRFUNC (Wang Xin)
+	#568519: Delete/Renaming default folders should not be allowed. (Johnny Jacob)
+
+Update Translations:
+       Reinout van Schouwen (nl)
+       Wouter Bolsterlee (nl)
+       甘露(Gan Lu) (zh_CN)
+       Clytie Siddall (vi)
+       Claude Paroz (fr)
+       Per Kongstad (da)
+       Yair Hershkovitz (he)
+       Jiri Eischmann (cs)
+
+evolution-mapi 0.25.90 2009-02-02
+---------------------------------------
+
+Bug Fixes:
+	#569270: Allow newer libmapi versions (Jelmer Vernooij)
+	#567890: Critical runtime warning fixes. (Milan Crha)
+	#541209: Adapt to the new APIs from upstream libical (Suman Manjunath)
+	#565556: Do not set a default value for content-type-encoding (Johnny Jacob)
+	#564897: crashes when didn't fill a domain and asked to authenticate. (Milan Crha)
+	#569246: Use GNU extensions. (Jelmer Vernooij)
+	#568521: Update summary after a rename. (Johnny Jacob)
+	#568663: Donot process all public folders. (Johnny Jacob)
+	#566735: No need to use summary for deleting the folder. (Johnny Jacob)
+
+Update Translations:
+       Andre Klapper (cs)
+       Andre Klapper (de)
+       A S Alam (pa)
+       Changwoo Ryu (ko)
+       Daniel Nylander (sv)
+       David Planella (ca)
+       甘露(Gan Lu) (zh_CN)
+       Gabor Kelemen (hu)
+       Jorge Gonzalez (es)
+
+evolution-mapi 0.25.5 2009-01-19
+---------------------------------------
+
+Bug Fixes:
+	#566883: Fetch summary does not complete in one attempt (Johnny Jacob)
+	#567190: Changing user name doesn't fix transport url of the account (Milan Crha)
+	#565964: String changes for translation issues. (Suman Manjunath)
+
+Update Translations:
+       Kjartan Maraas (nb)
+       Gabor Kelemen (hu)
+       Andre Klapper (de)
+       Daniel Nylander (sv)
+       Ilkka Tuohela (fi)
+       David Planella (ca)
+       Mario Blättermann (de)
+       Matej Urbančič (sl)
+       Jorge Gonzalez (es)
+
+evolution-mapi 0.25.4 2009-01-05
+---------------------------------------
+
+Bug Fixes:
+	#561654: Send the recurrence blob to meeting recipients (Suman Manjunath)
+	#564553: Fixes for compiler warnings (Matthew Barnes)
+	#564613: Memory corruption due to incorrect type passed to camel_content_set_type_param() (Johnny Jacob)
+	#564899: Fixes for compiler warnings and memory leaks (Milan Crha)
+	#564901: Fill the 'Domain' entry on editing (Milan Crha)
+	#450850: (bugzilla.novell.com) Fix for a crash when rendering meeting requests (Suman Manjunath)
+
+Updated Translations:
+	Leonardo Ferreira Fontenelle (pt_BR)
+	Simos Xenitellis (el)
+	Jorge Gonzalez (es)
+	Matej Urbančič (sl)
+	Daniel Nylander (sv)
+	甘露(Gan Lu) (zh_CN)
+
+evolution-mapi 0.25.3 2008-12-15
+---------------------------------------
+
+* Debut tarball
+

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="addon">
+	<id>evolution-mapi</id>
+	<extends>evolution.desktop</extends>
+	<name>Exchange MAPI</name>
+	<name xml:lang="cs">Exchange MAPI</name>
+	<name xml:lang="el">Exchange MAPI</name>
+	<name xml:lang="hu">Exchange MAPI</name>
+	<name xml:lang="id">MAPI Exchange</name>
+	<name xml:lang="kn">Exchange MAPI</name>
+	<name xml:lang="pl">Exchange MAPI</name>
+	<name xml:lang="pt_BR">Exchange MAPI</name>
+	<name xml:lang="sr">МАПИ размена</name>
+	<name xml:lang="sr@latin">MAPI razmena</name>
+	<summary>For accessing Microsoft Exchange 2007/OpenChange servers via MAPI</summary>
+	<summary xml:lang="as">MAPI ৰে Microsoft Exchange 2007/OpenChange চাৰ্ভাৰসমূহ অভিগম কৰিবলে</summary>
+	<summary xml:lang="bn_IN">MAPI প্রয়োগকারী Microsoft Exchange/OpenChange সার্ভার ব্যবহারের জন্য</summary>
+	<summary xml:lang="cs">Pro přístup k serverům Microsoft Exchange 2007/OpenChange pomocí MAPI</summary>
+	<summary xml:lang="da">Tilgå Microsoft Exchange 2007-/OpenChange-servere ved brug af MAPI</summary>
+	<summary xml:lang="de">Für den Zugriff auf Microsoft Exchange 2007-/OpenChange-Server über MAPI</summary>
+	<summary xml:lang="el">Για την πρόσβαση διακομιστών Microsoft Exchange 2007/OpenChange με χρήση MAPI</summary>
+	<summary xml:lang="en_GB">For accessing Microsoft Exchange 2007/OpenChange servers via MAPI</summary>
+	<summary xml:lang="es">Para acceder a servidores Microsoft Exchange 2007/OpenChange usando MAPI</summary>
+	<summary xml:lang="eu">Microsoft Exchange 2007/ OpenChange zerbitzariak atzitzeko MAPI erabiliz</summary>
+	<summary xml:lang="fr">Pour accéder à des serveurs Microsoft Exchange 2007/OpenChange en utilisant MAPI</summary>
+	<summary xml:lang="gu">MAPI મારફતે Microsoft Exchange 2007/OpenChange સર્વરોને વાપરવા માટે</summary>
+	<summary xml:lang="hi">Microsoft एक्चेंज 2007/ OpenChange की पहुंच के लिए MAPI के प्रयोग से</summary>
+	<summary xml:lang="hu">Microsoft Exchange 2007/OpenChange kiszolgálók elérése MAPI használatával</summary>
+	<summary xml:lang="id">Untuk mengakses server Microsoft Exchange 2007/OpenChange dengan MAPI</summary>
+	<summary xml:lang="kn">MAPI ಅನ್ನು ಬಳಸಿಕೊಂಡು  Microsoft Exchange 2007/ OpenChange ಪೂರೈಕೆಗಣಕಗಳನ್ನು ನಿಲುಕಿಸಿಕೊಳ್ಳಲು</summary>
+	<summary xml:lang="lt">Prieigai prie Microsoft Exchange 2007/OpenChange serverių naudojant MAPI</summary>
+	<summary xml:lang="lv">Microsoft Exchange 2007/OpenChange serveru piekļuvei, izmantojot MAPI</summary>
+	<summary xml:lang="ml">MAPI ഉപയോഗിച്ചു മൈക്രോസോഫ്റ്റ് എക്സ്‌ചേഞ്ച് 2007/ ഓപ്പണ്‍ചേഞ്ച് സെര്‍വറുകളുമായി ബന്ധപ്പെടാന്‍ വേണ്ടി</summary>
+	<summary xml:lang="mr">MAPI तर्फे माइक्रोसॉफ्ट एक्सचेंज 2007/ओपनचेंज सर्व्हर्सकरीता प्रवेश करण्याकरीता</summary>
+	<summary xml:lang="nb">Tilgang til Microsoft Exchange 2007/OpenChange tjenere via MAPI</summary>
+	<summary xml:lang="or">MAPI ବ୍ୟବହାର କରି Microsoft Exchange 2007/OpenChange ସର୍ଭରରେ ଅଭିଗମ୍ୟ କରିବା ପାଇଁ</summary>
+	<summary xml:lang="pl">Dostęp do serwerów Microsoft Exchange 2007/OpenChange przez protokół MAPI</summary>
+	<summary xml:lang="pt_BR">Para acessar servidores Microsoft Exchange 2007/OpenChange usando MAPI</summary>
+	<summary xml:lang="ru">Для доступа к серверам Microsoft Exchange 2007/OpenChange c использованием MAPI</summary>
+	<summary xml:lang="sk">Na prístup k serverom Microsoft Exchange 2007/OpenChange pomocou MAPI</summary>
+	<summary xml:lang="sl">Za dostop do Microsoft Exchange / OpenChange strežnikov z uporabo protokola MAPI</summary>
+	<summary xml:lang="sr">Да приступите серверима Мајкрософтове размене 2007/ Слободне измене кроз МАПИ</summary>
+	<summary xml:lang="sr@latin">Da pristupite serverima Majkrosoftove razmene 2007/ Slobodne izmene kroz MAPI</summary>
+	<summary xml:lang="sv">För åtkomst till Microsoft Exchange 2007/OpenChange-servrar med MAPI</summary>
+	<summary xml:lang="ta">Microsoft Exchange 2007/OpenChange சேவையகங்களை MAPI மூலமாக அணுக</summary>
+	<summary xml:lang="te">Microsoft Exchange 2007/OpenChange సేవికలను MAPI ద్వారా యాక్సెస్ చేయుటకు</summary>
+	<url type="homepage">https://live.gnome.org/Apps/Evolution</url>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>LGPL</project_license>
+	<updatecontact>evolution-hackers_at_gnome.org</updatecontact>
+</component>

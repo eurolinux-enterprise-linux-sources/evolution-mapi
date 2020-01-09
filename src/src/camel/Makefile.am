@@ -10,6 +10,7 @@ AM_CPPFLAGS = -I.. 				\
 	$(CAMEL_CFLAGS)				\
 	$(LIBECAL_CFLAGS)			\
         $(LIBMAPI_CFLAGS)                       \
+	-DEXCHANGE_MAPI_LOCALEDIR=\"$(localedir)\" \
 	-DG_LOG_DOMAIN=\"camel-mapi-provider\"
 
 libcamelmapi_la_SOURCES = 			\
@@ -19,6 +20,7 @@ libcamelmapi_la_SOURCES = 			\
 	camel-mapi-store-summary.c         	\
 	camel-mapi-summary.c	         	\
 	camel-mapi-utils.c			\
+	camel-mapi-notifications.c		\
 	camel-mapi-transport.c			
 
 noinst_HEADERS =         			\
@@ -28,8 +30,8 @@ noinst_HEADERS =         			\
 	camel-mapi-summary.h	         	\
 	camel-mapi-transport.h			\
 	camel-mapi-utils.h			\
-	camel-mapi-private.h			\
-	camel-private.h				
+	camel-mapi-notifications.h		\
+	camel-mapi-private.h
 
 libcamelmapi_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
 libcamelmapi_la_LIBADD = 			\

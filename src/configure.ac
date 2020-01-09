@@ -3,7 +3,7 @@ dnl Written by Julien Kerihuel <j.kerihuel@openchange.org>
 dnl Modified for GNOME Evolution MAPI Provider by Johnny Jacob <jjohnny@novell.com>
 
 AC_PREREQ(2.58)
-AC_INIT([evolution-mapi], [0.28.3], [http://bugzilla.gnome.org/browse.cgi?product=evolution-mapi])
+AC_INIT([evolution-mapi], [0.32.2], [http://bugzilla.gnome.org/browse.cgi?product=evolution-mapi])
 AM_INIT_AUTOMAKE([gnu 1.9])
 AC_CONFIG_SRCDIR(README)
 AC_CONFIG_HEADERS(config.h)
@@ -23,9 +23,38 @@ EDS_PACKAGE=1.2
 dnl *******************
 dnl Required Packages
 dnl *******************
-m4_define([eds_minimum_version], [2.27.2])
-m4_define([evo_minimum_version], [2.27.2])
-m4_define([libmapi_minimum_version], [0.8])
+m4_define([eds_minimum_version], [2.31.6])
+m4_define([evo_minimum_version], [2.31.1])
+m4_define([libmapi_minimum_version], [0.9])
+m4_define([glib_minimum_version], [2.16.1])
+m4_define([gconf_minimum_version], [2.0.0])
+
+dnl **********************************
+dnl Gtk-3 compatibility
+dnl Use the API version 3.0 while compiling with gtk+-3
+dnl **********************************
+AC_ARG_ENABLE([gtk3],
+	AS_HELP_STRING([--enable-gtk3],
+	[Attempt to use gtk+-3]),
+	[enable_gtk3=$enableval],[enable_gtk3=no])
+
+if test "x${enable_gtk3}" = "xyes"; then
+	LIBEDATASERVER_UI_API_VERSION=3.0
+	GTK_PACKAGE="gtk+-3.0"
+	EVO_PLUGIN_PACKAGE="evolution-plugin-3.0"
+	gtk_minimum_version="2.90.4"
+	gweather_minimum_version="2.90.0"
+else	
+	LIBEDATASERVER_UI_API_VERSION=1.2
+	GTK_PACKAGE="gtk+-2.0"
+	EVO_PLUGIN_PACKAGE="evolution-plugin"
+	gtk_minimum_version="2.20.0"
+	gweather_minimum_version="2.25.4"
+fi
+
+AM_CONDITIONAL([ENABLE_GTK3], [test "$enable_gtk3" = yes])
+GTK_MODULE="$GTK_PACKAGE >= $gtk_minimum_version"
+AC_SUBST(GTK_MODULE)
 
 dnl ***********************************
 dnl Automake 1.11 - Silent Build Rules
@@ -54,6 +83,9 @@ AS_COMPILER_FLAGS(WARNING_FLAGS,
 	-DGDK_PIXBUF_DISABLE_DEPRECATED
 	-DGTK_DISABLE_DEPRECATED
 	-DGNOME_DISABLE_DEPRECATED
+	-DE_BOOK_DISABLE_DEPRECATED
+	-DE_CAL_DISABLE_DEPRECATED
+	-DGSEAL_ENABLE
 	-Wall -Wextra
 	-Wno-missing-field-initializers
 	-Wno-sign-compare
@@ -63,7 +95,7 @@ AS_COMPILER_FLAGS(WARNING_FLAGS,
 	-Wformat-nonliteral -Wformat-security -Winit-self
 	-Wmissing-declarations -Wmissing-include-dirs
 	-Wmissing-noreturn -Wnested-externs -Wpointer-arith
-	-Wredundant-decls -Wundef -Wwrite-strings")
+	-Wundef -Wwrite-strings")
 AC_SUBST(WARNING_FLAGS)
 
 dnl Other useful compiler warnings for test builds only.
@@ -71,6 +103,7 @@ dnl These may produce warnings we have no control over.
 dnl
 dnl	-Wmissing-format-attribute
 dnl	-Wshadow
+dnl	-Wredundant-decls
 
 CFLAGS="$CFLAGS $WARNING_FLAGS"
 
@@ -95,6 +128,14 @@ AC_PROG_LIBTOOL
 
 PKG_PROG_PKG_CONFIG
 
+dnl *****************************
+dnl Check for GNOME Platform
+dnl *****************************
+PKG_CHECK_MODULES(GNOME_PLATFORM,
+	[glib-2.0 >= glib_minimum_version
+	$GTK_MODULE
+	gconf-2.0 >= gconf_minimum_version])
+
 dnl ********************************
 dnl Check for evolution-data-server 
 dnl ********************************
@@ -110,7 +151,7 @@ PKG_CHECK_MODULES(CAMEL, camel-provider-$EDS_PACKAGE >= eds_minimum_version)
 dnl ****************************
 dnl Check for evolution plugins 
 dnl ****************************
-PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin >= evo_minimum_version)
+PKG_CHECK_MODULES(EVOLUTION_PLUGIN, $EVO_PLUGIN_PACKAGE >= evo_minimum_version)
 
 dnl ****************************
 dnl Check for LibMAPI
@@ -122,6 +163,94 @@ PKG_CHECK_MODULES(LIBMAPI,
 	[AC_MSG_ERROR([libmapi wasn't found! Please install at least libmapi-libmapi_minimum_version!])])
 AC_SUBST(LIBMAPI_CFLAGS)
 AC_SUBST(LIBMAPI_LIBS)
+
+dnl ****************************
+dnl Check for windows_to_utf8 function
+dnl ****************************
+AC_MSG_CHECKING([libmapi windows_to_utf8 function])
+save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
+save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[windows_to_utf8 (NULL, NULL)]])],
+	[AC_DEFINE(HAVE_WINDOWS_TO_UTF8, 1, [libmapi provides windows_to_utf8 function]) ac_cv_have_wtu=yes],[ac_cv_have_wtu=no])
+CFLAGS=$save_cflags
+LIBS=$save_libs
+AC_MSG_RESULT([$ac_cv_have_wtu])
+
+dnl ****************************
+dnl Check for RegisterNotification function with two params
+dnl ****************************
+AC_MSG_CHECKING([libmapi RegisterNotification function with two params])
+save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
+save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[RegisterNotification (NULL, 0)]])],
+	[AC_DEFINE(HAVE_CORRECT_REGISTERNOTIFICATION, 1, [libmapi provides correct RegisterNotification function]) ac_cv_have_crn=yes],[ac_cv_have_crn=no])
+CFLAGS=$save_cflags
+LIBS=$save_libs
+AC_MSG_RESULT([$ac_cv_have_crn])
+
+dnl ****************************
+dnl Check for GetGALTableCount function
+dnl ****************************
+AC_MSG_CHECKING([libmapi GetGALTableCount function])
+save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
+save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[GetGALTableCount (NULL, NULL)]])],
+	[AC_DEFINE(HAVE_GETGALTABLECOUNT, 1, [libmapi provides GetGALTableCount function]) ac_cv_have_ggtc=yes],[ac_cv_have_ggtc=no])
+CFLAGS=$save_cflags
+LIBS=$save_libs
+AC_MSG_RESULT([$ac_cv_have_ggtc])
+
+dnl ****************************
+dnl Check for cast_SPropValue function with three params
+dnl ****************************
+AC_MSG_CHECKING([libmapi cast_SPropValue function with three params])
+save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
+save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[cast_SPropValue (NULL, NULL, NULL)]])],
+	[AC_DEFINE(HAVE_MEMCTX_ON_CAST_SPROPVALUE, 1, [libmapi provides cast_SPropValue with mem context parameter]) ac_cv_have_mocs=yes],[ac_cv_have_mocs=no])
+CFLAGS=$save_cflags
+LIBS=$save_libs
+AC_MSG_RESULT([$ac_cv_have_mocs])
+
+dnl ****************************
+dnl Check for cast_mapi_SPropValue function with three params
+dnl ****************************
+AC_MSG_CHECKING([libmapi cast_mapi_SPropValue function with three params])
+save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
+save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[cast_mapi_SPropValue (NULL, NULL, NULL)]])],
+	[AC_DEFINE(HAVE_MEMCTX_ON_CAST_MAPI_SPROPVALUE, 1, [libmapi provides cast_mapi_SPropValue with mem context parameter]) ac_cv_have_mocms=yes],[ac_cv_have_mocms=no])
+CFLAGS=$save_cflags
+LIBS=$save_libs
+AC_MSG_RESULT([$ac_cv_have_mocms])
+
+dnl ****************************
+dnl Check for PR_RECIPIENT_FLAGS
+dnl ****************************
+AC_MSG_CHECKING([libmapi provides PR_RECIPIENT_FLAGS])
+save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
+save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[printf ("%d", PR_RECIPIENT_FLAGS)]])],
+	[AC_DEFINE(HAVE_PR_RECIPIENT_FLAGS, 1, [libmapi provides PR_RECIPIENT_FLAGS]) ac_cv_have_prf=yes],[ac_cv_have_prf=no])
+CFLAGS=$save_cflags
+LIBS=$save_libs
+AC_MSG_RESULT([$ac_cv_have_prf])
+
+if test "x${ac_cv_have_prf}" = "xno"; then
+	CFLAGS="$CFLAGS -DPR_RECIPIENT_FLAGS=PR_RECIPIENTS_FLAGS"
+fi
 
 dnl ****************************
 dnl Expose version information
@@ -147,7 +276,7 @@ AC_SUBST_FILE(EVO_PLUGIN_RULE)
 dnl *******************
 dnl Special directories
 dnl *******************
-plugindir=`$PKG_CONFIG --variable=plugindir evolution-plugin`
+plugindir=`$PKG_CONFIG --variable=plugindir $EVO_PLUGIN_PACKAGE`
 AC_SUBST(plugindir)
 
 extensiondir=`$PKG_CONFIG --variable=extensiondir evolution-data-server-$EDS_PACKAGE`

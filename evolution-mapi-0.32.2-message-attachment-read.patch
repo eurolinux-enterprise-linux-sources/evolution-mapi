@@ -1,0 +1,37 @@
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c.message-attachment-read evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c.message-attachment-read	2011-02-07 04:45:47.000000000 +0100
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c	2013-09-11 12:21:52.692331812 +0200
+@@ -689,7 +689,7 @@ mapi_mime_classify_attachments (Exchange
+ 		CamelContentType *content_type;
+ 		CamelMimePart *part;
+ 		const uint32_t *ui32;
+-		gboolean is_apple;
++		gboolean is_apple, is_message;
+ 		guint32 apple_data_len = 0, apple_resource_len = 0;
+ 
+ 		stream = exchange_mapi_util_find_stream (attach->streams, PR_ATTACH_DATA_BIN);
+@@ -702,12 +702,14 @@ mapi_mime_classify_attachments (Exchange
+ 
+ 		/*Content-Type*/
+ 		ui32 = (const uint32_t *) exchange_mapi_util_find_SPropVal_array_propval (attach->lpProps, PR_ATTACH_METHOD);
+-		if (ui32 && *ui32 == ATTACH_EMBEDDED_MSG) {
++		is_message = ui32 && *ui32 == ATTACH_EMBEDDED_MSG;
++		if (is_message) {
+ 			mime_type = "message/rfc822";
+ 		} else {
+ 			mime_type = (const gchar *) exchange_mapi_util_find_SPropVal_array_propval (attach->lpProps, PR_ATTACH_MIME_TAG);
+ 			if (!mime_type)
+ 				mime_type = "application/octet-stream";
++			is_message = g_ascii_strcasecmp (mime_type, "message/rfc822") == 0;
+ 		}
+ 
+ 		if (is_apple) {
+@@ -830,7 +832,7 @@ mapi_mime_classify_attachments (Exchange
+ 			content_type = camel_mime_part_get_content_type (part);
+ 			if (content_type && camel_content_type_is (content_type, "text", "*"))
+ 				camel_mime_part_set_encoding (part, CAMEL_TRANSFER_ENCODING_QUOTEDPRINTABLE);
+-			else if (!ui32 || *ui32 != ATTACH_EMBEDDED_MSG)
++			else if (!is_message)
+ 				camel_mime_part_set_encoding (part, CAMEL_TRANSFER_ENCODING_BASE64);
+ 		}
+ 

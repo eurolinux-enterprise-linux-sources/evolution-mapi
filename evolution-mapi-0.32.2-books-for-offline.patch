@@ -1,0 +1,13 @@
+diff -up evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c.books-for-offline evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c
+--- evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c.books-for-offline	2013-06-07 14:28:49.438654951 +0200
++++ evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c	2013-06-07 14:28:49.456654951 +0200
+@@ -636,8 +636,7 @@ add_addressbook_sources (EAccount *accou
+ 		e_source_set_property (source, "public", "no");
+ 
+ 		if (is_new_source) {
+-			e_source_set_property (source, "offline_sync",
+-					       camel_url_get_param (url, "offline_sync") ? "1" : "0");
++			e_source_set_property (source, "offline_sync", "1");
+ 			e_source_set_property (source, "completion", "true");
+ 		}
+ 

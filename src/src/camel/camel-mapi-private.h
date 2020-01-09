@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with the program; if not, see <http://www.gnu.org/licenses/>  
+ * License along with the program; if not, see <http://www.gnu.org/licenses/>
  *
  *
  * Authors:
@@ -22,7 +22,7 @@
  */
 
 #ifndef CAMEL_MAPI_PRIVATE_H
-#define CAMEL_MAPI_PRIVATE_H 1
+#define CAMEL_MAPI_PRIVATE_H
 
 /* need a way to configure and save this data, if this header is to
    be installed.  For now, dont install it */
@@ -36,10 +36,6 @@
 	(g_static_mutex_lock(&((CamelMapiFolder *)f)->priv->l))
 #define CAMEL_MAPI_FOLDER_UNLOCK(f, l) \
 	(g_static_mutex_unlock(&((CamelMapiFolder *)f)->priv->l))
-#define CAMEL_MAPI_FOLDER_REC_LOCK(f, l) \
-	(g_static_rec_mutex_lock(&((CamelMapiFolder *)f)->priv->l))
-#define CAMEL_MAPI_FOLDER_REC_UNLOCK(f, l) \
-	(g_static_rec_mutex_unlock(&((CamelMapiFolder *)f)->priv->l))
 //#else
 #define MAPI_FOLDER_LOCK(f, l)
 #define MAPI_FOLDER_UNLOCK(f, l)

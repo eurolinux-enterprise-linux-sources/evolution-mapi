@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with the program; if not, see <http://www.gnu.org/licenses/>  
+ * License along with the program; if not, see <http://www.gnu.org/licenses/>
  *
  *
  * Authors:
@@ -27,18 +27,10 @@
 
 #include <string.h>
 
+#include <glib/gi18n-lib.h>
+
 #include <libmapi/libmapi.h>
 #include <gen_ndr/exchange.h>
-
-#include <camel/camel-data-wrapper.h>
-#include <camel/camel-exception.h>
-#include <camel/camel-mime-filter-crlf.h>
-#include <camel/camel-mime-message.h>
-#include <camel/camel-multipart.h>
-#include <camel/camel-session.h>
-#include <camel/camel-stream-filter.h>
-#include <camel/camel-stream-mem.h>
-
 
 #include "camel-mapi-transport.h"
 
@@ -47,28 +39,14 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include <camel/camel-sasl.h>
-#include <camel/camel-utf8.h>
-#include <camel/camel-tcp-stream-raw.h>
-
-#ifdef HAVE_SSL
-#include <camel/camel-tcp-stream-ssl.h>
-#endif
-
-
-#include <camel/camel-private.h>
-#include <camel/camel-i18n.h>
-#include <camel/camel-net-utils.h>
 #include "camel-mapi-store.h"
 #include "camel-mapi-folder.h"
 #include "camel-mapi-store-summary.h"
 #include "camel-mapi-utils.h"
-#include <camel/camel-session.h>
-#include <camel/camel-store-summary.h>
 #define d(x) x
 
-#include <camel/camel-seekable-stream.h>
 #include <exchange-mapi-defs.h>
+#include "exchange-mapi-mail-utils.h"
 
 #define STREAM_SIZE 4000
 
@@ -76,98 +54,116 @@ CamelStore *get_store(void);
 
 void	set_store(CamelStore *);
 
+G_DEFINE_TYPE (CamelMapiTransport, camel_mapi_transport, CAMEL_TYPE_TRANSPORT)
 
 /*CreateItem would return the MID of the new message or '0' if we fail.*/
 static mapi_id_t
-mapi_message_item_send (MapiItem *item)
+mapi_message_item_send (ExchangeMapiConnection *conn, MailItem *item, GError **perror)
 {
 	guint64 fid = 0;
 	mapi_id_t mid = 0;
 
-	mid = exchange_mapi_create_item (olFolderSentMail, fid, NULL, NULL, 
-					 camel_mapi_utils_create_item_build_props,
-					 item, item->recipients,
-					 item->attachments, item->generic_streams, MAPI_OPTIONS_DELETE_ON_SUBMIT_FAILURE);
+	#define unset(x) g_free (x); x = NULL
+
+	item->header.flags = MSGFLAG_UNSENT;
+	unset (item->header.from);
+	unset (item->header.from_email);
+	unset (item->header.transport_headers);
+	item->header.recieved_time = 0;
+
+	#undef unset
+
+	mid = exchange_mapi_connection_create_item (conn, olFolderSentMail, fid,
+					 camel_mapi_utils_create_item_build_props, item,
+					 item->recipients, item->attachments, item->generic_streams, MAPI_OPTIONS_DELETE_ON_SUBMIT_FAILURE, perror);
 
 	return mid;
 }
 
 static gboolean
 mapi_send_to (CamelTransport *transport, CamelMimeMessage *message,
-	      CamelAddress *from, CamelAddress *recipients, CamelException *ex)
+	      CamelAddress *from, CamelAddress *recipients, GError **error)
 {
-	MapiItem *item = NULL;
-	const char *namep;
-	const char *addressp;
+	ExchangeMapiConnection *conn;
+	MailItem *item = NULL;
+	const gchar *namep;
+	const gchar *addressp;
 	mapi_id_t st = 0;
+	CamelURL *url;
+	GError *mapi_error = NULL;
 
-	if (!camel_internet_address_get((const CamelInternetAddress *)from, 0, &namep, &addressp)) {
+	if (!camel_internet_address_get((CamelInternetAddress *)from, 0, &namep, &addressp)) {
 		return (FALSE);
 	}
 
-	/* Convert MIME to MAPIItem, attacment lists and recipient list.*/
-	item = camel_mapi_utils_mime_to_item (message, from, recipients, ex);
+	g_return_val_if_fail (CAMEL_IS_SERVICE (transport), FALSE);
 
-	/* send */
-	st = mapi_message_item_send(item);
+	url = CAMEL_SERVICE (transport)->url;
+	g_return_val_if_fail (url != NULL, FALSE);
 
-	if (st == 0) {
-		/*Fixme : Set a better error message. Would be helful in troubleshooting. */
-		camel_exception_setv (ex, CAMEL_EXCEPTION_SERVICE_UNAVAILABLE,_("Could not send message."));
+	conn = exchange_mapi_connection_find (camel_url_get_param (url, "profile"));
+	if (!conn) {
+		g_set_error (
+			error, CAMEL_SERVICE_ERROR,
+			CAMEL_SERVICE_ERROR_UNAVAILABLE,
+			_("Could not send message."));
 		return FALSE;
 	}
-	
+
+	/* Convert MIME to MailItem, attacment lists and recipient list.*/
+	item = camel_mapi_utils_mime_to_item (message, 0, from, NULL);
+
+	/* send */
+	st = mapi_message_item_send (conn, item, error);
+
+	g_object_unref (conn);
+
+	if (st == 0) {
+		if (mapi_error) {
+			g_set_error (
+				error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+				_("Could not send message: %s"), mapi_error->message);
+			g_error_free (mapi_error);
+		} else {
+			g_set_error (
+				error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+				_("Could not send message."));
+		}
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
-
-static char*
+static gchar *
 mapi_transport_get_name(CamelService *service, gboolean brief)
 {
 	if (brief) {
+		/* Translators: The %s is replaced with a server's host name */
 		return g_strdup_printf (_("Exchange MAPI server %s"), service->url->host);
 	} else {
+		/* Translators: The first %s is replaced with a user name, the second with a server's host name */
 		return g_strdup_printf (_("Exchange MAPI service for %s on %s"),
 					service->url->user, service->url->host);
 	}
 }
 
-
 static void
-camel_mapi_transport_class_init(CamelMapiTransportClass *camel_mapi_transport_class)
+camel_mapi_transport_class_init (CamelMapiTransportClass *class)
 {
-	CamelTransportClass *camel_transport_class =
-		CAMEL_TRANSPORT_CLASS (camel_mapi_transport_class);
-	CamelServiceClass *camel_service_class =
-		CAMEL_SERVICE_CLASS (camel_mapi_transport_class);
-  
-	camel_service_class->get_name = mapi_transport_get_name;
-	camel_transport_class->send_to = mapi_send_to;
+	CamelServiceClass *service_class;
+	CamelTransportClass *transport_class;
+
+	service_class = CAMEL_SERVICE_CLASS (class);
+	service_class->get_name = mapi_transport_get_name;
+
+	transport_class = CAMEL_TRANSPORT_CLASS (class);
+	transport_class->send_to = mapi_send_to;
 }
 
 static void
-camel_mapi_transport_init (CamelTransport *transport)
+camel_mapi_transport_init (CamelMapiTransport *transport)
 {
 
-}
-
-CamelType
-camel_mapi_transport_get_type (void)
-{
-	static CamelType camel_mapi_transport_type = CAMEL_INVALID_TYPE;
-  
-	if (camel_mapi_transport_type == CAMEL_INVALID_TYPE) {
-		camel_mapi_transport_type =
-			camel_type_register (CAMEL_TRANSPORT_TYPE,
-					     "CamelMapiTransport",
-					     sizeof (CamelMapiTransport),
-					     sizeof (CamelMapiTransportClass),
-					     (CamelObjectClassInitFunc) camel_mapi_transport_class_init,
-					     NULL,
-					     (CamelObjectInitFunc) camel_mapi_transport_init,
-					     NULL);
-	}
-
-	return camel_mapi_transport_type;
 }
 

@@ -1,0 +1,159 @@
+diff -up evolution-mapi-0.32.2/src/camel/camel-mapi-store.c.slash-in-folder-name evolution-mapi-0.32.2/src/camel/camel-mapi-store.c
+--- evolution-mapi-0.32.2/src/camel/camel-mapi-store.c.slash-in-folder-name	2013-06-07 14:27:45.272654965 +0200
++++ evolution-mapi-0.32.2/src/camel/camel-mapi-store.c	2013-06-07 14:27:45.295654965 +0200
+@@ -1104,6 +1104,86 @@ mapi_concat ( const gchar *prefix, const
+ 		return g_strdup_printf ("%s%c%s", prefix, '/', suffix);
+ }
+ 
++/* escapes backslashes with \5C and forward slashes with \2F */
++static gchar *
++escape_slash (const gchar *str)
++{
++	gint ii, jj, count = 0;
++	gchar *res;
++
++	if (!str)
++		return NULL;
++
++	for (ii = 0; str[ii]; ii++) {
++		if (str[ii] == '\\' || str[ii] == '/')
++			count++;
++	}
++
++	if (!count)
++		return g_strdup (str);
++
++	res = g_malloc0 (sizeof (gchar *) * (1 + ii + (2 * count)));
++	for (ii = 0, jj = 0; str[ii]; ii++, jj++) {
++		if (str[ii] == '\\') {
++			res[jj] = '\\';
++			res[jj + 1] = '5';
++			res[jj + 2] = 'C';
++			jj += 2;
++		} else if (str[ii] == '/') {
++			res[jj] = '\\';
++			res[jj + 1] = '2';
++			res[jj + 2] = 'F';
++			jj += 2;
++		} else {
++			res[jj] = str[ii];
++		}
++	}
++
++	res[jj] = '\0';
++
++	return res;
++}
++
++/* reverses escape_slash processing */
++static gchar *
++unescape_slash (const gchar *str)
++{
++	gchar *res = g_strdup (str);
++	gint ii, jj;
++
++	for (ii = 0, jj = 0; res[ii]; ii++, jj++) {
++		if (res[ii] == '\\' && g_ascii_isxdigit (res[ii + 1]) && g_ascii_isxdigit (res[ii + 2])) {
++			res[jj] = ((g_ascii_xdigit_value (res[ii + 1]) & 0xF) << 4) | (g_ascii_xdigit_value (res[ii + 2]) & 0xF);
++			ii += 2;
++		} else if (ii != jj) {
++			res[jj] = res[ii];
++		}
++	}
++
++	res[jj] = '\0';
++
++	return res;
++}
++
++static void
++fix_folder_names (CamelFolderInfo *fi)
++{
++	while (fi) {
++		if (fi->name && strchr (fi->name, '\\')) {
++			gchar *unescaped;
++
++			unescaped = unescape_slash (fi->name);
++			g_free (fi->name);
++			fi->name = unescaped;
++		}
++
++		if (fi->child)
++			fix_folder_names (fi->child);
++
++		fi = fi->next;
++	}
++}
++
+ static CamelFolderInfo *
+ mapi_build_folder_info(CamelMapiStore *mapi_store, const gchar *parent_name, const gchar *folder_name)
+ {
+@@ -1244,20 +1324,23 @@ mapi_get_folder_info_offline (CamelStore
+ 	g_free (path);
+ 	fi = camel_folder_info_build (folders, top, '/', TRUE);
+ 	g_ptr_array_free (folders, TRUE);
++
++	fix_folder_names (fi);
++
+ 	return fi;
+ }
+ 
+ static CamelFolderInfo *
+ mapi_convert_to_folder_info (CamelMapiStore *store, ExchangeMAPIFolder *folder, const gchar *url, GError **error)
+ {
+-	const gchar *name = NULL;
++	gchar *name;
+ 	gchar *parent, *id = NULL;
+ 	mapi_id_t mapi_id_folder;
+ 
+ 	const gchar *par_name = NULL;
+ 	CamelFolderInfo *fi;
+ 
+-	name = exchange_mapi_folder_get_name (folder);
++	name = escape_slash (exchange_mapi_folder_get_name (folder));
+ 
+ 	id = g_strdup_printf ("%016" G_GINT64_MODIFIER "X", exchange_mapi_folder_get_fid (folder));
+ 
+@@ -1305,7 +1388,7 @@ mapi_convert_to_folder_info (CamelMapiSt
+ 	mapi_id_folder = exchange_mapi_folder_get_parent_id (folder);
+ 	parent = g_strdup_printf ("%016" G_GINT64_MODIFIER "X", mapi_id_folder);
+ 
+-	fi->name =  g_strdup (name);
++	fi->name = name;
+ 
+ 	par_name = mapi_folders_hash_table_name_lookup (store, parent, TRUE);
+ 	if (par_name != NULL) {
+@@ -1548,7 +1631,8 @@ mapi_folders_sync (CamelMapiStore *store
+ 
+ 	/*populate the hash table for finding the mapping from container id <-> folder name*/
+ 	for (;temp_list != NULL; temp_list = g_slist_next (temp_list) ) {
+-		const gchar *full_name = NULL;
++		const gchar *full_name;
++		gchar *escaped_name = NULL;
+ 		gchar *fid = NULL, *parent_id = NULL, *tmp = NULL;
+ 		guint *folder_type = g_new0 (guint, 1);
+ 
+@@ -1558,12 +1642,13 @@ mapi_folders_sync (CamelMapiStore *store
+ 		if (!full_name) {
+ 			const gchar *par_full_name;
+ 
++			escaped_name = escape_slash (exchange_mapi_folder_get_name (temp_list->data));
+ 			par_full_name = g_hash_table_lookup (priv->id_hash, parent_id);
+ 			if (par_full_name) {
+-				tmp = g_strconcat (par_full_name, "/", exchange_mapi_folder_get_name (temp_list->data), NULL);
++				tmp = g_strconcat (par_full_name, "/", escaped_name, NULL);
+ 				full_name = tmp;
+ 			} else {
+-				full_name = exchange_mapi_folder_get_name (temp_list->data);
++				full_name = escaped_name;
+ 			}
+ 		}
+ 
+@@ -1580,6 +1665,7 @@ mapi_folders_sync (CamelMapiStore *store
+ 		}
+ 		g_free (fid);
+ 		g_free (parent_id);
++		g_free (escaped_name);
+ 		g_free (tmp);
+ 	}
+ 

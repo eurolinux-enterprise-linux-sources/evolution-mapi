@@ -10,7 +10,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with the program; if not, see <http://www.gnu.org/licenses/>  
+ * License along with the program; if not, see <http://www.gnu.org/licenses/>
  *
  *
  * Authors:
@@ -21,7 +21,6 @@
  *
  */
 
-
 #ifndef EXCHANGE_MAPI_ACCOUNT_SETUP_H
 #define EXCHANGE_MAPI_ACCOUNT_SETUP_H
 
@@ -30,12 +29,10 @@
 /* This definition should be in-sync with the definition in camel-mapi-store.c */
 #define EXCHANGE_MAPI_PASSWORD_COMPONENT "ExchangeMAPI"
 
-#define DEFAULT_PROF_PATH ".evolution/mapi-profiles.ldb"
-
 #define MAPI_URI_PREFIX   "mapi://" 
 #define MAPI_PREFIX_LENGTH 7
 
 ExchangeMAPIAccountListener *
-exchange_mapi_accounts_peek_config_listener (void); 
+exchange_mapi_accounts_peek_config_listener (void);
 
 #endif /* EXCHANGE_MAPI_ACCOUNT_SETUP_H */

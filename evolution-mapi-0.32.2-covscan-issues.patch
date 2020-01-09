@@ -1,0 +1,213 @@
+diff -up evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-settings.c.covscan-issues evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-settings.c
+--- evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-settings.c.covscan-issues	2011-02-07 04:45:46.000000000 +0100
++++ evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-settings.c	2013-07-03 16:46:42.404123629 +0200
+@@ -279,7 +279,6 @@ action_folder_size_cb (GtkAction *action
+ static void
+ folder_size_actions_update_cb (EShellView *shell_view, GtkActionEntry *entries)
+ {
+-	EShellContent *shell_content;
+ 	EShellWindow *shell_window;
+ 	GtkActionGroup *action_group;
+ 	GtkUIManager *ui_manager;
+@@ -300,7 +299,6 @@ folder_size_actions_update_cb (EShellVie
+ 		return;
+ 	}
+ 
+-	shell_content = e_shell_view_get_shell_content (shell_view);
+ 	shell_window = e_shell_view_get_shell_window (shell_view);
+ 
+ 	ui_manager = e_shell_window_get_ui_manager (shell_window);
+diff -up evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c.covscan-issues evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c
+--- evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c.covscan-issues	2011-02-07 04:45:46.000000000 +0100
++++ evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c	2013-07-03 16:46:42.405123629 +0200
+@@ -2035,7 +2035,7 @@ mapi_error_to_edb_error (GError **perror
+ 	else if (!mapi_error)
+ 		err_msg = g_strdup (_("Unknown error"));
+ 
+-	g_propagate_error (perror, e_data_book_create_error (code, err_msg ? err_msg : mapi_error->message));
++	g_propagate_error (perror, e_data_book_create_error (code, err_msg ? err_msg : (mapi_error ? mapi_error->message : _("Unknown error"))));
+ 
+ 	g_free (err_msg);
+ }
+diff -up evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi-contacts.c.covscan-issues evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi-contacts.c
+--- evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi-contacts.c.covscan-issues	2011-02-07 04:45:46.000000000 +0100
++++ evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi-contacts.c	2013-07-03 16:46:42.406123629 +0200
+@@ -359,8 +359,7 @@ mapi_book_write_props (ExchangeMapiConne
+ 			if (camel_address_decode (CAMEL_ADDRESS (addr), raw) > 0) {
+ 				const gchar *nm = NULL, *eml = NULL;
+ 
+-				camel_internet_address_get (addr, 0, &nm, &eml);
+-				if (eml) {
++				if (camel_internet_address_get (addr, 0, &nm, &eml) && eml) {
+ 					/* keep both lists in sync */
+ 					if (member_values && g_hash_table_lookup (member_values, raw)) {
+ 						/* stored ListMembers values when contact's value didn't change */
+diff -up evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.covscan-issues evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c
+--- evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.covscan-issues	2013-07-03 16:46:42.396123629 +0200
++++ evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c	2013-07-03 16:46:42.408123629 +0200
+@@ -132,7 +132,7 @@ mapi_error_to_edc_error (GError **perror
+ 	else if (!mapi_error)
+ 		err_msg = g_strdup (_("Unknown error"));
+ 
+-	g_propagate_error (perror, EDC_ERROR_EX (code, err_msg ? err_msg : mapi_error->message));
++	g_propagate_error (perror, EDC_ERROR_EX (code, err_msg ? err_msg : (mapi_error ? mapi_error->message : _("Unknown error"))));
+ 
+ 	g_free (err_msg);
+ }
+diff -up evolution-mapi-0.32.2/src/camel/camel-mapi-folder.c.covscan-issues evolution-mapi-0.32.2/src/camel/camel-mapi-folder.c
+--- evolution-mapi-0.32.2/src/camel/camel-mapi-folder.c.covscan-issues	2011-02-07 04:45:46.000000000 +0100
++++ evolution-mapi-0.32.2/src/camel/camel-mapi-folder.c	2013-07-03 16:46:42.409123629 +0200
+@@ -215,10 +215,12 @@ fetch_items_summary_cb (FetchItemsCallba
+ 		fi_data->last_modification_time.tv_usec = item_modification_time.tv_usec;
+ 	}
+ 
+-	if ((*flags & MSGFLAG_READ) != 0)
+-		item->header.flags |= CAMEL_MESSAGE_SEEN;
+-	if ((*flags & MSGFLAG_HASATTACH) != 0)
+-		item->header.flags |= CAMEL_MESSAGE_ATTACHMENTS;
++	if (flags) {
++		if ((*flags & MSGFLAG_READ) != 0)
++			item->header.flags |= CAMEL_MESSAGE_SEEN;
++		if ((*flags & MSGFLAG_HASATTACH) != 0)
++			item->header.flags |= CAMEL_MESSAGE_ATTACHMENTS;
++	}
+ 
+ 	*slist = g_slist_prepend (*slist, item);
+ 
+diff -up evolution-mapi-0.32.2/src/camel/camel-mapi-notifications.c.covscan-issues evolution-mapi-0.32.2/src/camel/camel-mapi-notifications.c
+--- evolution-mapi-0.32.2/src/camel/camel-mapi-notifications.c.covscan-issues	2011-02-07 04:45:46.000000000 +0100
++++ evolution-mapi-0.32.2/src/camel/camel-mapi-notifications.c	2013-07-03 16:46:42.409123629 +0200
+@@ -168,15 +168,19 @@ mapi_notifications_filter (guint16 type,
+ 	case fnevMbit|fnevObjectDeleted:
+ 		d_notifications(printf ("Event : Message deleted\n"));
+ 		d_notifications(mapidump_messagedeleted (event, "\t"));
++		break;
+ 	case fnevMbit|fnevObjectModified:
+ 		d_notifications(printf ("Event : Message modified\n"));
+ 		d_notifications(mapidump_messagemodified (event, "\t"));
++		break;
+ 	case fnevMbit|fnevObjectMoved:
+ 		d_notifications(printf ("Event : Message moved\n"));
+ 		d_notifications(mapidump_messagemoved (event, "\t"));
++		break;
+ 	case fnevMbit|fnevObjectCopied:
+ 		d_notifications(printf ("Event : Message copied\n"));
+ 		d_notifications(mapidump_messagecopied (event, "\t"));
++		break;
+ 	default:
+ 		/* Unsupported  */
+ 		break;
+diff -up evolution-mapi-0.32.2/src/camel/camel-mapi-store.c.covscan-issues evolution-mapi-0.32.2/src/camel/camel-mapi-store.c
+--- evolution-mapi-0.32.2/src/camel/camel-mapi-store.c.covscan-issues	2013-07-03 16:46:42.390123629 +0200
++++ evolution-mapi-0.32.2/src/camel/camel-mapi-store.c	2013-07-03 16:46:42.411123629 +0200
+@@ -1122,7 +1122,7 @@ escape_slash (const gchar *str)
+ 	if (!count)
+ 		return g_strdup (str);
+ 
+-	res = g_malloc0 (sizeof (gchar *) * (1 + ii + (2 * count)));
++	res = g_malloc0 (sizeof (gchar) * (1 + ii + (2 * count)));
+ 	for (ii = 0, jj = 0; str[ii]; ii++, jj++) {
+ 		if (str[ii] == '\\') {
+ 			res[jj] = '\\';
+@@ -1711,7 +1711,6 @@ mapi_folders_sync (CamelMapiStore *store
+ 		} else if (folder->category == MAPI_FAVOURITE_FOLDER) {
+ 			gchar *fid, *pfid = NULL;
+ 			info = mapi_convert_to_folder_info (store, folder, (const gchar *)url, NULL);
+-			mapi_si = (CamelMapiStoreInfo *) camel_store_summary_path ((CamelStoreSummary *)store->summary, info->full_name);
+ 			fid = g_strdup_printf ("%016" G_GINT64_MODIFIER "X",
+ 						exchange_mapi_folder_get_fid((ExchangeMAPIFolder *)(folder_list->data)));
+ 			pfid = g_strdup_printf ("%016" G_GINT64_MODIFIER "X",
+@@ -1883,7 +1882,7 @@ mapi_subscribe_folder(CamelStore *store,
+ 		}
+ 	}
+ 
+-	if (si->flags & CAMEL_MAPI_FOLDER_MAIL) {
++	if (si && (si->flags & CAMEL_MAPI_FOLDER_MAIL) != 0) {
+ 		fi = mapi_build_folder_info (mapi_store, parent_name, use_folder_name);
+ 		if (favourites) {
+ 			CamelURL *url;
+@@ -1906,7 +1905,8 @@ mapi_subscribe_folder(CamelStore *store,
+ 		guint folder_type = mapi_folders_hash_table_type_lookup (mapi_store, folder_name);
+ 		exchange_mapi_add_esource (CAMEL_SERVICE(mapi_store)->url, use_folder_name, fid, folder_type);
+ 	}
+-	camel_store_summary_info_free((CamelStoreSummary *)mapi_store->summary, si);
++	if (si)
++		camel_store_summary_info_free((CamelStoreSummary *)mapi_store->summary, si);
+ 	return TRUE;
+ }
+ 
+@@ -1955,7 +1955,7 @@ mapi_unsubscribe_folder(CamelStore *stor
+ 		else //Don't process All Public Folder.
+ 			return TRUE;
+ 	}
+-	if (si->flags & CAMEL_MAPI_FOLDER_MAIL) {
++	if (si && (si->flags & CAMEL_MAPI_FOLDER_MAIL) != 0) {
+ 		fi = mapi_build_folder_info (mapi_store, parent_name, folder_name);
+ 		camel_store_folder_unsubscribed (store, fi);
+ 		camel_folder_info_free (fi);
+@@ -1963,7 +1963,8 @@ mapi_unsubscribe_folder(CamelStore *stor
+ 		guint folder_type = mapi_folders_hash_table_type_lookup (mapi_store, use_folder_name);
+ 		exchange_mapi_remove_esource(url, folder_name, fid, folder_type);
+ 	}
+-	camel_store_summary_info_free((CamelStoreSummary *)mapi_store->summary, si);
++	if (si)
++		camel_store_summary_info_free((CamelStoreSummary *)mapi_store->summary, si);
+ 
+ 	return TRUE;
+ }
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c.covscan-issues evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c.covscan-issues	2013-07-03 16:46:42.399123629 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c	2013-07-03 16:46:42.412123629 +0200
+@@ -1039,7 +1039,6 @@ fetch_camel_cal_comp_cb (FetchItemsCallb
+ {
+ 	struct fetch_camel_cal_data *fccd = data;
+ 	ECalComponent *comp = NULL;
+-	mapi_id_t mid = 0;
+ 	icalcomponent *icalcomp = NULL;
+ 	gchar *str = NULL, *smid = NULL, *fileuri;
+ 
+@@ -1050,9 +1049,7 @@ fetch_camel_cal_comp_cb (FetchItemsCallb
+ 
+ 	if (!comp) {
+ 		/* read component from a mail, if not found in the calendar */
+-		if (mid)
+-			smid = exchange_mapi_util_mapi_id_to_string (mid);
+-		else if (item_data->mid)
++		if (item_data->mid)
+ 			smid = exchange_mapi_util_mapi_id_to_string (item_data->mid);
+ 		else
+ 			smid = e_cal_component_gen_uid();
+@@ -2074,8 +2071,8 @@ exchange_mapi_cal_utils_get_free_busy_da
+ 		e_cal_component_commit_sequence (comp);
+ 		icalcomp = e_cal_component_get_icalcomponent (comp);
+ 
+-		start_time = icaltime_from_timet_with_zone (start, 0, default_zone ? default_zone : NULL);
+-		end_time = icaltime_from_timet_with_zone (end, 0, default_zone ? default_zone : NULL);
++		start_time = icaltime_from_timet_with_zone (start, 0, default_zone);
++		end_time = icaltime_from_timet_with_zone (end, 0, default_zone);
+ 		icalcomponent_set_dtstart (icalcomp, start_time);
+ 		icalcomponent_set_dtend (icalcomp, end_time);
+ 
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.covscan-issues evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.covscan-issues	2013-07-03 16:46:42.401123629 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c	2013-07-03 16:46:42.415123629 +0200
+@@ -917,7 +917,7 @@ obj_message_to_camel_mime (ExchangeMapiC
+ 	mail_item_free (item);
+ 
+ 	if (msg) {
+-		CamelStream *mem = camel_stream_mem_new ();
++		CamelStream *mem;
+ 
+ 		res = g_byte_array_new ();
+ 
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c.covscan-issues evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c.covscan-issues	2013-07-03 16:46:42.383123629 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c	2013-07-03 16:47:13.248123622 +0200
+@@ -478,6 +478,7 @@ exchange_mapi_debug_property_dump (struc
+ 				break;
+ 			case PT_APPTIME:
+ 				g_print (" PT_APPTIME");
++				break;
+ 			case PT_I8:
+ 				g_print (" (gint) - 0x%016" G_GINT64_MODIFIER "X", lpProp->value.d);
+ 				break;

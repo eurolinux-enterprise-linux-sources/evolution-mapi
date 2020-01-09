@@ -1,0 +1,53 @@
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.exchange2010 evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.exchange2010	2013-06-07 14:44:58.748654703 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c	2013-06-07 14:44:58.761654703 +0200
+@@ -799,6 +799,9 @@ exchange_mapi_util_delete_attachments (m
+ 		goto cleanup;
+ 	}
+ 
++	if (!attach_count)
++		goto cleanup;
++
+ 	ms = QueryRows (&obj_tb_attach, attach_count, TBL_ADVANCE, &rows_attach);
+ 	if (ms != MAPI_E_SUCCESS) {
+ 		make_mapi_error (perror, "QueryRows", ms);
+@@ -1005,6 +1008,9 @@ exchange_mapi_util_get_attachments (Exch
+ 		goto cleanup;
+ 	}
+ 
++	if (!attach_count)
++		goto cleanup;
++
+ 	ms = QueryRows (&obj_tb_attach, attach_count, TBL_ADVANCE, &rows_attach);
+ 	if (ms != MAPI_E_SUCCESS) {
+ 		make_mapi_error (perror, "QueryRows", ms);
+@@ -1501,6 +1507,9 @@ exchange_mapi_connection_check_restricti
+ 		goto cleanup;
+ 	}
+ 
++	if (!count)
++		goto cleanup;
++
+ 	/* Fill the table columns with data from the rows */
+ 	ms = QueryRows (&obj_table, count, TBL_ADVANCE, &SRowSet);
+ 	if (ms != MAPI_E_SUCCESS) {
+@@ -1614,6 +1623,9 @@ exchange_mapi_connection_fetch_items   (
+ 			goto cleanup;
+ 		}
+ 
++		if (!count)
++			break;
++
+ 		/* Fill the table columns with data from the rows */
+ 		ms = QueryRows (&obj_table, count, TBL_ADVANCE, &SRowSet);
+ 		if (ms != MAPI_E_SUCCESS) {
+@@ -3002,6 +3014,9 @@ get_child_folders (TALLOC_CTX *mem_ctx, 
+ 			goto cleanup;
+ 		}
+ 
++		if (!count)
++			break;
++
+ 		/* Fill the table columns with data from the rows */
+ 		ms = QueryRows (&obj_table, 100, TBL_ADVANCE, &rowset);
+ 		if (ms != MAPI_E_SUCCESS) {

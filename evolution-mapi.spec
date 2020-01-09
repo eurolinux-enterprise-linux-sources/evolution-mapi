@@ -1,25 +1,24 @@
-%define evo_version 2.28.0
-%define eds_version 2.28.0
-%define libmapi_version 1.0
+%define evo_version 2.32.0
+%define eds_version 2.32.0
+%define libmapi_version 1.0-4
 %define intltool_version 0.35.5
 
-%define evo_major 2.28
-%define eds_major 1.2
+%define evo_base_version 2.32
+%define eds_api_version 1.2
 
 %define strict_build_settings 0
 
 ### Abstract ###
 
 Name: evolution-mapi
-Version: 0.28.3
+Version: 0.32.2
 Release: 12%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
 URL: http://www.gnome.org/projects/evolution-mapi/
-Source: http://ftp.gnome.org/pub/gnome/sources/evolution-mapi/0.28/evolution-mapi-%{version}.tar.bz2
+Source: http://ftp.gnome.org/pub/gnome/sources/evolution-mapi/0.32/evolution-mapi-%{version}.tar.bz2
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-ExcludeArch: s390 s390x
 
 ### Dependencies ###
 
@@ -28,68 +27,49 @@ Requires: evolution-data-server >= %{eds_version}
 
 ### Patches ###
 
-# RH bug #589193
-Patch1: evolution-mapi-0.28.3-el6-translation-updates.patch
-
-# RH bug #602749 / GNOME bug #618602
-Patch2: evolution-mapi-0.28.3-extra-re-in-replies.patch
-
-# RH bug #605369 / Exchange 2010 login support
-Patch3: evolution-mapi-0.28.3-exchange2010.patch
-
-# RH bug #605369 / GNOME bug #593176
-Patch4: evolution-mapi-0.28.3-gn593176.patch
-
-# RH bug #605369 / GNOME bug #607422
-Patch5: evolution-mapi-0.28.3-gn607422.patch
-
-# RH bug #605369 / GNOME bug #610224
-Patch6: evolution-mapi-0.28.3-gn610224.patch
-
-# RH bug #605369 / GNOME bug #602896
-Patch7: evolution-mapi-0.28.3-gn602896.patch
-
-# RH bug #605369 / GNOME bug #581434
-Patch8: evolution-mapi-0.28.3-gn581434.patch
-
-# RH bug #605369 / GNOME bug #598564
-Patch9: evolution-mapi-0.28.3-gn598564.patch
-
-# RH bug #605369 / GNOME bug #595914
-Patch10: evolution-mapi-0.28.3-gn595914.patch
-
-# RH bug #605369 / GNOME bug #600389
-Patch11: evolution-mapi-0.28.3-gn600389.patch
-
-# RH bug #605369 / GNOME bug #600386
-Patch12: evolution-mapi-0.28.3-gn600386.patch
-
-# RH bug #605369 / GNOME bug #607384
-Patch13: evolution-mapi-0.28.3-gn607384.patch
+Patch01: evolution-mapi-0.32.2-gethierarchytable-fix.patch
 
 # RH bug #605369 / less debug output on console
-Patch14: evolution-mapi-0.28.3-less-debug-output.patch
-
-# RH bug #605369 / GNOME bug #569631
-Patch15: evolution-mapi-0.28.3-gn569631.patch
-
-# RH bug #589193
-Patch16: evolution-mapi-0.28.3-el6-translation-updates-2.patch
-
-# RH bug #666492
-Patch17: evolution-mapi-0.28.3-bookview-crash.patch
+Patch02: evolution-mapi-0.28.3-less-debug-output.patch
 
 # RH bug #680061
-Patch18: evolution-mapi-0.28.3-crash-setting-props.patch
+Patch03: evolution-mapi-0.28.3-crash-setting-props.patch
 
 # RH bug #767678
-Patch19: evolution-mapi-0.28.3-openchange-1.0.patch
+Patch04: evolution-mapi-0.28.3-openchange-1.0.patch
 
-# RH bug #902932
-Patch20: evolution-mapi-0.28.3-samba4-corrections.patch
+# RH bug #694134
+Patch05: evolution-mapi-0.32.2-books-for-offline.patch
 
-# RH bug #903241
-Patch21: evolution-mapi-0.28.3-copymove-doublefree.patch
+# RH bug #625059
+Patch06: evolution-mapi-0.32.2-slash-in-folder-name.patch
+
+# RH bug #905591
+Patch07: evolution-mapi-0.32.2-exchange2010.patch
+
+# RH bug #909259
+Patch08: evolution-mapi-0.32.2-meeting-invites.patch
+
+# Address some of the Coverity scan issues
+Patch09: evolution-mapi-0.32.2-covscan-issues.patch
+
+# Translation updates
+Patch10: evolution-mapi-0.32.2-translation-updates.patch
+
+# RH bug #1005072
+Patch11: evolution-mapi-0.32.2-profile-create-after-restore.patch
+
+# RH bug #619842
+Patch12: evolution-mapi-0.32.2-message-attachment-read.patch
+
+# RH bug #621941
+Patch13: evolution-mapi-0.32.2-show-events-owa.patch
+
+# RH bug #906341
+Patch14: evolution-mapi-0.32.2-create-book-cal-source.patch
+
+# RH bug #1017108
+Patch15: evolution-mapi-0.32.2-shorten-delay-of-open.patch
 
 ### Build Dependencies ###
 
@@ -121,27 +101,21 @@ Development files needed for building things which link against %{name}.
 
 %prep
 %setup -q
-%patch1 -p1 -b .el6-translation-updates
-%patch2 -p1 -b .extra-re-in-replies
-%patch3 -p1 -b .exchange2010
-%patch4 -p1 -b .gn593176
-%patch5 -p1 -b .gn607422
-%patch6 -p1 -b .gn610224
-%patch7 -p1 -b .gn602896
-%patch8 -p1 -b .gn581434
-%patch9 -p1 -b .gn598564
-%patch10 -p1 -b .gn595914
-%patch11 -p1 -b .gn600389
-%patch12 -p1 -b .gn600386
-%patch13 -p1 -b .gn607384
-%patch14 -p1 -b .less-debug-output
-%patch15 -p1 -b .gn569631
-%patch16 -p1 -b .el6-translation-updates-2
-%patch17 -p1 -b .bookview-crash
-%patch18 -p1 -b .crash-setting-props
-%patch19 -p1 -b .openchange-1.0
-%patch20 -p1 -b .samba4-corrections
-%patch21 -p1 -b .copymove-doublefree
+%patch01 -p1 -b .gethierarchytable-fix
+%patch02 -p1 -b .less-debug-output
+%patch03 -p1 -b .crash-setting-props
+%patch04 -p1 -b .openchange-1.0
+%patch05 -p1 -b .books-for-offline
+%patch06 -p1 -b .slash-in-folder-name
+%patch07 -p1 -b .exchange2010
+%patch08 -p1 -b .meeting-invites
+%patch09 -p1 -b .covscan-issues
+%patch10 -p1 -b .translation-updates
+%patch11 -p1 -b .profile-create-after-restore
+%patch12 -p1 -b .message-attachment-read
+%patch13 -p1 -b .show-events-owa
+%patch14 -p1 -b .create-book-cal-source
+%patch15 -p1 -b .shorten-delay-of-open
 
 %build
 
@@ -184,21 +158,67 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc AUTHORS ChangeLog INSTALL README
 %{_libdir}/libexchangemapi-1.0.so.*
-%{_libdir}/evolution/%{evo_major}/plugins/*
-%{_libdir}/evolution-data-server-%{eds_major}/camel-providers/libcamelmapi.so
-%{_libdir}/evolution-data-server-%{eds_major}/camel-providers/libcamelmapi.urls
-%{_libdir}/evolution-data-server-%{eds_major}/extensions/libebookbackendmapi.so
-%{_libdir}/evolution-data-server-%{eds_major}/extensions/libebookbackendmapigal.so
-%{_libdir}/evolution-data-server-%{eds_major}/extensions/libecalbackendmapi.so
-%{_datadir}/evolution-data-server-%{evo_major}/mapi
+%{_libdir}/evolution/%{evo_base_version}/plugins/*
+%{_libdir}/evolution-data-server-%{eds_api_version}/camel-providers/libcamelmapi.so
+%{_libdir}/evolution-data-server-%{eds_api_version}/camel-providers/libcamelmapi.urls
+%{_libdir}/evolution-data-server-%{eds_api_version}/extensions/libebookbackendmapi.so
+%{_libdir}/evolution-data-server-%{eds_api_version}/extensions/libecalbackendmapi.so
+%{_datadir}/evolution-data-server-%{evo_base_version}/mapi
 
 %files devel
 %defattr(-,root,root,-)
-%{_includedir}/evolution-data-server-%{evo_major}/mapi
+%{_includedir}/evolution-data-server-%{evo_base_version}/mapi
 %{_libdir}/libexchangemapi-1.0.so
 %{_libdir}/pkgconfig/libexchangemapi-1.0.pc
 
 %changelog
+* Thu Oct 17 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-12
+- Fix a copy&paste error in a patch update for RH bug #621941
+
+* Wed Oct 16 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-11
+- Update patch for RH bug #621941 (Created events not shown in OWA)
+- Add patch for RH bug #1017108 (Shorten delay of calendar open)
+
+* Mon Oct 14 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-10
+- Add patch for RH bug #621941 (Created events not shown in OWA)
+- Add patch for RH bug #906341 (Cannot create book/calendar)
+
+* Thu Sep 19 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-9
+- Update patch for RH bug #1005072 (Calendars could not authenticate)
+
+* Wed Sep 11 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-8
+- Add patch for RH bug #619842 (Attached email message is empty in forwarded email)
+
+* Fri Sep 06 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-7
+- Add patch for RH bug #1005072 (Authentication after migration/restore fails)
+
+* Mon Aug 12 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-6
+- Add patch for translation updates
+- Update patch for issues found by Coverity scan
+
+* Fri Jun 14 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-5
+- Bump libmapi requirement to 1.0-4
+
+* Wed Jun 12 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-4
+- Add patch for some issues found by Coverity scan
+
+* Tue Jun 11 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-3
+- Add patch for RH bug #909259 (Meeting invite accept duplicates event)
+
+* Fri Jun 07 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-2
+- Add patch for RH bug #694134 (Contacts book not searchable)
+- Add patch for RH bug #625059 (Allow slash in folder names)
+- Add patch for RH bug #905591 (Refresh folder can fail with Exchange 2010 server)
+
+* Mon Jun 03 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-1
+- Rebase to 0.32.2
+- Remove patch for RH bug #589193 (obsolete by rebase)
+- Remove patch for RH bug #602749 (part of rebase)
+- Remove patch for RH bug #605369 (part of rebase)
+- Remove patch for RH bug #666492 (obsolete by rebase)
+- Remove patch for RH bug #902932 (merged to openchange-1.0 patch)
+- Remove patch for RH bug #903241 (part of rebase)
+
 * Wed Jan 23 2013 Milan Crha <mcrha@redhat.com> - 0.28.3-12
 - Add patch for RH bug #903241 (Double-free on message copy/move)
 

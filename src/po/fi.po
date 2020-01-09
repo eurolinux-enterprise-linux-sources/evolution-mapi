@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: evolution-mapi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-09-13 11:41+0300\n"
-"PO-Revision-Date: 2009-09-13 11:50+0300\n"
+"POT-Creation-Date: 2009-09-13 07:18+0300\n"
+"PO-Revision-Date: 2009-09-13 07:15+0300\n"
 "Last-Translator: Ilkka Tuohela <hile@iki.fi>\n"
 "Language-Team: Finnish <gnome-fi-laatu@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -168,7 +168,7 @@ msgstr "Poistetaan poistettuja viestejä välimuistista kansiossa %s"
 #: ../src/camel/camel-mapi-folder.c:1033 ../src/camel/camel-mapi-folder.c:1650
 #: ../src/camel/camel-mapi-folder.c:1658
 msgid "This message is not available in offline mode."
-msgstr "Tämä viesti ei ole saatavilla ilman verkkoyhteyttä."
+msgstr "Tämä viesti ei ole saatavilla yhteydettömässä tilassa."
 
 #: ../src/camel/camel-mapi-folder.c:1042
 #, c-format
@@ -211,9 +211,8 @@ msgid "Cannot append message to folder '%s'"
 msgstr "Viestiä ei voi lisätä kansioon \"%s\""
 
 #: ../src/camel/camel-mapi-folder.c:1978
-#, c-format
-msgid "Offline. '%s'"
-msgstr "Ei verkkoyhteyttä. %s"
+msgid "Offline."
+msgstr "Yhteydetön tila."
 
 #: ../src/camel/camel-mapi-folder.c:2098
 #, c-format
@@ -305,7 +304,7 @@ msgstr "Exchangen MAPI-palvelimelle ei voitu kirjautua."
 
 #: ../src/camel/camel-mapi-store.c:456
 msgid "Cannot create MAPI folders in offline mode."
-msgstr "MAPI-kansioita ei voi luoda ilman verkkoyhteyttä."
+msgstr "MAPI-kansioita ei voi luoda yhteydettömässä tilassa."
 
 #: ../src/camel/camel-mapi-store.c:461
 #, c-format
@@ -330,7 +329,7 @@ msgstr "MAPI-kansiota \"%s\" ei voi nimetä uudestaan nimelle \"%s\""
 
 #: ../src/camel/camel-mapi-store.c:1227
 msgid "Folder list not available in offline mode."
-msgstr "Kansioluettelo ei ole saatavissa ilman verkkoyhteyttä."
+msgstr "Kansioluettelo ei ole saatavissa yhteydettömässä tilassa."
 
 #. Fixme : Set a better error message. Would be helful in troubleshooting.
 #: ../src/camel/camel-mapi-transport.c:116

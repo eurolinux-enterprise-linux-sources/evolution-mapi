@@ -1,5 +1,7 @@
 as
+ast
 bg
+bn
 bn_IN
 ca
 ca@valencia
@@ -8,6 +10,7 @@ da
 de
 el
 en_GB
+en@shaw
 es
 et
 eu
@@ -18,14 +21,17 @@ gu
 he
 hi
 hu
+id
 it
 ja
 ko
 kn
 lt
+lv
 mai
 ml
 mr
+ms
 nb
 nl
 or

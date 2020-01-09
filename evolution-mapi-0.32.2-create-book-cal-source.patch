@@ -1,0 +1,736 @@
+diff -up evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c.create-book-cal-source evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c
+--- evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c.create-book-cal-source	2013-10-14 19:23:14.115936078 +0200
++++ evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-listener.c	2013-10-14 19:23:14.195936078 +0200
+@@ -40,6 +40,7 @@
+ #include <exchange-mapi-folder.h>
+ #include <exchange-mapi-connection.h>
+ #include <exchange-mapi-utils.h>
++#include <em-operation-queue.h>
+ 
+ #define d(x)
+ 
+@@ -63,8 +64,36 @@ struct _ExchangeMAPIAccountInfo {
+ 	gboolean enabled;
+ };
+ 
++static ExchangeMAPIAccountInfo *
++copy_mapi_account_info (const ExchangeMAPIAccountInfo *src)
++{
++	ExchangeMAPIAccountInfo *res;
++
++	g_return_val_if_fail (src != NULL, NULL);
++
++	res = g_new0 (ExchangeMAPIAccountInfo, 1);
++	res->uid = g_strdup (src->uid);
++	res->name = g_strdup (src->name);
++	res->source_url = g_strdup (src->source_url);
++	res->enabled = src->enabled;
++
++	return res;
++}
++
++static void
++free_mapi_account_info (ExchangeMAPIAccountInfo *info)
++{
++	g_return_if_fail (info != NULL);
++
++	g_free (info->uid);
++	g_free (info->name);
++	g_free (info->source_url);
++	g_free (info);
++}
++
+ /* list of ExchangeMAPIAccountInfo structures */
+-static	GList *mapi_accounts = NULL;
++static GList *mapi_accounts = NULL;
++static gpointer async_ops = NULL; /* EMOperationQueue * */
+ 
+ static GObjectClass *parent_class = NULL;
+ 
+@@ -102,6 +131,9 @@ finalize (GObject *object)
+ 	g_list_free (mapi_accounts);
+ 
+ 	G_OBJECT_CLASS (parent_class)->finalize (object);
++
++	if (async_ops)
++		g_object_unref (async_ops);
+ }
+ 
+ static void
+@@ -466,7 +498,6 @@ remove_cal_esource (EAccount *existing_a
+ 	ESourceList *list;
+ 	const gchar *conf_key = NULL, *source_selection_key = NULL;
+ 	GSList *groups;
+-	gboolean found_group;
+ 	GConfClient* client;
+ 	GSList *ids;
+ 	GSList *node_tobe_deleted;
+@@ -488,13 +519,10 @@ remove_cal_esource (EAccount *existing_a
+ 
+ 	client = gconf_client_get_default();
+ 	list = e_source_list_new_for_gconf (client, conf_key);
+-	groups = e_source_list_peek_groups (list);
+ 
+ 	base_uri = g_strdup_printf ("mapi://%s@%s/", url->user, url->host);
+ 
+-	found_group = FALSE;
+-
+-	for (; groups != NULL && !found_group; groups = g_slist_next (groups)) {
++	for (groups = e_source_list_peek_groups (list); groups != NULL; groups = g_slist_next (groups)) {
+ 		ESourceGroup *group = E_SOURCE_GROUP (groups->data);
+ 
+ 		if (strcmp (e_source_group_peek_name (group), existing_account_info->name) == 0 &&
+@@ -518,7 +546,6 @@ remove_cal_esource (EAccount *existing_a
+ 			}
+ 			e_source_list_remove_group (list, group);
+ 			e_source_list_sync (list, NULL);
+-			found_group = TRUE;
+ 			break;
+ 		}
+ 	}
+@@ -529,8 +556,9 @@ remove_cal_esource (EAccount *existing_a
+ }
+ 
+ /* add sources for calendar and tasks if the account added is exchange account
+-   adds the new account info to mapi_accounts list */
+-
++   adds the new account info to mapi_accounts list;
++   it is always called in the main thread
++*/
+ static void
+ add_calendar_sources (EAccount *account, GSList *folders, mapi_id_t trash_fid)
+ {
+@@ -542,28 +570,48 @@ add_calendar_sources (EAccount *account,
+ 		add_cal_esource (account, folders, MAPI_FOLDER_TYPE_APPOINTMENT, url, trash_fid);
+ 		add_cal_esource (account, folders, MAPI_FOLDER_TYPE_TASK, url, trash_fid);
+ 		add_cal_esource (account, folders, MAPI_FOLDER_TYPE_MEMO, url, trash_fid);
+-	}
+ 
+-	camel_url_free (url);
++		camel_url_free (url);
++	}
+ }
+ 
+ /* removes calendar and tasks sources if the account removed is exchange account
+-   removes the the account info from mapi_account list */
+-
++   removes the the account info from mapi_account list;
++   it is always called in the main thread
++*/
+ static void
+-remove_calendar_sources (EAccount *account)
++remove_calendar_sources_async (gpointer worker_data, gboolean cancelled, gpointer user_data)
+ {
++	EAccount *account = worker_data;
+ 	CamelURL *url;
+ 
++	g_return_if_fail (account != NULL);
++
+ 	url = camel_url_new (account->source->url, NULL);
+ 
+ 	if (url) {
+ 		remove_cal_esource (account, MAPI_FOLDER_TYPE_APPOINTMENT, url);
+ 		remove_cal_esource (account, MAPI_FOLDER_TYPE_TASK, url);
+ 		remove_cal_esource (account, MAPI_FOLDER_TYPE_MEMO, url);
++
++		camel_url_free (url);
+ 	}
+ 
+-	camel_url_free (url);
++	g_object_unref (account);
++}
++
++static void
++remove_calendar_sources (EAccount *account)
++{
++	g_return_if_fail (account != NULL);
++
++	g_object_ref (account);
++
++	if (!g_main_context_get_thread_default () || g_main_context_is_owner (g_main_context_default ())) {
++		em_async_queue_push (async_ops, account, NULL, NULL, remove_calendar_sources_async);
++	} else {
++		remove_calendar_sources_async (account, FALSE, NULL);
++	}
+ }
+ 
+ static gboolean
+@@ -735,37 +783,37 @@ add_addressbook_sources (EAccount *accou
+ 	return TRUE;
+ }
+ 
++/* this is always called in the main thread */
+ static void
+-remove_addressbook_sources (ExchangeMAPIAccountInfo *existing_account_info)
++remove_addressbook_sources_async (gpointer worker_data, gboolean cancelled, gpointer user_data)
+ {
++	ExchangeMAPIAccountInfo *existing_account_info = worker_data;
+ 	ESourceList *list;
+ 	ESourceGroup *group;
+ 	GSList *groups;
+-	gboolean found_group;
+ 	CamelURL *url;
+ 	gchar *base_uri;
+ 	GConfClient *client;
+ 
++	g_return_if_fail (existing_account_info != NULL);
++
+ 	url = camel_url_new (existing_account_info->source_url, NULL);
+ 	if (url == NULL) {
++		free_mapi_account_info (existing_account_info);
+ 		return;
+ 	}
+ 
+ 	base_uri = g_strdup_printf ("mapi://%s@%s/", url->user, url->host);
+ 	client = gconf_client_get_default ();
+ 	list = e_source_list_new_for_gconf (client, "/apps/evolution/addressbook/sources" );
+-	groups = e_source_list_peek_groups (list);
+-
+-	found_group = FALSE;
+-
+-	for (; groups != NULL && !found_group; groups = g_slist_next (groups)) {
+ 
++	for (groups = e_source_list_peek_groups (list); groups != NULL; groups = g_slist_next (groups)) {
+ 		group = E_SOURCE_GROUP (groups->data);
+-		if ( strcmp ( e_source_group_peek_base_uri (group), base_uri) == 0 && strcmp (e_source_group_peek_name (group), existing_account_info->name) == 0) {
+ 
++		if (strcmp (e_source_group_peek_base_uri (group), base_uri) == 0 && strcmp (e_source_group_peek_name (group), existing_account_info->name) == 0) {
+ 			e_source_list_remove_group (list, group);
+ 			e_source_list_sync (list, NULL);
+-			found_group = TRUE;
++			break;
+ 		}
+ 	}
+ 
+@@ -773,45 +821,104 @@ remove_addressbook_sources (ExchangeMAPI
+ 	g_object_unref (client);
+ 	g_free (base_uri);
+ 	camel_url_free (url);
++	free_mapi_account_info (existing_account_info);
+ }
+ 
+-static gboolean
+-update_sources_idle_cb (gpointer data)
++static void
++remove_addressbook_sources (ExchangeMAPIAccountInfo *existing_account_info)
++{
++	g_return_if_fail (existing_account_info != NULL);
++
++	if (!g_main_context_get_thread_default () || g_main_context_is_owner (g_main_context_default ())) {
++		em_async_queue_push (async_ops, copy_mapi_account_info (existing_account_info), NULL, NULL, remove_addressbook_sources_async);
++	} else {
++		remove_addressbook_sources_async (copy_mapi_account_info (existing_account_info), FALSE, NULL);
++	}
++}
++
++struct add_sources_data
++{
++	EAccount *account;
++	GSList *folders;
++	mapi_id_t trash_fid;
++};
++
++static void
++add_sources_async (gpointer worker_data, gboolean cancelled, gpointer user_data)
++{
++	struct add_sources_data *data = worker_data;
++
++	g_return_if_fail (data != NULL);
++
++	add_addressbook_sources (data->account, data->folders, data->trash_fid);
++	add_calendar_sources (data->account, data->folders, data->trash_fid);
++
++	g_object_unref (data->account);
++	exchange_mapi_folder_free_list (data->folders);
++	g_free (data);
++}
++
++static void
++add_sources (EAccount *account, GSList *folders, mapi_id_t trash_fid)
++{
++	struct add_sources_data *data;
++
++	g_return_if_fail (account != NULL);
++	g_return_if_fail (folders != NULL);
++
++	data = g_new0 (struct add_sources_data, 1);
++	data->account = g_object_ref (account);
++	data->folders = exchange_mapi_folder_copy_list (folders);
++	data->trash_fid = trash_fid;
++
++	if (!g_main_context_get_thread_default () || g_main_context_is_owner (g_main_context_default ())) {
++		em_async_queue_push (async_ops, data, NULL, NULL, add_sources_async);
++	} else {
++		add_sources_async (data, FALSE, NULL);
++	}
++}
++
++static void
++update_sources_idle_cb (gpointer data, gboolean cancelled, gpointer user_data)
+ {
+ 	ExchangeMapiConnection *conn = data;
+ 	EAccount *account;
+ 	GSList *folders_list;
+ 
+-	g_return_val_if_fail (conn != NULL, FALSE);
++	g_return_if_fail (conn != NULL);
+ 
+ 	account = g_object_get_data (G_OBJECT (conn), "EAccount");
+ 	if (!account) {
+ 		g_object_unref (conn);
+-		g_return_val_if_fail (account != NULL, FALSE);
+-		return FALSE;
++		g_return_if_fail (account != NULL);
++		return;
+ 	}
+ 
+ 	g_object_set_data (G_OBJECT (conn), "EAccount", NULL);
+ 
+-	folders_list = exchange_mapi_connection_peek_folders_list (conn);
++	if (!cancelled) {
++		folders_list = exchange_mapi_connection_peek_folders_list (conn);
+ 
+-	if (account->enabled && lookup_account_info (account->uid)) {
+-		mapi_id_t trash_fid = exchange_mapi_connection_get_default_folder_id (conn, olFolderDeletedItems, NULL);
++		if (account->enabled && lookup_account_info (account->uid)) {
++			mapi_id_t *trash_fid = user_data;
+ 
+-		add_addressbook_sources (account, folders_list, trash_fid);
+-		add_calendar_sources (account, folders_list, trash_fid);
++			add_sources (account, folders_list, trash_fid ? *trash_fid : 0);
++		}
+ 	}
+ 
+ 	g_object_unref (conn);
+ 	g_object_unref (account);
+-
+-	return FALSE;
++	g_free (user_data);
+ }
+ 
+ static void
+-update_sources_fn (gpointer data, gpointer user_data)
++update_sources_cb (gpointer data, gboolean cancelled, gpointer user_data)
+ {
+ 	ExchangeMapiConnection *conn = data;
++	mapi_id_t *trash_id = user_data;
++
++	if (cancelled)
++		return;
+ 
+ 	g_return_if_fail (conn != NULL);
+ 
+@@ -819,28 +926,20 @@ update_sources_fn (gpointer data, gpoint
+ 	   thus next call will be quick as much as possible */
+ 	exchange_mapi_connection_peek_folders_list (conn);
+ 
+-	/* run a job in a main thread */
+-	g_idle_add (update_sources_idle_cb, conn);
++	if (trash_id)
++		*trash_id = exchange_mapi_connection_get_default_folder_id (conn, olFolderDeletedItems, NULL);
+ }
+ 
+ static void
+ run_update_sources_thread (ExchangeMapiConnection *conn, EAccount *account)
+ {
+-	static GThreadPool *thread_pool = NULL;
+-
+ 	g_return_if_fail (conn != NULL);
+ 	g_return_if_fail (account != NULL);
+-
+-	/* this should be called only on the main thread, thus no locking needed */
+-	if (!thread_pool)
+-		thread_pool = g_thread_pool_new (update_sources_fn, NULL, 1, FALSE, NULL);
++	g_return_if_fail (async_ops != NULL);
+ 
+ 	g_object_set_data (G_OBJECT (conn), "EAccount", g_object_ref (account));
+ 
+-	if (!thread_pool)
+-		update_sources_fn (conn, NULL);
+-	else
+-		g_thread_pool_push (thread_pool, conn, NULL);
++	em_async_queue_push (async_ops, conn, g_new0 (mapi_id_t, 1), update_sources_cb, update_sources_idle_cb);
+ }
+ 
+ struct create_sources_data
+@@ -878,10 +977,12 @@ check_for_account_conn_cb (gpointer data
+ }
+ 
+ static void
+-update_account_sources (EAccount *account, gboolean can_create_profile)
++update_account_sources_async (gpointer worker_data, gboolean cancelled, gpointer user_data)
+ {
+ 	CamelURL *url;
+ 	ExchangeMapiConnection *conn;
++	EAccount *account = worker_data;
++	gboolean can_create_profile = GPOINTER_TO_INT (user_data) ? TRUE : FALSE;
+ 
+ 	url = camel_url_new (account->source->url, NULL);
+ 	g_return_if_fail (url != NULL);
+@@ -911,6 +1012,21 @@ update_account_sources (EAccount *accoun
+ 	}
+ 
+ 	camel_url_free (url);
++	g_object_unref (account);
++}
++
++static void
++update_account_sources (EAccount *account, gboolean can_create_profile)
++{
++	g_return_if_fail (account != NULL);
++
++	if (!g_main_context_get_thread_default () || g_main_context_is_owner (g_main_context_default ())) {
++		/* called from main thread, but we want this to be called
++		   in its own thread, thus create it */
++		em_async_queue_push (async_ops, g_object_ref (account), GINT_TO_POINTER (can_create_profile ? 1 : 0), update_account_sources_async, NULL);
++	} else {
++		update_account_sources_async (g_object_ref (account), FALSE, GINT_TO_POINTER (can_create_profile ? 1 : 0));
++	}
+ }
+ 
+ static void
+@@ -976,10 +1092,7 @@ mapi_account_removed (EAccountList *acco
+ 	}
+ 
+ 	/* Free up the structure */
+-	g_free (info->uid);
+-	g_free (info->name);
+-	g_free (info->source_url);
+-	g_free (info);
++	free_mapi_account_info (info);
+ }
+ 
+ static gboolean
+@@ -1063,12 +1176,19 @@ mapi_camel_url_equal (CamelURL *a, Camel
+ 	return retval;
+ }
+ 
++static void mapi_account_changed (EAccountList *account_listener, EAccount *account);
++
+ static void
+-mapi_account_changed (EAccountList *account_listener, EAccount *account)
++mapi_account_changed_async (gpointer worker_data, gboolean cancelled, gpointer user_data)
+ {
+ 	CamelURL *new_url = NULL, *old_url = NULL;
+ 	gboolean isa_mapi_account = FALSE;
+ 	ExchangeMAPIAccountInfo *existing_account_info = NULL;
++	EAccountList *account_listener = worker_data;
++	EAccount *account = user_data;
++
++	g_return_if_fail (account_listener != NULL);
++	g_return_if_fail (account != NULL);
+ 
+ 	isa_mapi_account = is_mapi_account (account);
+ 
+@@ -1143,6 +1263,17 @@ mapi_account_changed (EAccountList *acco
+ 		camel_url_free (old_url);
+ 
+ 	camel_url_free (new_url);
++
++	g_object_unref (account_listener);
++	g_object_unref (account);
++}
++
++static void
++mapi_account_changed (EAccountList *account_listener, EAccount *account)
++{
++	g_return_if_fail (async_ops != NULL);
++
++	em_async_queue_push (async_ops, g_object_ref (account_listener), g_object_ref (account), mapi_account_changed_async, NULL);
+ }
+ 
+ static void
+@@ -1185,6 +1316,13 @@ exchange_mapi_account_listener_new (void
+ {
+ 	ExchangeMAPIAccountListener *config_listener;
+ 
++	if (!async_ops) {
++		async_ops = em_async_queue_new ();
++		g_object_add_weak_pointer (G_OBJECT (async_ops), &async_ops);
++	} else {
++		g_object_ref (async_ops);
++	}
++
+ 	config_listener = g_object_new (EXCHANGE_MAPI_ACCOUNT_LISTENER_TYPE, NULL);
+ 	config_listener->priv->gconf_client = gconf_client_get_default();
+ 
+diff -up evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-setup.c.create-book-cal-source evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-setup.c
+--- evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-setup.c.create-book-cal-source	2013-10-14 19:23:14.099936078 +0200
++++ evolution-mapi-0.32.2/src/account-setup-eplugin/exchange-mapi-account-setup.c	2013-10-14 19:23:14.193936078 +0200
+@@ -797,6 +797,8 @@ exchange_mapi_book_commit (EPlugin *epl,
+ 
+ 	e_source_set_property (source, "completion", "true");
+ 	e_source_set_property (source, "public", "no");
++	e_source_set_property (source, "folder-id", sfid);
++
+ 	// Update the folder list in the plugin and ExchangeMAPIFolder
+ 	g_free (r_uri);
+ 	g_free (sfid);
+diff -up evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c.create-book-cal-source evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c
+--- evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c.create-book-cal-source	2013-10-14 19:23:14.168936078 +0200
++++ evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c	2013-10-14 19:23:14.193936078 +0200
+@@ -1535,6 +1535,9 @@ e_book_backend_mapi_update_view_by_cache
+ 	query = e_data_book_view_get_card_query (book_view);
+ 	e_book_backend_mapi_get_summary_and_cache (ebma, &summary, &cache);
+ 
++	if (!summary || !cache)
++		return;
++
+ 	if (e_book_backend_summary_is_summary_query (summary, query)) {
+ 		GPtrArray *ids = NULL;
+ 
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.c.create-book-cal-source evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.c.create-book-cal-source	2011-02-07 04:45:47.000000000 +0100
++++ evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.c	2013-10-14 19:23:14.190936078 +0200
+@@ -273,3 +273,69 @@ em_operation_queue_length (EMOperationQu
+ 
+ 	return len;
+ }
++
++struct async_queue_data
++{
++	gpointer worker_data;
++	gpointer user_data;
++	EMOperationQueueFunc worker_cb;
++	EMOperationQueueFunc done_cb;
++
++	gboolean cancelled;
++};
++
++static gboolean
++async_queue_idle_cb (gpointer user_data)
++{
++	struct async_queue_data *data = user_data;
++
++	g_return_val_if_fail (data != NULL, FALSE);
++	g_return_val_if_fail (data->done_cb != NULL, FALSE);
++
++	if (data->done_cb)
++		data->done_cb (data->worker_data, data->cancelled, data->user_data);
++
++	g_free (data);
++
++	return FALSE;
++}
++
++static void
++async_queue_worker_cb (gpointer worker_data, gboolean cancelled, gpointer user_data)
++{
++	struct async_queue_data *data = worker_data;
++
++	g_return_if_fail (data != NULL);
++
++	data->cancelled = cancelled;
++
++	if (data->worker_cb)
++		data->worker_cb (data->worker_data, data->cancelled, data->user_data);
++
++	if (data->done_cb)
++		g_idle_add (async_queue_idle_cb, data);
++	else
++		g_free (data);
++}
++
++EMOperationQueue *
++em_async_queue_new (void)
++{
++	return em_operation_queue_new (async_queue_worker_cb, NULL);
++}
++
++void
++em_async_queue_push (EMOperationQueue *queue, gpointer worker_data, gpointer user_data, EMOperationQueueFunc worker_cb, EMOperationQueueFunc done_cb)
++{
++	struct async_queue_data *data;
++
++	g_return_if_fail (queue != NULL);
++
++	data = g_new0 (struct async_queue_data, 1);
++	data->worker_data = worker_data;
++	data->user_data = user_data;
++	data->worker_cb = worker_cb;
++	data->done_cb = done_cb;
++
++	em_operation_queue_push (queue, data);
++}
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.h.create-book-cal-source evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.h.create-book-cal-source	2011-02-07 04:45:47.000000000 +0100
++++ evolution-mapi-0.32.2/src/libexchangemapi/em-operation-queue.h	2013-10-14 19:23:14.191936078 +0200
+@@ -62,4 +62,11 @@ gboolean		em_operation_queue_cancel	(EMO
+ gboolean		em_operation_queue_cancel_all	(EMOperationQueue *queue);
+ gint			em_operation_queue_length	(EMOperationQueue *queue);
+ 
++EMOperationQueue *	em_async_queue_new		(void);
++void			em_async_queue_push		(EMOperationQueue *queue,
++							 gpointer worker_data,
++							 gpointer user_data,
++							 EMOperationQueueFunc worker_cb, /* run in a new thread */
++							 EMOperationQueueFunc done_cb);  /* run in a main thread */
++
+ #endif /* EM_OPERATION_QUEUE */
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.create-book-cal-source evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.create-book-cal-source	2013-10-14 19:23:14.145936078 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c	2013-10-14 19:23:14.189936078 +0200
+@@ -158,6 +158,7 @@ struct _ExchangeMapiConnectionPrivate {
+ 	mapi_object_t public_store;
+ 
+ 	GSList *folders;		/* list of ExchangeMapiFolder pointers */
++	GStaticRecMutex folders_lock;	/* lock for 'folders' variable */
+ 
+ 	GHashTable *named_ids;		/* cache of named ids; key is a folder ID, value is a hash table
+ 					   of named_id to prop_id in that respective folder */
+@@ -172,8 +173,11 @@ disconnect (ExchangeMapiConnectionPrivat
+ 	if (!priv->session)
+ 		return;
+ 
++	g_static_rec_mutex_lock (&priv->folders_lock);
+ 	if (priv->folders)
+ 		exchange_mapi_folder_free_list (priv->folders);
++	priv->folders = NULL;
++	g_static_rec_mutex_unlock (&priv->folders_lock);
+ 
+ 	if (priv->has_public_store)
+ 		mapi_object_release (&priv->public_store);
+@@ -186,7 +190,6 @@ disconnect (ExchangeMapiConnectionPrivat
+ 
+ 	priv->session = NULL;
+ 	priv->has_public_store = FALSE;
+-	priv->folders = NULL;
+ }
+ 
+ /* should have session_lock locked already, when calling this function */
+@@ -235,6 +238,7 @@ exchange_mapi_connection_finalize (GObje
+ 
+ 		UNLOCK ();
+ 		g_static_rec_mutex_free (&priv->session_lock);
++		g_static_rec_mutex_free (&priv->folders_lock);
+ 	}
+ 
+ 	if (G_OBJECT_CLASS (exchange_mapi_connection_parent_class)->finalize)
+@@ -260,6 +264,9 @@ exchange_mapi_connection_init (ExchangeM
+ 	priv = EXCHANGE_MAPI_CONNECTION_GET_PRIVATE (conn);
+ 	g_return_if_fail (priv != NULL);
+ 
++	g_static_rec_mutex_init (&priv->session_lock);
++	g_static_rec_mutex_init (&priv->folders_lock);
++
+ 	priv->session = NULL;
+ 	priv->profile = NULL;
+ 	priv->has_public_store = FALSE;
+@@ -2047,7 +2054,9 @@ exchange_mapi_connection_create_folder (
+ 
+ 	fid = mapi_object_get_id (&obj_folder);
+ 	g_debug("Folder %s created with id %016" G_GINT64_MODIFIER "X ", name, fid);
+-	
++
++	g_static_rec_mutex_lock (&priv->folders_lock);
++
+ 	/* we should also update folder list locally */
+ 	if (fid != 0 && priv->folders != NULL) {
+ 		ExchangeMAPIFolder *folder = NULL;
+@@ -2056,6 +2065,8 @@ exchange_mapi_connection_create_folder (
+ 			priv->folders = g_slist_append (priv->folders, folder);
+ 	}
+ 
++	g_static_rec_mutex_unlock (&priv->folders_lock);
++
+ cleanup:
+ 	mapi_object_release(&obj_folder);
+ 	mapi_object_release(&obj_top);
+@@ -2181,7 +2192,10 @@ cleanup:
+ 	mapi_object_release(&obj_folder);
+ 	mapi_object_release(&obj_top);
+ 
++	g_static_rec_mutex_lock (&priv->folders_lock);
+ 	priv->folders = g_slist_remove (priv->folders, folder);
++	g_static_rec_mutex_unlock (&priv->folders_lock);
++
+ 	exchange_mapi_folder_free (folder);
+ 
+ 	UNLOCK ();
+@@ -3356,10 +3370,15 @@ exchange_mapi_connection_peek_folders_li
+ 	CHECK_CORRECT_CONN_AND_GET_PRIV (conn, FALSE);
+ 	e_return_val_mapi_error_if_fail (priv->session != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+ 
+-	LOCK ();
+-	if (!priv->folders)
++	g_static_rec_mutex_lock (&priv->folders_lock);
++
++	if (!priv->folders) {
++		LOCK ();
+ 		exchange_mapi_connection_get_folders_list (conn, &priv->folders, perror);
+-	UNLOCK ();
++		UNLOCK ();
++	}
++
++	g_static_rec_mutex_unlock (&priv->folders_lock);
+ 
+ 	return priv->folders;
+ }
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.c.create-book-cal-source evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.c.create-book-cal-source	2013-10-14 19:23:14.106936078 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.c	2013-10-14 19:23:14.190936078 +0200
+@@ -71,6 +71,25 @@ exchange_mapi_folder_new (const gchar *f
+ 	return folder;
+ }
+ 
++ExchangeMAPIFolder *
++exchange_mapi_folder_copy (ExchangeMAPIFolder *src)
++{
++	ExchangeMAPIFolder *res;
++
++	g_return_val_if_fail (src != NULL, NULL);
++
++	res = g_new0 (ExchangeMAPIFolder, 1);
++	*res = *src;
++	
++	res->owner_name = g_strdup (src->owner_name);
++	res->owner_email = g_strdup (src->owner_email);
++	res->user_name = g_strdup (src->user_name);
++	res->user_email = g_strdup (src->user_email);
++	res->folder_name = g_strdup (src->folder_name);
++
++	return res;
++}
++
+ void
+ exchange_mapi_folder_free (ExchangeMAPIFolder *folder)
+ {
+@@ -128,6 +147,19 @@ exchange_mapi_folder_get_total_count (Ex
+ 	return folder->total;
+ }
+ 
++GSList *
++exchange_mapi_folder_copy_list (GSList *folder_list)
++{
++	GSList *res, *ii;
++	
++	res = g_slist_copy (folder_list);
++	for (ii = res; ii; ii = ii->next) {
++		ii->data = exchange_mapi_folder_copy (ii->data);
++	}
++
++	return res;
++}
++
+ void
+ exchange_mapi_folder_free_list (GSList *folder_list)
+ {
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.h.create-book-cal-source evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.h.create-book-cal-source	2011-02-07 04:45:47.000000000 +0100
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-folder.h	2013-10-14 19:23:14.191936078 +0200
+@@ -77,6 +77,7 @@ exchange_mapi_folder_new (const gchar *f
+ 			  ExchangeMAPIFolderCategory catgory,
+ 			  mapi_id_t folder_id, mapi_id_t parent_folder_id,
+ 			  uint32_t child_count, uint32_t unread_count, uint32_t total);
++ExchangeMAPIFolder *exchange_mapi_folder_copy (ExchangeMAPIFolder *src);
+ void exchange_mapi_folder_free (ExchangeMAPIFolder *folder);
+ ExchangeMAPIFolderType exchange_mapi_container_class (gchar *type);
+ 
+@@ -88,6 +89,7 @@ guint32 exchange_mapi_folder_get_unread_
+ guint32 exchange_mapi_folder_get_total_count (ExchangeMAPIFolder *folder);
+ gboolean exchange_mapi_folder_is_root (ExchangeMAPIFolder *folder);
+ 
++GSList *exchange_mapi_folder_copy_list (GSList *folder_list);
+ void exchange_mapi_folder_free_list (GSList *folder_list);
+ 
+ #endif

@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with the program; if not, see <http://www.gnu.org/licenses/>  
+ * License along with the program; if not, see <http://www.gnu.org/licenses/>
  *
  *
  * Authors:
@@ -27,23 +27,16 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include <glib/gi18n-lib.h>
 
 #include <gmodule.h>
-
-#include <camel/camel-provider.h>
-#include <camel/camel-session.h>
-#include <camel/camel-url.h>
-#include <camel/camel-sasl.h>
-#include <camel/camel-i18n.h>
 
 #include "camel-mapi-store.h"
 #include "camel-mapi-transport.h"
 
-#define d(x) x
-
-static void add_hash (guint *, char *);
+static void add_hash (guint *, gchar *);
 static guint mapi_url_hash (gconstpointer);
-static gint check_equal (char *, char *);
+static gint check_equal (gchar *, gchar *);
 static gint mapi_url_equal (gconstpointer, gconstpointer);
 
 static CamelProviderConfEntry mapi_conf_entries[] = {
@@ -65,22 +58,21 @@ static CamelProviderConfEntry mapi_conf_entries[] = {
 	{ CAMEL_PROVIDER_CONF_CHECKBOX, "filter_junk_inbox", "filter_junk",
 	  N_("Only check for Junk messag_es in the Inbox folder"), "0" },
 
-	 	
 	{ CAMEL_PROVIDER_CONF_SECTION_END },
 	{ CAMEL_PROVIDER_CONF_END }
 };
 
 static CamelProvider mapi_provider = {
-	"mapi",	
+	"mapi",
 
-	"Exchange MAPI", 
+	"Exchange MAPI",
 
-	N_("For accessing Microsoft Exchange / OpenChange servers using MAPI"),	
+	N_("For accessing Microsoft Exchange/OpenChange servers using MAPI"),
 
-	"mail",	
+	"mail",
 
 	CAMEL_PROVIDER_IS_REMOTE | CAMEL_PROVIDER_IS_SOURCE |
-	CAMEL_PROVIDER_IS_STORAGE | CAMEL_PROVIDER_DISABLE_SENT_FOLDER | CAMEL_PROVIDER_IS_EXTERNAL, 
+	CAMEL_PROVIDER_IS_STORAGE | CAMEL_PROVIDER_DISABLE_SENT_FOLDER | CAMEL_PROVIDER_IS_EXTERNAL,
 
 	CAMEL_URL_NEED_USER | CAMEL_URL_NEED_HOST,
 
@@ -91,15 +83,14 @@ static CamelProvider mapi_provider = {
 
 CamelServiceAuthType camel_mapi_password_authtype = {
 	N_("Password"),
-	N_("This option will connect to the Openchange server using a plaintext password."),
+	N_("This option will connect to the OpenChange server using a plaintext password."),
 	"",
 	TRUE
 };
 
-static int 
-mapi_auto_detect_cb(CamelURL *url, GHashTable **auto_detected, CamelException *ex)
+static gint
+mapi_auto_detect_cb(CamelURL *url, GHashTable **auto_detected, GError **error)
 {
-        d (printf("mapi_auto_detect_cb\n"));
 	*auto_detected = g_hash_table_new (g_str_hash, g_str_equal);
 	g_hash_table_insert (*auto_detected, g_strdup ("poa"), g_strdup (url->host));
 
@@ -110,6 +101,7 @@ void
 camel_provider_module_init(void)
 {
 	mapi_provider.name = "Exchange MAPI";
+	mapi_provider.translation_domain = (gchar *) GETTEXT_PACKAGE;
 	mapi_provider.auto_detect = mapi_auto_detect_cb;
 	mapi_provider.authtypes = g_list_prepend (mapi_provider.authtypes, &camel_mapi_password_authtype);
 	mapi_provider.url_hash = mapi_url_hash;
@@ -117,11 +109,15 @@ camel_provider_module_init(void)
 	mapi_provider.license = "LGPL";
 	mapi_provider.object_types[CAMEL_PROVIDER_STORE] = camel_mapi_store_get_type();
 	mapi_provider.object_types[CAMEL_PROVIDER_TRANSPORT] = camel_mapi_transport_get_type();
+
+	bindtextdomain (GETTEXT_PACKAGE, EXCHANGE_MAPI_LOCALEDIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+
 	camel_provider_register (&mapi_provider);
 }
 
 static void
-add_hash(guint *hash, char *s)
+add_hash(guint *hash, gchar *s)
 {
 	if (s) {
 		*hash ^= g_str_hash(s);
@@ -143,7 +139,7 @@ mapi_url_hash(gconstpointer key)
 }
 
 static gint
-check_equal(char *s1, char *s2)
+check_equal(gchar *s1, gchar *s2)
 {
 	if (s1 == NULL) {
 		if (s2 == NULL) {
@@ -164,7 +160,7 @@ mapi_url_equal (gconstpointer a, gconstpointer b)
 {
 	const CamelURL	*u1 = a;
 	const CamelURL	*u2 = b;
-  
+
 	return check_equal (u1->protocol, u2->protocol)
 		&& check_equal (u1->user, u2->user)
 		&& check_equal (u1->authmech, u2->authmech)

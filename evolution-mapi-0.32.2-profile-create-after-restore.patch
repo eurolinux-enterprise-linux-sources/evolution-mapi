@@ -1,0 +1,195 @@
+diff -up evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c.profile-create-after-restore evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c
+--- evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c.profile-create-after-restore	2013-09-19 19:48:04.396841210 +0200
++++ evolution-mapi-0.32.2/src/addressbook/e-book-backend-mapi.c	2013-09-19 19:48:04.425841210 +0200
+@@ -427,7 +427,7 @@ ebbm_load_source (EBookBackendMAPI *ebma
+ 	priv->book_uri = e_source_get_uri (source);
+ 
+ 	g_free (priv->profile);
+-	priv->profile = g_strdup (e_source_get_property (source, "profile"));
++	priv->profile = exchange_mapi_util_get_profile_name_for_source (source);
+ 
+ 	cache_dir = e_book_backend_get_cache_dir (E_BOOK_BACKEND (ebma));
+ 	summary_file_name = g_build_filename (cache_dir, "cache.summary", NULL);
+diff -up evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.profile-create-after-restore evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c
+--- evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.profile-create-after-restore	2013-09-19 19:48:04.397841210 +0200
++++ evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c	2013-09-19 19:48:04.427841210 +0200
+@@ -1541,7 +1541,7 @@ ecbm_open (ECalBackend *backend, EDataCa
+ 	priv->username = g_strdup (username);
+ 	priv->password = g_strdup (password);
+ 
+-	priv->profile = g_strdup (e_source_get_property (esource, "profile"));
++	priv->profile = exchange_mapi_util_get_profile_name_for_source (esource);
+ 	priv->user_name = g_strdup (e_source_get_property (esource, "acl-user-name"));
+ 	priv->user_email = g_strdup (e_source_get_property (esource, "acl-user-email"));
+ 	priv->owner_name = g_strdup (e_source_get_property (esource, "acl-owner-name"));
+diff -up evolution-mapi-0.32.2/src/camel/camel-mapi-store.c.profile-create-after-restore evolution-mapi-0.32.2/src/camel/camel-mapi-store.c
+--- evolution-mapi-0.32.2/src/camel/camel-mapi-store.c.profile-create-after-restore	2013-09-19 19:48:04.400841210 +0200
++++ evolution-mapi-0.32.2/src/camel/camel-mapi-store.c	2013-09-19 19:48:04.428841210 +0200
+@@ -281,7 +281,7 @@ static gboolean mapi_construct(CamelServ
+ 	camel_store_summary_load ((CamelStoreSummary *) mapi_store->summary);
+ 
+ 	/*user and profile*/
+-	priv->profile = g_strdup (camel_url_get_param(url, "profile"));
++	priv->profile = exchange_mapi_util_profile_name (url->user, camel_url_get_param (url, "domain"), url->host, FALSE);
+ 
+ 	/*base url*/
+ 	priv->base_url = camel_url_to_string (service->url, (CAMEL_URL_HIDE_PASSWORD |
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c.profile-create-after-restore evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c.profile-create-after-restore	2013-09-19 19:48:04.404841210 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.c	2013-09-19 19:48:17.266841753 +0200
+@@ -25,6 +25,11 @@
+ #include <config.h>
+ #endif
+ 
++#include <libedataserver/e-flag.h>
++#include <libedataserver/e-source-list.h>
++#include <libedataserver/e-source-group.h>
++#include <libedataserver/e-source.h>
++
+ #include "exchange-mapi-utils.h"
+ 
+ #ifdef G_OS_WIN32
+@@ -958,6 +963,123 @@ exchange_mapi_util_profile_name (const g
+ 	return res;
+ }
+ 
++struct GetProfileNameForSourceData
++{
++	ESource *source;
++	EFlag *flag;
++	gchar *profile_name;
++};
++
++static gboolean
++get_profile_name_for_source_in_main_thread_cb (gpointer user_data)
++{
++	struct GetProfileNameForSourceData *gpn = user_data;
++	ESourceList *source_list = NULL;
++	ESourceGroup *group;
++	gchar *user, *host, *domain;
++
++	g_return_val_if_fail (gpn != NULL, FALSE);
++	g_return_val_if_fail (gpn->source != NULL, FALSE);
++
++	group = e_source_peek_group (gpn->source);
++	if (!group) {
++		const gchar *gconf_paths[] = {
++			"/apps/evolution/addressbook/sources",
++			"/apps/evolution/calendar/sources",
++			"/apps/evolution/tasks/sources",
++			"/apps/evolution/memos/sources",
++			NULL
++		};
++		gint ii;
++		GConfClient *gconf_client;
++		const gchar *source_uid = e_source_peek_uid (gpn->source);
++
++		gconf_client = gconf_client_get_default ();
++
++		for (ii = 0; gconf_paths[ii] && !group; ii++) {
++			ESource *sec_source;
++
++			source_list = e_source_list_new_for_gconf (gconf_client, gconf_paths[ii]);
++			if (!source_list)
++				continue;
++
++			sec_source = e_source_list_peek_source_by_uid (source_list, source_uid);
++			if (sec_source) {
++				GSList *giter;
++
++				for (giter = e_source_list_peek_groups (source_list); giter && !group; giter = giter->next) {
++					ESourceGroup *gadept = giter->data;
++
++					if (e_source_group_peek_source_by_uid (gadept, source_uid))
++						group = gadept;
++				}
++			}
++			
++			if (!group) {
++				g_object_unref (source_list);
++				source_list = NULL;
++			}
++		}
++
++		g_object_unref (gconf_client);
++	}
++
++	g_return_val_if_fail (group != NULL, FALSE);
++
++	user = e_source_group_get_property (group, "user");
++	if (!user)
++		user = e_source_group_get_property (group, "username");
++
++	host = e_source_group_get_property (group, "host");
++	domain = e_source_group_get_property (group, "domain");
++
++	g_return_val_if_fail (user != NULL, FALSE);
++	g_return_val_if_fail (host != NULL, FALSE);
++	g_return_val_if_fail (domain != NULL, FALSE);
++
++	gpn->profile_name = exchange_mapi_util_profile_name (user, domain, host, FALSE);
++
++	g_free (user);
++	g_free (host);
++	g_free (domain);
++
++	if (source_list)
++		g_object_unref (source_list);
++
++	if (gpn->flag)
++		e_flag_set (gpn->flag);
++
++	return FALSE;
++}
++
++gchar *
++exchange_mapi_util_get_profile_name_for_source (ESource *source)
++{
++	struct GetProfileNameForSourceData gpn;
++
++	g_return_val_if_fail (E_IS_SOURCE (source), NULL);
++
++	gpn.source = g_object_ref (source);
++	gpn.flag = NULL;
++	gpn.profile_name = NULL;
++
++	if (!g_main_context_is_owner (g_main_context_default ())) {
++		gpn.flag = e_flag_new ();
++
++		/* function called from other than main thread */
++		g_timeout_add (10, get_profile_name_for_source_in_main_thread_cb, &gpn);
++
++		e_flag_wait (gpn.flag);
++		e_flag_free (gpn.flag);
++	} else {
++		get_profile_name_for_source_in_main_thread_cb (&gpn);
++	}
++
++	g_object_unref (source);
++
++	return gpn.profile_name;
++}
++
+ /**
+  * Adds prop_ids to props array. props should be created within the given mem_ctx.
+  **/
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.h.profile-create-after-restore evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.h.profile-create-after-restore	2011-02-07 04:45:47.000000000 +0100
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-utils.h	2013-09-19 19:48:04.430841210 +0200
+@@ -24,6 +24,8 @@
+ #ifndef EXCHANGE_MAPI_UTILS_H
+ #define EXCHANGE_MAPI_UTILS_H 
+ 
++#include <libedataserver/e-source-group.h>
++#include <libedataserver/e-source.h>
+ #include "exchange-mapi-connection.h"
+ 
+ gchar *
+@@ -71,6 +73,7 @@ gchar *
+ exchange_crlf_to_lf (const gchar *in);
+ 
+ gchar *exchange_mapi_util_profile_name (const gchar *username, const gchar *domain, const gchar *hostname, gboolean migrate);
++gchar *exchange_mapi_util_get_profile_name_for_source (ESource *source);
+ 
+ gboolean exchange_mapi_utils_add_props_to_props_array (TALLOC_CTX *mem_ctx, struct SPropTagArray *props, const uint32_t *prop_ids, guint prop_ids_n_elems);
+ gboolean exchange_mapi_utils_add_named_ids_to_props_array (ExchangeMapiConnection *conn, mapi_id_t fid, TALLOC_CTX *mem_ctx, struct SPropTagArray *props, ResolveNamedIDsData *named_ids_list, guint named_ids_n_elems);

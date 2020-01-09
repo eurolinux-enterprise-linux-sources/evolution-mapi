@@ -9,11 +9,17 @@
 /* Define to 1 if you have the `bind_textdomain_codeset' function. */
 #undef HAVE_BIND_TEXTDOMAIN_CODESET
 
+/* libmapi provides correct RegisterNotification function */
+#undef HAVE_CORRECT_REGISTERNOTIFICATION
+
 /* Define to 1 if you have the `dcgettext' function. */
 #undef HAVE_DCGETTEXT
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* libmapi provides GetGALTableCount function */
+#undef HAVE_GETGALTABLECOUNT
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
@@ -27,8 +33,17 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
+/* libmapi provides cast_mapi_SPropValue with mem context parameter */
+#undef HAVE_MEMCTX_ON_CAST_MAPI_SPROPVALUE
+
+/* libmapi provides cast_SPropValue with mem context parameter */
+#undef HAVE_MEMCTX_ON_CAST_SPROPVALUE
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* libmapi provides PR_RECIPIENT_FLAGS */
+#undef HAVE_PR_RECIPIENT_FLAGS
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -51,6 +66,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* libmapi provides windows_to_utf8 function */
+#undef HAVE_WINDOWS_TO_UTF8
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
@@ -69,6 +87,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

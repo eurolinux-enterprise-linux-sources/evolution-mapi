@@ -1,0 +1,416 @@
+diff -up evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.shorten-delay-of-open evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c
+--- evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.shorten-delay-of-open	2013-10-16 15:41:37.694598113 +0200
++++ evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c	2013-10-16 15:41:37.718598113 +0200
+@@ -93,6 +93,8 @@ struct _ECalBackendMAPIPrivate {
+ 	icaltimezone		*default_zone;
+ 	gboolean		populating_cache; /* whether in populate_cache */
+ 	GMutex			*updating_mutex;
++	guint updating_deltas; /* guarded by 'priv->mutex', means 'get_deltas' is processing */
++
+ 
+ 	/* timeout handler for syncing sendoptions */
+ 	guint			sendoptions_sync_timeout;
+@@ -105,7 +107,20 @@ struct _ECalBackendMAPIPrivate {
+ 
+ #define CACHE_REFRESH_INTERVAL 600000
+ 
+-static GStaticMutex auth_mutex = G_STATIC_MUTEX_INIT;
++#define dbg_tmr(_todo, _backend, _str) G_STMT_START {									\
++	GTimer *tmr = NULL;												\
++	if (exchange_mapi_connection_util_can_debug ()) {								\
++		tmr = g_timer_new ();											\
++		printf ("%s: %p before %s\n", G_STRFUNC, _backend, _str);						\
++	}														\
++															\
++	_todo;														\
++															\
++	if (tmr) {													\
++		printf ("%s: %p after %s, took %f s\n", G_STRFUNC, _backend, _str, g_timer_elapsed (tmr, NULL));	\
++		g_timer_destroy (tmr);											\
++	}														\
++	} G_STMT_END
+ 
+ static void
+ mapi_error_to_edc_error (GError **perror, const GError *mapi_error, EDataCalCallStatus code, const gchar *context)
+@@ -702,7 +717,7 @@ mapi_cal_get_idlist (ExchangeMapiConnect
+  */
+ 
+ static gboolean
+-get_deltas (gpointer handle)
++get_deltas (gpointer handle, gboolean only_new_items)
+ {
+ 	ECalBackendMAPI *cbmapi;
+ 	ECalBackendMAPIPrivate *priv;
+@@ -836,6 +851,13 @@ get_deltas (gpointer handle)
+ 	/* handle deleted items here by going over the entire cache and
+ 	 * checking for deleted items.*/
+ 
++	if (only_new_items) {
++		/* early stop, when there was not requested to get full deltas, but
++		   only check for missing items in the local cache */
++		g_mutex_unlock (priv->updating_mutex);
++		return TRUE;
++	}
++
+ 	/* e_cal_backend_cache_get_keys returns a list of all the keys.
+ 	 * The items in the list are pointers to internal data,
+ 	 * so should not be freed, only the list should. */
+@@ -1019,13 +1041,16 @@ ecbm_get_object (ECalBackend *backend, E
+ 	/* search the object in the cache */
+ 	comp = e_cal_backend_store_get_component (priv->store, uid, rid);
+ 
+-	if (!comp) {
++	if (!comp && !priv->updating_deltas) {
++		priv->updating_deltas++;
++
+ 		/* the object is not in the backend store, double check that it's
+ 		 * also not on the server to prevent for a race condition where we
+ 		 * might otherwise mistakenly generate a new UID */
+ 		g_mutex_unlock (priv->mutex);
+-		get_deltas (cbmapi);
++		get_deltas (cbmapi, TRUE);
+ 		g_mutex_lock (priv->mutex);
++		priv->updating_deltas--;
+ 		comp = e_cal_backend_store_get_component (priv->store, uid, rid);
+ 	}
+ 
+@@ -1139,7 +1164,19 @@ delta_thread (gpointer data)
+ 	timeout.tv_usec = 0;
+ 
+ 	while (TRUE)	{
+-		gboolean succeeded = get_deltas (cbmapi);
++		gboolean succeeded;
++
++		g_mutex_lock (priv->mutex);
++		if (!priv->updating_deltas) {
++			priv->updating_deltas++;
++			g_mutex_unlock (priv->mutex);
++			dbg_tmr((succeeded = get_deltas (cbmapi, FALSE)), cbmapi, "get_deltas()");
++			g_mutex_lock (priv->mutex);
++			priv->updating_deltas--;
++		} else {
++			succeeded = TRUE;
++		}
++		g_mutex_unlock (priv->mutex);
+ 
+ 		g_mutex_lock (priv->dlock->mutex);
+ 
+@@ -1485,9 +1522,6 @@ ecbm_open (ECalBackend *backend, EDataCa
+ 	gboolean res;
+ 	uint32_t olFolder = 0;
+ 
+-	if (e_cal_backend_is_loaded (E_CAL_BACKEND (backend)))
+-		return /* Success */;
+-
+ 	cbmapi = E_CAL_BACKEND_MAPI (backend);
+ 	priv = cbmapi->priv;
+ 
+@@ -1500,6 +1534,11 @@ ecbm_open (ECalBackend *backend, EDataCa
+ 
+ 	g_mutex_lock (priv->mutex);
+ 
++	if (e_cal_backend_is_loaded (E_CAL_BACKEND (backend))) {
++		g_mutex_unlock (priv->mutex);
++		return /* Success */;
++	}
++
+ 	cbmapi->priv->read_only = FALSE;
+ 
+ 	switch (e_cal_backend_get_kind (E_CAL_BACKEND (cbmapi))) {
+@@ -1568,11 +1607,8 @@ ecbm_open (ECalBackend *backend, EDataCa
+ 	exchange_mapi_util_mapi_id_from_string (fid, &priv->fid);
+ 	priv->olFolder = olFolder;
+ 
+-	g_mutex_unlock (priv->mutex);
+-
+-	g_static_mutex_lock (&auth_mutex);
+ 	res = ecbm_authenticate (E_CAL_BACKEND (cbmapi), perror);
+-	g_static_mutex_unlock (&auth_mutex);
++	g_mutex_unlock (priv->mutex);
+ 
+ 	if (res)
+ 		ecbm_connect (cbmapi, perror);
+@@ -2023,7 +2059,16 @@ ecbm_modify_object (ECalBackend *backend
+ 		/* check if the object exists */
+ 		cache_comp = e_cal_backend_store_get_component (priv->store, uid, rid);
+ 		if (!cache_comp) {
+-			get_deltas (cbmapi);
++			g_mutex_lock (priv->mutex);
++			if (!priv->updating_deltas) {
++				priv->updating_deltas++;
++				g_mutex_unlock (priv->mutex);
++				dbg_tmr ((get_deltas (cbmapi, TRUE)), cbmapi, "get_deltas()");
++				g_mutex_lock (priv->mutex);
++				priv->updating_deltas--;
++			}
++			g_mutex_unlock (priv->mutex);
++
+ 			cache_comp = e_cal_backend_store_get_component (priv->store, uid, rid);
+ 		}
+ 
+@@ -3043,7 +3088,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gboolean read_only = TRUE;
+ 
+-			ecbm_is_read_only (backend, op->cal, &read_only, &error);
++			dbg_tmr ((ecbm_is_read_only (backend, op->cal, &read_only, &error)), backend, "OP_IS_READONLY");
+ 
+ 			e_data_cal_notify_read_only (op->cal, error, read_only);
+ 		}
+@@ -3052,7 +3097,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *address = NULL;
+ 
+-			ecbm_get_cal_address (backend, op->cal, &address, &error);
++			dbg_tmr ((ecbm_get_cal_address (backend, op->cal, &address, &error)), backend, "OP_GET_CAL_ADDRESS");
+ 
+ 			e_data_cal_notify_cal_address (op->cal, op->context, error, address);
+ 
+@@ -3063,7 +3108,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *address = NULL;
+ 
+-			ecbm_get_alarm_email_address (backend, op->cal, &address, &error);
++			dbg_tmr ((ecbm_get_alarm_email_address (backend, op->cal, &address, &error)), backend, "OP_GET_ALARM_EMAIL_ADDRESS");
+ 
+ 			e_data_cal_notify_alarm_email_address (op->cal, op->context, error, address);
+ 
+@@ -3074,7 +3119,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *attribute = NULL;
+ 
+-			ecbm_get_ldap_attribute (backend, op->cal, &attribute, &error);
++			dbg_tmr ((ecbm_get_ldap_attribute (backend, op->cal, &attribute, &error)), backend, "OP_GET_LDAP_ATTRIBUTE");
+ 
+ 			e_data_cal_notify_ldap_attribute (op->cal, op->context, error, attribute);
+ 
+@@ -3085,7 +3130,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *capabilities = NULL;
+ 
+-			ecbm_get_static_capabilities (backend, op->cal, &capabilities, &error);
++			dbg_tmr ((ecbm_get_static_capabilities (backend, op->cal, &capabilities, &error)), backend, "OP_GET_STATIC_CAPABILITIES");
+ 
+ 			e_data_cal_notify_static_capabilities (op->cal, op->context, error, capabilities);
+ 
+@@ -3096,7 +3141,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		OperationOpen *opo = (OperationOpen *) op;
+ 
+ 		if (!cancelled) {
+-			ecbm_open (backend, op->cal, opo->only_if_exists, opo->username, opo->password, &error);
++			dbg_tmr ((ecbm_open (backend, op->cal, opo->only_if_exists, opo->username, opo->password, &error)), backend, "OP_OPEN");
+ 
+ 			e_data_cal_notify_open (op->cal, op->context, error);
+ 		}
+@@ -3108,14 +3153,14 @@ ecbm_operation_cb (OperationBase *op, gb
+ 	} break;
+ 	case OP_REFRESH: {
+ 		if (!cancelled) {
+-			ecbm_refresh (backend, op->cal, &error);
++			dbg_tmr ((ecbm_refresh (backend, op->cal, &error)), backend, "OP_REFRESH");
+ 
+ 			e_data_cal_notify_refresh (op->cal, op->context, error);
+ 		}
+ 	} break;
+ 	case OP_REMOVE: {
+ 		if (!cancelled) {
+-			ecbm_remove (backend, op->cal, &error);
++			dbg_tmr ((ecbm_remove (backend, op->cal, &error)), backend, "OP_REMOVE");
+ 
+ 			e_data_cal_notify_remove (op->cal, op->context, error);
+ 		}
+@@ -3127,7 +3172,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *uid = NULL, *modified_calobj = (gchar *)calobj;
+ 
+-			ecbm_create_object (backend, op->cal, &modified_calobj, &uid, &error);
++			dbg_tmr ((ecbm_create_object (backend, op->cal, &modified_calobj, &uid, &error)), backend, "OP_CREATE_OBJECT");
+ 
+ 			e_data_cal_notify_object_created (op->cal, op->context, error, uid, modified_calobj);
+ 
+@@ -3147,7 +3192,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 			gchar *old_object = NULL;
+ 			gchar *new_object = NULL;
+ 
+-			ecbm_modify_object (backend, op->cal, opm->calobj, opm->mod, &old_object, &new_object, &error);
++			dbg_tmr ((ecbm_modify_object (backend, op->cal, opm->calobj, opm->mod, &old_object, &new_object, &error)), backend, "OP_MODIFY_OBJECT");
+ 
+ 			if (new_object)
+ 				e_data_cal_notify_object_modified (op->cal, op->context, error, old_object, new_object);
+@@ -3166,7 +3211,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *object = NULL, *old_object = NULL;
+ 
+-			ecbm_remove_object (backend, op->cal, opr->uid, opr->rid, opr->mod, &old_object, &object, &error);
++			dbg_tmr ((ecbm_remove_object (backend, op->cal, opr->uid, opr->rid, opr->mod, &old_object, &object, &error)), backend, "OP_REMOVE_OBJECT");
+ 
+ 			if (!error) {
+ 				ECalComponentId *id = g_new0 (ECalComponentId, 1);
+@@ -3196,7 +3241,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		const gchar *uid = ops2->str1, *auid = ops2->str2;
+ 
+ 		if (!cancelled) {
+-			ecbm_discard_alarm (backend, op->cal, uid, auid, &error);
++			dbg_tmr ((ecbm_discard_alarm (backend, op->cal, uid, auid, &error)), backend, "OP_DISCARD_ALARM");
+ 
+ 			e_data_cal_notify_alarm_discarded (op->cal, op->context, error);
+ 		}
+@@ -3209,7 +3254,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		const gchar *calobj = ops->str;
+ 
+ 		if (!cancelled) {
+-			ecbm_receive_objects (backend, op->cal, calobj, &error);
++			dbg_tmr ((ecbm_receive_objects (backend, op->cal, calobj, &error)), backend, "OP_RECEIVE_OBJECTS");
+ 
+ 			e_data_cal_notify_objects_received (op->cal, op->context, error);
+ 		}
+@@ -3224,7 +3269,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 			GList *users = NULL;
+ 			gchar *modified_calobj = NULL;
+ 
+-			ecbm_send_objects (backend, op->cal, calobj, &users, &modified_calobj, &error);
++			dbg_tmr ((ecbm_send_objects (backend, op->cal, calobj, &users, &modified_calobj, &error)), backend, "OP_SEND_OBJECTS");
+ 
+ 			e_data_cal_notify_objects_sent (op->cal, op->context, error, users, modified_calobj);
+ 
+@@ -3239,7 +3284,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *object = NULL;
+ 
+-			ecbm_get_default_object (backend, op->cal, &object, &error);
++			dbg_tmr ((ecbm_get_default_object (backend, op->cal, &object, &error)), backend, "OP_GET_DEFAULT_OBJECT");
+ 
+ 			e_data_cal_notify_default_object (op->cal, op->context, error, object);
+ 
+@@ -3253,7 +3298,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *object = NULL;
+ 
+-			ecbm_get_object (backend, op->cal, uid, rid, &object, &error);
++			dbg_tmr ((ecbm_get_object (backend, op->cal, uid, rid, &object, &error)), backend, "OP_GET_OBJECT");
+ 
+ 			e_data_cal_notify_object (op->cal, op->context, error, object);
+ 
+@@ -3270,7 +3315,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			GSList *list = NULL;
+ 
+-			ecbm_get_attachment_list (backend, op->cal, uid, rid, &list, &error);
++			dbg_tmr ((ecbm_get_attachment_list (backend, op->cal, uid, rid, &list, &error)), backend, "OP_GET_ATTACHMENT_LIST");
+ 
+ 			e_data_cal_notify_attachment_list (op->cal, op->context, error, list);
+ 
+@@ -3288,7 +3333,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			GList *objects = NULL;
+ 
+-			ecbm_get_object_list (backend, op->cal, sexp, &objects, &error);
++			dbg_tmr ((ecbm_get_object_list (backend, op->cal, sexp, &objects, &error)), backend, "OP_GET_OBJECT_LIST");
+ 
+ 			e_data_cal_notify_object_list (op->cal, op->context, error, objects);
+ 
+@@ -3305,7 +3350,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			gchar *object = NULL;
+ 
+-			ecbm_get_timezone (backend, op->cal, tzid, &object, &error);
++			dbg_tmr ((ecbm_get_timezone (backend, op->cal, tzid, &object, &error)), backend, "OP_GET_TIMEZONE");
+ 
+ 			if (!object && tzid) {
+ 				/* fallback if tzid contains only the location of timezone */
+@@ -3365,7 +3410,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		const gchar *tzobj = ops->str;
+ 
+ 		if (!cancelled) {
+-			ecbm_add_timezone (backend, op->cal, tzobj, &error);
++			dbg_tmr ((ecbm_add_timezone (backend, op->cal, tzobj, &error)), backend, "OP_ADD_TIMEZONE");
+ 
+ 			e_data_cal_notify_timezone_added (op->cal, op->context, error, tzobj);
+ 		}
+@@ -3377,7 +3422,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		const gchar *tz = ops->str;
+ 
+ 		if (!cancelled) {
+-			ecbm_set_default_zone (backend, op->cal, tz, &error);
++			dbg_tmr ((ecbm_set_default_zone (backend, op->cal, tz, &error)), backend, "OP_SET_DEFAULT_ZONE");
+ 
+ 			e_data_cal_notify_default_timezone_set (op->cal, op->context, error);
+ 		}
+@@ -3391,7 +3436,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			GList *adds = NULL, *modifies = NULL, *deletes = NULL;
+ 
+-			ecbm_get_changes (backend, op->cal, change_id, &adds, &modifies, &deletes, &error);
++			dbg_tmr ((ecbm_get_changes (backend, op->cal, change_id, &adds, &modifies, &deletes, &error)), backend, "OP_GET_CHANGES");
+ 
+ 			e_data_cal_notify_changes (op->cal, op->context, error, adds, modifies, deletes);
+ 
+@@ -3413,7 +3458,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		if (!cancelled) {
+ 			GList *freebusy = NULL;
+ 
+-			ecbm_get_free_busy (backend, op->cal, opgfb->users, opgfb->start, opgfb->end, &freebusy, &error);
++			dbg_tmr ((ecbm_get_free_busy (backend, op->cal, opgfb->users, opgfb->start, opgfb->end, &freebusy, &error)), backend, "OP_GET_FREE_BUSY");
+ 
+ 			e_data_cal_notify_free_busy (op->cal, op->context, error, freebusy);
+ 
+@@ -3428,7 +3473,7 @@ ecbm_operation_cb (OperationBase *op, gb
+ 		OperationStartQuery *opsq = (OperationStartQuery *) op;
+ 
+ 		if (!cancelled) {
+-			ecbm_start_query (backend, opsq->query);
++			dbg_tmr ((ecbm_start_query (backend, opsq->query)), backend, "OP_START_QUERY");
+ 			/* do not notify here, is should start its own thread */
+ 		}
+ 
+@@ -3901,6 +3946,7 @@ e_cal_backend_mapi_init (ECalBackendMAPI
+ 	priv->updating_mutex = g_mutex_new ();
+ 	priv->populating_cache = FALSE;
+ 	priv->op_queue = em_operation_queue_new ((EMOperationQueueFunc) ecbm_operation_cb, cbmapi);
++	priv->updating_deltas = 0;
+ 
+ 	cbmapi->priv = priv;
+ }
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.shorten-delay-of-open evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.shorten-delay-of-open	2013-10-16 15:41:37.710598113 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c	2013-10-16 15:41:37.716598113 +0200
+@@ -3683,6 +3683,18 @@ ema_global_unlock (void)
+ 	g_static_rec_mutex_unlock (&profile_mutex);
+ }
+ 
++gboolean
++exchange_mapi_connection_util_can_debug (void)
++{
++	static gint can_debug = -1;
++
++	if (can_debug == -1) {
++		can_debug = g_getenv ("EXCHANGEMAPI_DEBUG") ? 1 : 0;
++	}
++
++	return can_debug == 1;
++}
++
+ static struct mapi_session *
+ mapi_profile_load (const gchar *profname, const gchar *password, GError **perror)
+ {
+@@ -3695,7 +3707,7 @@ mapi_profile_load (const gchar *profname
+ 	g_static_rec_mutex_lock (&profile_mutex);
+ 
+ 	/* Initialize libexchangemapi logger*/
+-	if (g_getenv ("EXCHANGEMAPI_DEBUG")) {
++	if (exchange_mapi_connection_util_can_debug ()) {
+ 		g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, mapi_debug_logger, NULL);
+ 	} else
+ 		g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, mapi_debug_logger_muted, NULL);
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.h.shorten-delay-of-open evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.h.shorten-delay-of-open	2013-10-16 15:41:37.615598113 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.h	2013-10-16 15:41:37.717598113 +0200
+@@ -41,6 +41,8 @@
+ 
+ G_BEGIN_DECLS
+ 
++gboolean exchange_mapi_connection_util_can_debug (void);
++
+ GQuark e_mapi_error_quark (void);
+ #define E_MAPI_ERROR e_mapi_error_quark ()
+ 

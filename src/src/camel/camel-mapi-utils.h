@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with the program; if not, see <http://www.gnu.org/licenses/>  
+ * License along with the program; if not, see <http://www.gnu.org/licenses/>
  *
  *
  * Authors:
@@ -21,19 +21,20 @@
  *
  */
 
-#ifndef __CAMEL_MAPI_UTILS_H__
-#define __CAMEL_MAPI_UTILS_H__
+#ifndef CAMEL_MAPI_UTILS_H
+#define CAMEL_MAPI_UTILS_H
 
 G_BEGIN_DECLS
 
-MapiItem *
-camel_mapi_utils_mime_to_item (CamelMimeMessage *message, CamelAddress *from, 
-			       CamelAddress *recipients, CamelException *ex);
+#include <exchange-mapi-connection.h>
+#include <exchange-mapi-mail-utils.h>
+#include <camel/camel.h>
 
-gint
-camel_mapi_utils_create_item_build_props (struct SPropValue **value, 
-					  struct SPropTagArray *SPropTagArray,
-					  gpointer data);
+MailItem *
+camel_mapi_utils_mime_to_item (CamelMimeMessage *message, gint32 message_camel_flags, CamelAddress *from, GError **error);
+
+gboolean
+camel_mapi_utils_create_item_build_props (ExchangeMapiConnection *conn, mapi_id_t fid, TALLOC_CTX *mem_ctx, struct SPropValue **values, uint32_t *n_values, gpointer data);
 
 G_END_DECLS
 

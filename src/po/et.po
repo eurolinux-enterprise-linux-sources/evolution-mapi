@@ -1,23 +1,26 @@
 # Evolution MAPI eesti keele tõlge.
 # Estonian translation of Evolution MAPI.
 #
-# Copyright (C) 2009 The GNOME Project.
+# Copyright (C) 2009, 2010 The GNOME Project.
 # This file is distributed under the same license as the evolution-mapi package.
 #
-# Ivar Smolin <okul@linux.ee>, 2002, 2009.
+# Ivar Smolin <okul@linux.ee>, 2002, 2009, 2010.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: evolution-mapi master\n"
+"Project-Id-Version: evolution-mapi 2.32\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-mapi\n"
-"POT-Creation-Date: 2009-08-31 09:55+0000\n"
-"PO-Revision-Date: 2009-09-01 13:18+0300\n"
-"Last-Translator: Ivar Smolin <okul@linux.ee>\n"
+"POT-Creation-Date: 2010-09-19 19:48+0000\n"
+"PO-Revision-Date: 2010-09-18 21:31+0300\n"
+"Last-Translator: Mattias Põldaru <mahfiaz gmail com>\n"
 "Language-Team: Estonian <et@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+msgid "Global Address List"
+msgstr "Globaalne aadressiraamat"
 
 #, c-format
 msgid "Enter Password for %s@%s"
@@ -33,7 +36,7 @@ msgstr "Kasutajanime valimine"
 msgid "Full name"
 msgstr "Täisnimi"
 
-msgid "User name"
+msgid "Username"
 msgstr "Kasutajanimi"
 
 msgid ""
@@ -55,14 +58,30 @@ msgstr "_Domeeninimi:"
 msgid "_Authenticate"
 msgstr "_Autendi"
 
+msgid "_Use secure connection"
+msgstr "Kasuta _turvalist ühendust"
+
 msgid "Personal Folders"
 msgstr "Isiklikud kaustad"
 
 msgid "_Location:"
 msgstr "_Asukoht:"
 
-msgid "_Folder size"
-msgstr "Kausta _suurus"
+#, c-format
+msgid "Failed to create address book '%s': %s"
+msgstr "Tõrge aadressiraamatu '%s' loomisel: %s"
+
+#, c-format
+msgid "Failed to create address book '%s'"
+msgstr "Tõrge aadressiraamatu loomisel: %s"
+
+#, c-format
+msgid "Failed to create calendar '%s': %s"
+msgstr "Tõrge kalendri '%s' loomisel: %s"
+
+#, c-format
+msgid "Failed to create calendar '%s'"
+msgstr "Tõrge kalendri '%s' loomisel"
 
 msgid "Folder"
 msgstr "Kaust"
@@ -76,44 +95,99 @@ msgstr "Kausta suuruse andmeid pole võimalik vastu võtta"
 msgid "Folder Size"
 msgstr "Kausta suurus"
 
-msgid "Fetching folder list ..."
-msgstr "Kaustade nimekirja vastuvõtmine..."
+msgid "Fetching folder list…"
+msgstr "Kaustade nimekirja vastuvõtmine…"
 
 #. Miscellaneous settings
 msgid "Miscellaneous"
-msgstr ""
+msgstr "Muu"
 
 msgid "View the size of all Exchange folders"
 msgstr "Kõigi Exchange kaustade suuruste vaatamine"
 
-msgid "Folders Size"
-msgstr "Kausta suurus"
-
 msgid "Exchange Settings"
 msgstr "Exchange sätted"
 
-msgid "Authentication failed"
-msgstr "Tõrge autentimisel"
+msgid "Folder size"
+msgstr "Kausta suurus"
+
+msgid "Cannot connect"
+msgstr "Ühendumine pole võimalik"
+
+msgid "Searching"
+msgstr "Otsimine"
+
+msgid "Unknown error"
+msgstr "Tundmatu viga"
+
+msgid "Failed to remove public folder"
+msgstr "Tõrge avaliku kausta eemaldamisel"
+
+msgid "Failed to create item on a server"
+msgstr "Tõrge kirje loomisel serverisse"
+
+msgid "Failed to modify item on a server"
+msgstr "Tõrge serveris oleva kirje muutmisel"
+
+msgid "Failed to fetch items from a server"
+msgstr "Viga serverist kirjete hankimisel"
+
+#. Translators : This is used to cache the downloaded contacts from a server.
+#. %d is an index of the contact.
+#, c-format
+msgid "Caching contact %d"
+msgstr "Kontakti %d puhverdamine"
+
+#. Translators : This is used to cache the downloaded contacts from a server.
+#. The first %d is an index of the contact,
+#. the second %d is total count of conacts on the server.
+#, c-format
+msgid "Caching contact %d/%d"
+msgstr "Kontakti %d/%d puhverdamine"
+
+#. Translators : This is used to cache the downloaded contacts from GAL.
+#. %d is an index of the GAL entry.
+#, c-format
+msgid "Caching GAL contact %d"
+msgstr "GAL-kontakti %d puhverdamine"
+
+#. Translators : This is used to cache the downloaded contacts from GAL.
+#. The first %d is an index of the GAL entry,
+#. the second %d is total count of entries in GAL.
+#, c-format
+msgid "Caching GAL contact %d/%d"
+msgstr "GAL-kontakti %d/%d puhverdamine"
+
+msgid "Failed to fetch GAL entries"
+msgstr "Tõrge GAL-kirjete vastuvõtmisel"
 
 #. To translators: This message is displayed on the status bar when calendar/tasks/memo items are being fetched from the server.
 #, c-format
 msgid "Loading items in folder %s"
 msgstr "Kausta \"%s\" kirjete laadimine"
 
-#. FIXME: String : We need to restart evolution-data-server
-msgid "Error fetching changes from the server."
-msgstr "Viga serverist muudatuste hankimisel."
+#, c-format
+msgid "Failed to fetch changes from a server: %s"
+msgstr "Tõrge serverist muudatuste hankimisel: %s"
 
-msgid "Could not create cache file"
-msgstr "Puhverfaili pole võimalik luua."
+msgid "Failed to fetch changes from a server"
+msgstr "Tõrge serverist muudatuste hankimisel"
 
 msgid "Could not create thread for populating cache"
-msgstr ""
+msgstr "Puhvri paljundamiseks pole võimalik lõime luua"
+
+msgid "Could not create cache file"
+msgstr "Puhverfaili pole võimalik luua"
 
 msgid ""
 "Support for modifying single instances of a recurring appointment is not yet "
 "implemented. No change was made to the appointment on the server."
 msgstr ""
+"Korduva sündmuse üksiku esinemise muutmine pole veel teostatud. Serveris "
+"olevat sündmust ei muudetud."
+
+msgid "Failed to get Free/Busy data"
+msgstr "Tõrge vaba/hõivatud andmete hankimisel"
 
 #, c-format
 msgid "Updating local summary cache for new messages in %s"
@@ -121,50 +195,57 @@ msgstr "Kausta %s uute sõnumite andmete lisamine kohalikku kokkuvõttepuhvrisse
 
 #, c-format
 msgid "Retrieving message IDs from server for %s"
-msgstr ""
+msgstr "%s jaoks serverist sõnumi ID vastuvõtmine"
 
 #, c-format
 msgid "Removing deleted messages from cache in %s"
 msgstr "Kaustast %s kustutatud sõnumite andmete eemaldamine puhvrist"
 
+#. TODO : Check for online state
+#, c-format
+msgid "Fetching summary information for new messages in %s"
+msgstr "Kaustas %s olevate uute sõnumite kohta andmete hankimine"
+
+#, c-format
 msgid "This message is not available in offline mode."
 msgstr "See sõnum pole võrguvabas režiimis saadaval."
 
 #, c-format
-msgid "Fetching summary information for new messages in %s"
-msgstr "Kaustas %s olevate uute sõnumite kohta andmete hankimine"
+msgid "Fetching items failed: %s"
+msgstr "Tõrge kirjete hankimisel: %s"
 
 msgid "Fetching items failed"
 msgstr "Tõrge kirjete hankimisel"
 
 #, c-format
-msgid ""
-"Cannot get message: %s\n"
-"  %s"
-msgstr ""
-"Sõnumit pole võimalik hankida: %s\n"
-"  %s"
+msgid "Cannot get message %s: %s"
+msgstr "Sõnumit %s pole võimalik hankida: %s"
 
 msgid "No such message"
 msgstr "Sellist sõnumit ei ole"
 
-msgid "Message fetching cancelled by user."
-msgstr "Sõnumi vastuvõtmine katkestati kasutaja poolt."
+#, c-format
+msgid "Could not get message: %s"
+msgstr "Sõnumit pole võimalik hankida: %s"
 
 #, c-format
-msgid "Cannot get message %s: %s"
-msgstr "Sõnumit %s pole võimalik hankida: %s"
-
 msgid "Could not get message"
 msgstr "Sõnumit pole võimalik hankida"
+
+#, c-format
+msgid "Failed to empty Trash: %s"
+msgstr "Tõrge prügikasti tühjendamisel: %s"
+
+msgid "Failed to empty Trash"
+msgstr "Tõrge prügikasti tühjendamisel"
 
 #, c-format
 msgid "Cannot append message to folder '%s'"
 msgstr "Sõnumit pole võimalik kausta `%s' lisada"
 
 #, c-format
-msgid "Offline. '%s'"
-msgstr "Ühendamata. '%s'"
+msgid "Offline."
+msgstr "Ühendamata."
 
 #, c-format
 msgid "Could not load summary for %s"
@@ -174,47 +255,43 @@ msgid "Checking for new mail"
 msgstr "Uute sõnumite kontrollimine"
 
 msgid "C_heck for new messages in all folders"
-msgstr ""
+msgstr "Uute sõnumite kontrollimine _kõikides kaustades"
 
 msgid "Options"
 msgstr "Valikud"
 
 msgid "Automatically synchroni_ze account locally"
-msgstr ""
+msgstr "Konto automaatne kohalik sünkroniseerimine"
 
 #. i18n: copy from evolution:camel-imap-provider.c
 msgid "_Apply filters to new messages in Inbox on this server"
-msgstr ""
+msgstr "_Filtrite automaatne rakendamine selle serveri saabuva posti kaustale"
 
 msgid "Check new messages for _Junk contents"
-msgstr ""
+msgstr "Uute sõnumite seast otsitakse _rämpsposti"
 
 msgid "Only check for Junk messag_es in the Inbox folder"
-msgstr ""
+msgstr "Rämpsposti otsitakse ainult _saabuvate kirjade kaustast"
 
-msgid "For accessing Microsoft Exchange / OpenChange servers using MAPI"
+msgid "For accessing Microsoft Exchange/OpenChange servers using MAPI"
 msgstr "MAPI kaudu Microsoft Exchange / OpenChange serveritele ligipääsuks"
 
 msgid "Password"
 msgstr "Parool"
 
 msgid ""
-"This option will connect to the Openchange server using a plaintext password."
+"This option will connect to the OpenChange server using a plaintext password."
 msgstr ""
-"See valik ühendab Openchange serveriga, kasutades avatekstilist parooli."
+"See valik ühendab OpenChange serveriga, kasutades avatekstilist parooli."
 
-msgid "Favorites"
-msgstr "Lemmikud"
-
-msgid "All Public Folders"
-msgstr "Kõik avalikud kaustad"
-
+#. Translators: The %s is replaced with a server's host name
 #, c-format
 msgid "Exchange MAPI server %s"
 msgstr "Exchange MAPI server %s"
 
 #. To translators : Example string : Exchange MAPI service for
 #. _username_ on _server host name__
+#. Translators: The first %s is replaced with a user name, the second with a server's host name
 #, c-format
 msgid "Exchange MAPI service for %s on %s"
 msgstr "Exchange MAPI-teenus kasutajale %s hostil %s"
@@ -227,35 +304,125 @@ msgstr "Exchange MAPI-teenus kasutajale %s hostil %s"
 msgid "%s Please enter the MAPI password for %s@%s"
 msgstr "%s Palun sisesta konto %s@%s MAPI-parool"
 
+#, c-format
 msgid "You did not enter a password."
 msgstr "Sa ei sisestanud parooli."
 
 #, c-format
-msgid "Unable to authenticate to Exchange MAPI server."
-msgstr "Exchange MAPI-serverisse pole võimalik autentida."
+msgid "Unable to authenticate to Exchange MAPI server: %s"
+msgstr "Exchange MAPI-serverisse pole võimalik autentida: %s"
 
+msgid "Unable to authenticate to Exchange MAPI server"
+msgstr "Exchange MAPI-serverisse pole võimalik autentida"
+
+#, c-format
 msgid "Cannot create MAPI folders in offline mode."
 msgstr "MAPI-kaustu pole võimalik võrguvabas režiimis luua."
 
 #, c-format
-msgid "Cannot create new folder `%s'"
-msgstr "Uut kausta `%s' pole võimalik luua"
+msgid "Cannot create new folder '%s'"
+msgstr "Uut kausta '%s' pole võimalik luua"
 
 #, c-format
-msgid "Cannot rename MAPI folder `%s'. Folder does not exist."
-msgstr "MAPI-kausta `%s' nime pole võimalik muuta. Kausta pole olemas."
+msgid "Authentication failed"
+msgstr "Tõrge autentimisel"
 
 #, c-format
-msgid "Cannot rename MAPI default folder `%s' to `%s'."
-msgstr "Vaikimisi MAPI-kaustale `%s' pole võimalik uut nime `%s' määrata"
+msgid "Cannot create folder '%s': %s"
+msgstr "Kausta '%s' pole võimalik luua: %s"
 
 #, c-format
-msgid "Cannot rename MAPI folder `%s' to `%s'"
-msgstr "MAPI-kaustale `%s' pole võimalik uut nime `%s' määrata"
+msgid "Cannot create folder '%s'"
+msgstr "Kausta '%s' pole võimalik luua"
 
+#, c-format
+msgid "Cannot remove folder '%s': %s"
+msgstr "Kausta '%s' pole võimalik eemaldada: %s"
+
+#, c-format
+msgid "Cannot remove folder '%s'"
+msgstr "Kausta '%s' pole võimalik eemaldada"
+
+#, c-format
+msgid "Cannot rename MAPI folder '%s'. Folder does not exist."
+msgstr "MAPI-kausta '%s' nime pole võimalik muuta. Kausta pole olemas."
+
+#, c-format
+msgid "Cannot rename MAPI default folder '%s' to '%s'."
+msgstr "Vaikimisi MAPI-kaustale '%s' pole võimalik uut nime '%s' määrata."
+
+#. Translators: '%s to %s' is current name of the folder and new name of the folder.
+#, c-format
+msgid "Cannot rename MAPI folder '%s' to '%s'"
+msgstr "MAPI-kaustale '%s' pole võimalik uut nime '%s' määrata"
+
+#. Translators: '%s to %s' is current name of the folder and new name of the folder.
+#. The last '%s' is a detailed error message.
+#, c-format
+msgid "Cannot rename MAPI folder '%s' to '%s': %s"
+msgstr "MAPI-kaustale '%s' pole võimalik uut nime '%s' määrata: %s"
+
+#, c-format
 msgid "Folder list not available in offline mode."
 msgstr "Kaustade nimekiri pole võrguvabas režiimis saadaval."
 
-#. Fixme : Set a better error message. Would be helful in troubleshooting.
+#, c-format
 msgid "Could not send message."
 msgstr "Sõnumit pole võimalik saata."
+
+#, c-format
+msgid "Could not send message: %s"
+msgstr "Sõnumit pole võimalik saata: %s"
+
+msgid "Failed to login into the server"
+msgstr "Tõrge serverisse sisselogimisel"
+
+msgid "Cannot create more sessions, session limit was reached"
+msgstr ""
+"Rohkem seansse pole võimalik luua, kuna sellega ületatakse suurima seansside "
+"arvu piirang"
+
+msgid "User cancelled operation"
+msgstr "Kasutaja tühistas toimingu"
+
+msgid "Unable to abort"
+msgstr "Katkestamine pole võimalik"
+
+msgid "Network error"
+msgstr "Võrgu viga"
+
+msgid "Disk error"
+msgstr "Ketta viga"
+
+msgid "Password change required"
+msgstr "Nõutakse parooli vahetamist"
+
+msgid "Password expired"
+msgstr "Parool on aegunud"
+
+msgid "Invalid workstation account"
+msgstr "Vigane tööjaamakonto"
+
+msgid "Invalid access time"
+msgstr "Vigane ligipääsuaeg"
+
+msgid "Account is disabled"
+msgstr "Konto on keelatud"
+
+msgid "End of session"
+msgstr "Seansi lõpp"
+
+#, c-format
+msgid "MAPI error %s (0x%x) occurred"
+msgstr "Esines MAPI viga %s (0x%x)"
+
+#. Translators: The first '%s' is replaced with an error context,
+#. aka where the error occurred, the second '%s' is replaced with
+#. the error message.
+#, c-format
+msgctxt "EXCHANGEMAPI_ERROR"
+msgid "%s: %s"
+msgstr "%s: %s"
+
+msgid "All Public Folders"
+msgstr "Kõik avalikud kaustad"

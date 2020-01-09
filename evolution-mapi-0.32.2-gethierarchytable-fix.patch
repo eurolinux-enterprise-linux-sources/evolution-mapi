@@ -1,0 +1,12 @@
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.gethierarchytable-fix evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c.gethierarchytable-fix	2011-05-02 07:42:39.126436054 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-connection.c	2011-05-02 07:42:54.658418011 +0200
+@@ -2961,7 +2961,7 @@ get_child_folders (TALLOC_CTX *mem_ctx, 
+ 	}
+ 
+ 	/* Get the hierarchy table */
+-	ms = GetHierarchyTable (&obj_folder, &obj_table, TableFlags_Depth | TableFlags_NoNotifications | TableFlags_UseUnicode, &row_count);
++	ms = GetHierarchyTable (&obj_folder, &obj_table, TableFlags_Depth | TableFlags_NoNotifications, &row_count);
+ 	if (ms != MAPI_E_SUCCESS) {
+ 		make_mapi_error (perror, "GetHierarchyTable", ms);
+ 		result = FALSE;

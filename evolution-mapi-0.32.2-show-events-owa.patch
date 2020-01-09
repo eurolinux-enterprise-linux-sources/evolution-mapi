@@ -1,0 +1,2443 @@
+diff -up evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.show-events-owa evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c
+--- evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c.show-events-owa	2013-10-16 17:42:37.270591825 +0200
++++ evolution-mapi-0.32.2/src/calendar/e-cal-backend-mapi.c	2013-10-16 17:42:37.281591825 +0200
+@@ -420,6 +420,7 @@ mapi_cal_get_changes_cb (FetchItemsCallb
+ 	GSList *streams = item_data->streams;
+ 	GSList *recipients = item_data->recipients;
+ 	GSList *attachments = item_data->attachments;
++	GSList *detached = NULL, *d_i = NULL;
+ 	ECalBackendMAPI *cbmapi	= data;
+ 	ECalBackendMAPIPrivate *priv = cbmapi->priv;
+ 	icalcomponent_kind kind;
+@@ -448,22 +449,29 @@ mapi_cal_get_changes_cb (FetchItemsCallb
+ 	cache_comp = e_cal_backend_store_get_component (priv->store, tmp, NULL);
+ 
+ 	if (cache_comp == NULL) {
+-		ECalComponent *comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, kind, tmp, array,
++		ECalComponent *comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, item_data->fid, kind, tmp, array,
+ 									streams, recipients, attachments,
+-									cache_dir, priv->default_zone, FALSE);
++									cache_dir, priv->default_zone, FALSE, &detached);
+ 
+-		if (E_IS_CAL_COMPONENT (comp)) {
+-			gchar *comp_str;
++		detached = g_slist_prepend (detached, comp);
+ 
+-			e_cal_component_commit_sequence (comp);
+-			comp_str = e_cal_component_get_as_string (comp);
++		for (d_i = detached; d_i; d_i = g_slist_next (d_i)) {
++			comp = d_i->data;
+ 
+-			put_component_to_store (cbmapi, comp);
+-			e_cal_backend_notify_object_created (E_CAL_BACKEND (cbmapi), (const gchar *) comp_str);
++			if (E_IS_CAL_COMPONENT (comp)) {
++				gchar *comp_str;
+ 
+-			g_free (comp_str);
++				e_cal_component_commit_sequence (comp);
++				put_component_to_store (cbmapi, comp);
++
++				comp_str = e_cal_component_get_as_string (comp);
++				e_cal_backend_notify_object_created (E_CAL_BACKEND (cbmapi), comp_str);
++				g_free (comp_str);
++			}
++
++			g_object_unref (comp);
+ 		}
+-		g_object_unref (comp);
++		g_slist_free (detached);
+ 	} else {
+ 		struct timeval t;
+ 
+@@ -481,9 +489,9 @@ mapi_cal_get_changes_cb (FetchItemsCallb
+ 				e_cal_component_commit_sequence (cache_comp);
+ 				cache_comp_str = e_cal_component_get_as_string (cache_comp);
+ 
+-				comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, kind, tmp, array,
++				comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, item_data->fid, kind, tmp, array,
+ 									streams, recipients, attachments,
+-									cache_dir, priv->default_zone, FALSE);
++									cache_dir, priv->default_zone, FALSE, NULL);
+ 
+ 				e_cal_component_commit_sequence (comp);
+ 				modif_comp_str = e_cal_component_get_as_string (comp);
+@@ -1209,6 +1217,7 @@ mapi_cal_cache_create_cb (FetchItemsCall
+ 	GSList *streams = item_data->streams;
+ 	GSList *recipients = item_data->recipients;
+ 	GSList *attachments = item_data->attachments;
++	GSList *detached = NULL, *d_i = NULL;
+ 	ECalBackendMAPI *cbmapi	= E_CAL_BACKEND_MAPI (data);
+ 	ECalBackendMAPIPrivate *priv = cbmapi->priv;
+ 	icalcomponent_kind kind;
+@@ -1242,20 +1251,29 @@ mapi_cal_cache_create_cb (FetchItemsCall
+ 	}
+ 
+ 	tmp = exchange_mapi_util_mapi_id_to_string (mid);
+-	comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, kind, tmp, properties,
++	comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, item_data->fid, kind, tmp, properties,
+ 							streams, recipients, attachments,
+-							cache_dir, priv->default_zone, FALSE);
++							cache_dir, priv->default_zone, FALSE, &detached);
+ 	g_free (tmp);
+ 
+-	if (E_IS_CAL_COMPONENT (comp)) {
+-		gchar *comp_str;
+-		e_cal_component_commit_sequence (comp);
+-		comp_str = e_cal_component_get_as_string (comp);
+-		e_cal_backend_notify_object_created (E_CAL_BACKEND (cbmapi), (const gchar *) comp_str);
+-		g_free (comp_str);
+-		put_component_to_store (cbmapi, comp);
++	detached = g_slist_prepend (detached, comp);
++	for (d_i = detached; d_i; d_i = g_slist_next (d_i)) {
++		comp = d_i->data;
++
++		if (E_IS_CAL_COMPONENT (comp)) {
++			gchar *comp_str;
++
++			e_cal_component_commit_sequence (comp);
++			put_component_to_store (cbmapi, comp);
++
++			comp_str = e_cal_component_get_as_string (comp);
++			e_cal_backend_notify_object_created (E_CAL_BACKEND (cbmapi), comp_str);
++			g_free (comp_str);
++		}
++
+ 		g_object_unref (comp);
+ 	}
++	g_slist_free (detached);
+ 
+ 	exchange_mapi_util_free_stream_list (&streams);
+ 	exchange_mapi_util_free_recipient_list (&recipients);
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c.show-events-owa evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c.show-events-owa	2013-10-16 17:42:37.187591825 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c	2013-10-16 17:42:37.284591825 +0200
+@@ -27,6 +27,7 @@
+ 
+ #define d(x)
+ #include "exchange-mapi-cal-recur-utils.h"
++#include <libecal/e-cal-util.h>
+ 
+ /* Reader/Writer versions */
+ #define READER_VERSION	0x3004
+@@ -34,48 +35,528 @@
+ #define READER_VERSION2 0x3006
+ #define WRITER_VERSION2 0x3009
+ 
+-#if 0
+-struct ChangeHighlight {
+-	uint32_t Size;
+-	uint32_t Value;
+-	uint32_t Reserved;
++/* Override flags defining what fields might be found in ExceptionInfo */
++#define ARO_SUBJECT 0x0001
++#define ARO_MEETINGTYPE 0x0002
++#define ARO_REMINDERDELTA 0x0004
++#define ARO_REMINDER 0x0008
++#define ARO_LOCATION 0x0010
++#define ARO_BUSYSTATUS 0x0020
++#define ARO_ATTACHMENT 0x0040
++#define ARO_SUBTYPE 0x0080
++#define ARO_APPTCOLOR 0x0100
++#define ARO_EXCEPTIONAL_BODY 0x0200
++
++/* Serialization helper: append len bytes from var to arr. */
++#define GBA_APPEND(a, v, l) g_byte_array_append ((a), (guint8*)(v), (l))
++
++/* Serialization helper: append the value of the variable to arr. */
++#define GBA_APPEND_LVAL(a, v) GBA_APPEND ((a), (&v), (sizeof (v)))
++
++/* Unserialization helper: read len bytes into buff from ba at offset off. */
++#define GBA_MEMCPY_OFFSET(arr, off, buf, blen) \
++	G_STMT_START { \
++		g_return_val_if_fail ((off >= 0 && arr->len - off >= blen), FALSE); \
++		memcpy (buf, arr->data + off, blen); \
++		off += blen; \
++	} G_STMT_END
++
++/* Unserialization helper: dereference and increment pointer. */
++#define GBA_DEREF_OFFSET(arr, off, lval, valtype) \
++	G_STMT_START { \
++		g_return_val_if_fail ((off >= 0 && arr->len - off >= sizeof (valtype)), FALSE); \
++		lval = *((valtype*)(arr->data+off)); \
++		off += sizeof (valtype); \
++	} G_STMT_END
++
++/** MS-OXOCAL 2.2.1.44.3 */
++struct ema_ChangeHighlight {
++	guint32 ChangeHighlightSize;
++	guint32 ChangeHighlightValue;
++	void *Reserved;
+ };
+ 
+-struct ExtendedException {
+-	struct ChangeHighlight ch;
+-	uint32_t ReservedEE1Size;
+-	uint32_t ReservedEE1;
+-	uint32_t StartDateTime;
+-	uint32_t EndDateTime;
+-	uint32_t OrigStartDate;
+-	uint16_t WideCharSubjectLength;
++/** MS-OXOCAL 2.2.1.44.4 */
++struct ema_ExtendedException {
++	struct ema_ChangeHighlight ChangeHighlight;
++	guint32 ReservedBlockEE1Size;
++	void *ReservedBlockEE1;
++	guint32 StartDateTime;
++	guint32 EndDateTime;
++	guint32 OriginalStartDate;
++	guint16 WideCharSubjectLength;
+ 	gchar *WideCharSubject;
+-	uint16_t WideCharLocationLength;
++	guint16 WideCharLocationLength;
+ 	gchar *WideCharLocation;
+-	uint32_t ReservedEE2Size;
+-	uint32_t ReservedEE2;
++	guint32 ReservedBlockEE2Size;
++	void *ReservedBlockEE2;
+ };
+ 
+-struct ExceptionInfo {
+-	uint32_t StartDateTime;
+-	uint32_t EndDateTime;
+-	uint32_t OrigStartDate;
+-	uint16_t OverrideFlags;
+-	uint16_t SubjectLength;
+-	uint16_t SubjectLength2;
++/** MS-OXOCAL 2.2.1.44.2 */
++struct ema_ExceptionInfo {
++	guint32 StartDateTime;
++	guint32 EndDateTime;
++	guint32 OriginalStartDate;
++	guint16 OverrideFlags;
++	guint16 SubjectLength;
++	guint16 SubjectLength2;
+ 	gchar *Subject;
+-	uint32_t MeetingType;
+-	uint32_t ReminderDelta;
+-	uint32_t ReminderSet;
+-	uint16_t LocationLength;
+-	uint16_t LocationLength2;
++	guint32 MeetingType;
++	guint32 ReminderDelta;
++	guint32 ReminderSet;
++	guint16 LocationLength;
++	guint16 LocationLength2;
+ 	gchar *Location;
+-	uint32_t BusyStatus;
+-	uint32_t Attachment;
+-	uint32_t SubType;
+-	uint32_t AppointmentColor;
++	guint32 BusyStatus;
++	guint32 Attachment;
++	guint32 SubType;
++	guint32 AppointmentColor;
+ };
+-#endif
++
++/** MS-OXOCAL 2.2.1.44.1 */
++struct ema_RecurrencePattern {
++	guint16 ReaderVersion;
++	guint16 WriterVersion;
++	guint16 RecurFrequency;
++	guint16 PatternType;
++	guint16 CalendarType;
++	guint32 FirstDateTime;
++	guint32 Period;
++	guint32 SlidingFlag;
++	guint32 PatternTypeSpecific;
++	guint32 N;
++	guint32 EndType;
++	guint32 OccurrenceCount;
++	guint32 FirstDOW;
++	guint32 DeletedInstanceCount;
++	guint32 *DeletedInstanceDates;
++	guint32 ModifiedInstanceCount;
++	guint32 *ModifiedInstanceDates;
++	guint32 StartDate;
++	guint32 EndDate;
++};
++
++/** MS-OXOCAL 2.2.1.44.5 */
++struct ema_AppointmentRecurrencePattern {
++	struct ema_RecurrencePattern RecurrencePattern;
++	guint32 ReaderVersion2;
++	guint32 WriterVersion2;
++	guint32 StartTimeOffset;
++	guint32 EndTimeOffset;
++	guint16 ExceptionCount;
++	struct ema_ExceptionInfo *ExceptionInfo;
++	guint32 ReservedBlock1Size;
++	void *ReservedBlock1;
++	struct ema_ExtendedException *ExtendedException;
++	guint32 ReservedBlock2Size;
++	void *ReservedBlock2;
++};
++
++/** Serialize a RecurrencePattern to the end of an existing GByteArray */
++static void
++rp_to_gba(const struct ema_RecurrencePattern *rp, GByteArray *gba)
++{
++	GBA_APPEND_LVAL (gba, rp->ReaderVersion);
++	GBA_APPEND_LVAL (gba, rp->WriterVersion);
++	GBA_APPEND_LVAL (gba, rp->RecurFrequency);
++	GBA_APPEND_LVAL (gba, rp->PatternType);
++	GBA_APPEND_LVAL (gba, rp->CalendarType);
++	GBA_APPEND_LVAL (gba, rp->FirstDateTime);
++	GBA_APPEND_LVAL (gba, rp->Period);
++	GBA_APPEND_LVAL (gba, rp->SlidingFlag);
++
++	if (rp->PatternType != PatternType_Day) {
++		GBA_APPEND_LVAL (gba, rp->PatternTypeSpecific);
++		if (rp->PatternType == PatternType_MonthNth) {
++			GBA_APPEND_LVAL (gba, rp->N);
++		}
++	}
++
++	GBA_APPEND_LVAL (gba, rp->EndType);
++	GBA_APPEND_LVAL (gba, rp->OccurrenceCount);
++	GBA_APPEND_LVAL (gba, rp->FirstDOW);
++	GBA_APPEND_LVAL (gba, rp->DeletedInstanceCount);
++	if ( rp->DeletedInstanceCount ) {
++		GBA_APPEND (gba, rp->DeletedInstanceDates,
++		            sizeof (guint32) * rp->DeletedInstanceCount);
++	}
++	GBA_APPEND_LVAL(gba, rp->ModifiedInstanceCount);
++	if ( rp->ModifiedInstanceCount ) {
++		GBA_APPEND (gba, rp->ModifiedInstanceDates,
++		            sizeof (guint32) * rp->ModifiedInstanceCount);
++	}
++	GBA_APPEND_LVAL (gba, rp->StartDate);
++	GBA_APPEND_LVAL (gba, rp->EndDate);
++}
++
++static void
++ei_to_gba(const struct ema_ExceptionInfo *ei, GByteArray *gba)
++{
++	GBA_APPEND_LVAL (gba, ei->StartDateTime);
++	GBA_APPEND_LVAL (gba, ei->EndDateTime);
++	GBA_APPEND_LVAL (gba, ei->OriginalStartDate);
++	GBA_APPEND_LVAL (gba, ei->OverrideFlags);
++	if (ei->OverrideFlags&ARO_SUBJECT) {
++		GBA_APPEND_LVAL (gba, ei->SubjectLength);
++		GBA_APPEND_LVAL (gba, ei->SubjectLength2);
++		GBA_APPEND (gba, ei->Subject, strlen (ei->Subject));
++	}
++	if (ei->OverrideFlags&ARO_MEETINGTYPE) {
++		GBA_APPEND_LVAL (gba, ei->MeetingType);
++	}
++	if (ei->OverrideFlags&ARO_REMINDERDELTA) {
++		GBA_APPEND_LVAL (gba, ei->ReminderDelta);
++	}
++	if (ei->OverrideFlags & ARO_REMINDER) {
++		GBA_APPEND_LVAL (gba, ei->ReminderSet);
++	}
++	if (ei->OverrideFlags&ARO_LOCATION) {
++		GBA_APPEND_LVAL (gba, ei->LocationLength);
++		GBA_APPEND_LVAL (gba, ei->LocationLength2);
++		GBA_APPEND (gba, ei->Location, strlen (ei->Location));
++	}
++	if (ei->OverrideFlags&ARO_BUSYSTATUS) {
++		GBA_APPEND_LVAL (gba, ei->BusyStatus);
++	}
++	if (ei->OverrideFlags&ARO_ATTACHMENT) {
++		GBA_APPEND_LVAL (gba, ei->Attachment);
++	}
++	if (ei->OverrideFlags&ARO_SUBTYPE) {
++		GBA_APPEND_LVAL (gba, ei->SubType);
++	}
++	if (ei->OverrideFlags&ARO_APPTCOLOR) {
++		GBA_APPEND_LVAL (gba, ei->AppointmentColor);
++	}
++}
++
++static void
++ee_to_gba(const struct ema_ExtendedException *ee,
++          const struct ema_AppointmentRecurrencePattern *arp, int exnum,
++          GByteArray *gba)
++{
++	if (arp->WriterVersion2 >= 0x3009) {
++		GBA_APPEND_LVAL (gba, ee->ChangeHighlight.ChangeHighlightSize);
++		if (ee->ChangeHighlight.ChangeHighlightSize >= sizeof (guint32)) {
++			GBA_APPEND_LVAL (gba, ee->ChangeHighlight.ChangeHighlightValue);
++			if (ee->ChangeHighlight.ChangeHighlightSize > sizeof (guint32)) {
++				GBA_APPEND (gba, ee->ChangeHighlight.Reserved,
++				            ee->ChangeHighlight.ChangeHighlightSize - sizeof (guint32));
++			}
++		}
++	}
++
++	GBA_APPEND_LVAL (gba, ee->ReservedBlockEE1Size);
++	if (ee->ReservedBlockEE1Size) {
++		GBA_APPEND (gba, ee->ReservedBlockEE1, ee->ReservedBlockEE1Size);
++	}
++
++	if (arp->ExceptionInfo[exnum].OverrideFlags&(ARO_SUBJECT|ARO_LOCATION)) {
++		GBA_APPEND_LVAL (gba, ee->StartDateTime);
++		GBA_APPEND_LVAL (gba, ee->EndDateTime);
++		GBA_APPEND_LVAL (gba, ee->OriginalStartDate);
++
++		if (arp->ExceptionInfo[exnum].OverrideFlags&ARO_SUBJECT) {
++			GBA_APPEND_LVAL (gba, ee->WideCharSubjectLength);
++			GBA_APPEND (gba, ee->WideCharSubject,
++			            sizeof (guint16) * ee->WideCharSubjectLength);
++		}
++
++		if( arp->ExceptionInfo[exnum].OverrideFlags&ARO_LOCATION) {
++			GBA_APPEND_LVAL(gba, ee->WideCharLocationLength);
++			GBA_APPEND(gba, ee->WideCharLocation,
++			           sizeof (guint16) * ee->WideCharLocationLength);
++		}
++
++		GBA_APPEND_LVAL (gba, ee->ReservedBlockEE2Size);
++		if (ee->ReservedBlockEE2Size) {
++			GBA_APPEND (gba, ee->ReservedBlockEE2,
++			            ee->ReservedBlockEE2Size);
++		}
++	}
++}
++
++static void
++arp_to_gba(const struct ema_AppointmentRecurrencePattern *arp, GByteArray *gba)
++{
++	int i;
++
++	rp_to_gba (&arp->RecurrencePattern, gba);
++	GBA_APPEND_LVAL (gba, arp->ReaderVersion2);
++	GBA_APPEND_LVAL (gba, arp->WriterVersion2);
++	GBA_APPEND_LVAL (gba, arp->StartTimeOffset);
++	GBA_APPEND_LVAL (gba, arp->EndTimeOffset);
++	GBA_APPEND_LVAL (gba, arp->ExceptionCount);
++	for (i = 0; i < arp->ExceptionCount; ++i) {
++		ei_to_gba (&arp->ExceptionInfo[i], gba);
++	}
++	GBA_APPEND_LVAL (gba, arp->ReservedBlock1Size);
++	if (arp->ReservedBlock1Size) {
++		GBA_APPEND (gba, arp->ReservedBlock1, arp->ReservedBlock1Size);
++	}
++	for (i = 0; i < arp->ExceptionCount; ++i) {
++		ee_to_gba (&arp->ExtendedException[i], arp, i, gba);
++	}
++	GBA_APPEND_LVAL (gba, arp->ReservedBlock2Size);
++	if (arp->ReservedBlock2Size) {
++		GBA_APPEND (gba, arp->ReservedBlock2, arp->ReservedBlock2Size);
++	}
++}
++
++static gboolean
++gba_to_rp(const GByteArray *gba, ptrdiff_t *off,
++	  struct ema_RecurrencePattern *rp)
++{
++	GBA_DEREF_OFFSET (gba, *off, rp->ReaderVersion, guint16);
++	GBA_DEREF_OFFSET (gba, *off, rp->WriterVersion, guint16);
++	GBA_DEREF_OFFSET (gba, *off, rp->RecurFrequency, guint16);
++	GBA_DEREF_OFFSET (gba, *off, rp->PatternType, guint16);
++	GBA_DEREF_OFFSET (gba, *off, rp->CalendarType, guint16);
++	GBA_DEREF_OFFSET (gba, *off, rp->FirstDateTime, guint32);
++	GBA_DEREF_OFFSET (gba, *off, rp->Period, guint32);
++	GBA_DEREF_OFFSET (gba, *off, rp->SlidingFlag, guint32);
++
++	if (rp->PatternType != PatternType_Day) {
++		GBA_DEREF_OFFSET (gba, *off, rp->PatternTypeSpecific, guint32);
++		if (rp->PatternType == PatternType_MonthNth) {
++			GBA_DEREF_OFFSET (gba, *off, rp->N,
++			                  guint32);
++		}
++	}
++
++	GBA_DEREF_OFFSET (gba, *off, rp->EndType, guint32);
++	GBA_DEREF_OFFSET (gba, *off, rp->OccurrenceCount, guint32);
++	GBA_DEREF_OFFSET (gba, *off, rp->FirstDOW, guint32);
++
++	GBA_DEREF_OFFSET (gba, *off, rp->DeletedInstanceCount, guint32);
++	if (rp->DeletedInstanceCount) {
++		rp->DeletedInstanceDates = g_new (guint32,
++		                                  rp->DeletedInstanceCount);
++		GBA_MEMCPY_OFFSET(gba, *off, rp->DeletedInstanceDates,
++		                  sizeof (guint32) * rp->DeletedInstanceCount);
++	}
++
++	GBA_DEREF_OFFSET (gba, *off, rp->ModifiedInstanceCount, guint32);
++	if (rp->ModifiedInstanceCount) {
++		rp->ModifiedInstanceDates = g_new (guint32,
++		                                   rp->ModifiedInstanceCount);
++		GBA_MEMCPY_OFFSET (gba, *off, rp->ModifiedInstanceDates,
++		                   sizeof (guint32) * rp->ModifiedInstanceCount);
++	}
++
++	GBA_DEREF_OFFSET(gba, *off, rp->StartDate, guint32);
++	GBA_DEREF_OFFSET(gba, *off, rp->EndDate, guint32);
++
++	return TRUE;
++}
++
++static gboolean
++gba_to_ei(const GByteArray *gba, ptrdiff_t *off, struct ema_ExceptionInfo *ei)
++{
++	GBA_DEREF_OFFSET (gba, *off, ei->StartDateTime, guint32);
++	GBA_DEREF_OFFSET (gba, *off, ei->EndDateTime, guint32);
++	GBA_DEREF_OFFSET (gba, *off, ei->OriginalStartDate, guint32);
++	GBA_DEREF_OFFSET (gba, *off, ei->OverrideFlags, guint16);
++
++	if (ei->OverrideFlags&ARO_SUBJECT) {
++		GBA_DEREF_OFFSET (gba, *off, ei->SubjectLength, guint16);
++		GBA_DEREF_OFFSET (gba, *off, ei->SubjectLength2, guint16);
++		ei->Subject = g_new0 (gchar, ei->SubjectLength2 + 1);
++		GBA_MEMCPY_OFFSET (gba, *off, ei->Subject, ei->SubjectLength2);
++	}
++
++	if (ei->OverrideFlags&ARO_MEETINGTYPE) {
++		GBA_DEREF_OFFSET (gba, *off, ei->MeetingType, guint32);
++	}
++
++	if (ei->OverrideFlags&ARO_REMINDERDELTA) {
++		GBA_DEREF_OFFSET (gba, *off, ei->ReminderDelta, guint32);
++	}
++
++	if (ei->OverrideFlags & ARO_REMINDER) {
++		GBA_DEREF_OFFSET (gba, *off, ei->ReminderSet, guint32);
++	}
++
++	if (ei->OverrideFlags&ARO_LOCATION) {
++		GBA_DEREF_OFFSET (gba, *off, ei->LocationLength, guint16);
++		GBA_DEREF_OFFSET (gba, *off, ei->LocationLength2, guint16);
++		ei->Location = g_new0 (gchar, ei->LocationLength2 + 1);
++		GBA_MEMCPY_OFFSET (gba, *off, ei->Location, ei->LocationLength2);
++	}
++
++	if (ei->OverrideFlags&ARO_BUSYSTATUS) {
++		GBA_DEREF_OFFSET (gba, *off, ei->BusyStatus, guint32);
++	}
++
++	if (ei->OverrideFlags&ARO_ATTACHMENT) {
++		GBA_DEREF_OFFSET (gba, *off, ei->Attachment, guint32);
++	}
++
++	if (ei->OverrideFlags&ARO_SUBTYPE) {
++		GBA_DEREF_OFFSET (gba, *off, ei->SubType, guint32);
++	}
++
++	if (ei->OverrideFlags&ARO_APPTCOLOR) {
++		GBA_DEREF_OFFSET (gba, *off, ei->AppointmentColor, guint32);
++	}
++
++	return TRUE;
++}
++
++static gboolean
++gba_to_ee(const GByteArray *gba, ptrdiff_t *off,
++          struct ema_ExtendedException *ee,
++          struct ema_AppointmentRecurrencePattern *arp, int exnum)
++{
++	GBA_DEREF_OFFSET (gba, *off, ee->ChangeHighlight.ChangeHighlightSize,
++	                  guint32);
++
++	if (arp->WriterVersion2 >= 0x3009) {
++		if (ee->ChangeHighlight.ChangeHighlightSize > 0) {
++			int reserved_size = ee->ChangeHighlight.ChangeHighlightSize - sizeof (guint32);
++			GBA_DEREF_OFFSET (gba, *off,
++			                  ee->ChangeHighlight.ChangeHighlightValue,
++			                  guint32);
++			if (reserved_size > 0) {
++				ee->ChangeHighlight.Reserved = g_new (gchar, reserved_size);
++				GBA_MEMCPY_OFFSET (gba, *off,
++				                   &ee->ChangeHighlight.Reserved,
++				                   reserved_size);
++			}
++		}
++	}
++
++	GBA_DEREF_OFFSET (gba, *off, ee->ReservedBlockEE1Size, guint32);
++	if (ee->ReservedBlockEE1Size) {
++		ee->ReservedBlockEE1 = g_new (gchar, ee->ReservedBlockEE1Size);
++		GBA_MEMCPY_OFFSET (gba, *off, ee->ReservedBlockEE1,
++		                   ee->ReservedBlockEE1Size);
++	}
++
++	if (arp->ExceptionInfo[exnum].OverrideFlags&(ARO_SUBJECT|ARO_LOCATION)) {
++		GBA_DEREF_OFFSET (gba, *off, ee->StartDateTime, guint32);
++		GBA_DEREF_OFFSET (gba, *off, ee->EndDateTime, guint32);
++		GBA_DEREF_OFFSET (gba, *off, ee->OriginalStartDate, guint32);
++
++		if(arp->ExceptionInfo[exnum].OverrideFlags&ARO_SUBJECT) {
++			GBA_DEREF_OFFSET (gba, *off, ee->WideCharSubjectLength,
++			                  guint16);
++			ee->WideCharSubject = g_new0(gchar,
++			                             sizeof(guint16) * (ee->WideCharSubjectLength + 1));
++			GBA_MEMCPY_OFFSET (gba, *off, ee->WideCharSubject,
++			                   sizeof(guint16) * ee->WideCharSubjectLength);
++		}
++
++		if(arp->ExceptionInfo[exnum].OverrideFlags&ARO_LOCATION) {
++			GBA_DEREF_OFFSET (gba, *off, ee->WideCharLocationLength,
++			                  guint16);
++			ee->WideCharLocation = g_new0 (gchar,
++			                               sizeof(guint16) * (ee->WideCharLocationLength + 1));
++			GBA_MEMCPY_OFFSET (gba, *off, ee->WideCharLocation,
++			                   sizeof (guint16) * ee->WideCharLocationLength);
++		}
++
++		GBA_DEREF_OFFSET (gba, *off, ee->ReservedBlockEE2Size, guint32);
++		if (ee->ReservedBlockEE2Size) {
++			ee->ReservedBlockEE2 = g_new (gchar,
++			                              ee->ReservedBlockEE2Size);
++			GBA_MEMCPY_OFFSET (gba, *off, ee->ReservedBlockEE2,
++			                   ee->ReservedBlockEE2Size);
++		}
++	}
++
++	return TRUE;
++}
++
++static gboolean
++gba_to_arp(const GByteArray *gba, ptrdiff_t *off,
++           struct ema_AppointmentRecurrencePattern *arp) {
++	int i;
++
++	g_return_val_if_fail (gba_to_rp (gba, off, &arp->RecurrencePattern),
++	                      FALSE);
++	GBA_DEREF_OFFSET (gba, *off, arp->ReaderVersion2, guint32);
++	GBA_DEREF_OFFSET (gba, *off, arp->WriterVersion2, guint32);
++	GBA_DEREF_OFFSET (gba, *off, arp->StartTimeOffset, guint32);
++	GBA_DEREF_OFFSET (gba, *off, arp->EndTimeOffset, guint32);
++
++	GBA_DEREF_OFFSET (gba, *off, arp->ExceptionCount, guint16);
++	if (arp->ExceptionCount) {
++		arp->ExceptionInfo = g_new0 (struct ema_ExceptionInfo,
++		                             arp->ExceptionCount);
++		for (i = 0; i < arp->ExceptionCount; ++i) {
++			g_return_val_if_fail (gba_to_ei (gba, off, &arp->ExceptionInfo[i]),
++			                      FALSE);
++		}
++	}
++
++	GBA_DEREF_OFFSET (gba, *off, arp->ReservedBlock1Size, guint32);
++	if (arp->ReservedBlock1Size) {
++		arp->ReservedBlock1 = g_new (gchar, arp->ReservedBlock1Size);
++		GBA_MEMCPY_OFFSET (gba, *off, arp->ReservedBlock1,
++		                   arp->ReservedBlock1Size);
++	}
++
++	if (arp->ExceptionCount) {
++		arp->ExtendedException = g_new0 (struct ema_ExtendedException,
++		                                 arp->ExceptionCount);
++		for (i = 0; i < arp->ExceptionCount; ++i) {
++			g_return_val_if_fail (gba_to_ee (gba, off, &arp->ExtendedException[i], arp, i),
++			                      FALSE);
++		}
++	}
++
++	GBA_DEREF_OFFSET (gba, *off, arp->ReservedBlock2Size, guint32);
++	if (arp->ReservedBlock2Size) {
++		arp->ReservedBlock2 = g_new (gchar, arp->ReservedBlock2Size);
++		GBA_MEMCPY_OFFSET (gba, *off, arp->ReservedBlock2,
++		                   arp->ReservedBlock2Size);
++	}
++
++	return TRUE;
++}
++
++static void
++free_arp_contents(struct ema_AppointmentRecurrencePattern *arp)
++{
++	int i;
++
++	if(arp) {
++		if (arp->RecurrencePattern.DeletedInstanceDates)
++			g_free (arp->RecurrencePattern.DeletedInstanceDates);
++		if (arp->RecurrencePattern.ModifiedInstanceDates)
++			g_free (arp->RecurrencePattern.ModifiedInstanceDates);
++		if (arp->ExceptionInfo) {
++			for (i = 0; i < arp->RecurrencePattern.ModifiedInstanceCount; ++i) {
++				if (arp->ExceptionInfo[i].Subject)
++					g_free (arp->ExceptionInfo[i].Subject);
++				if (arp->ExceptionInfo[i].Location)
++					g_free (arp->ExceptionInfo[i].Location);
++			}
++			g_free (arp->ExceptionInfo);
++		}
++		if (arp->ReservedBlock1) {
++			g_free (arp->ReservedBlock1);
++		}
++		if (arp->ExtendedException) {
++			for (i = 0; i < arp->RecurrencePattern.ModifiedInstanceCount; ++i) {
++				if (arp->ExtendedException[i].ChangeHighlight.Reserved)
++					g_free (arp->ExtendedException[i].ChangeHighlight.Reserved);
++				if (arp->ExtendedException[i].ReservedBlockEE1)
++					g_free (arp->ExtendedException[i].ReservedBlockEE1);
++				if (arp->ExtendedException[i].WideCharSubject)
++					g_free (arp->ExtendedException[i].WideCharSubject);
++				if (arp->ExtendedException[i].WideCharLocation)
++					g_free (arp->ExtendedException[i].WideCharLocation);
++				if (arp->ExtendedException[i].ReservedBlockEE2)
++					g_free (arp->ExtendedException[i].ReservedBlockEE2);
++			}
++			g_free (arp->ExtendedException);
++		}
++		if (arp->ReservedBlock2) {
++			g_free (arp->ReservedBlock2);
++		}
++	}
++}
+ 
+ static icalrecurrencetype_weekday
+ get_ical_weekstart (uint32_t fdow)
+@@ -235,390 +716,197 @@ check_calendar_type (guint16 type)
+ }
+ 
+ gboolean
+-exchange_mapi_cal_util_bin_to_rrule (GByteArray *ba, ECalComponent *comp)
++exchange_mapi_cal_util_bin_to_rrule (GByteArray *ba, ECalComponent *comp, GSList **extra_detached, icaltimezone *recur_zone)
+ {
+ 	struct icalrecurrencetype rt;
+-	guint16 flag16;
+-	guint32 flag32;
+-	guint8 *ptr = ba->data;
++	struct ema_AppointmentRecurrencePattern arp;
++	struct ema_RecurrencePattern *rp; /* Convenience pointer */
++	gboolean success = FALSE, check_calendar = FALSE;
+ 	gint i;
++	ptrdiff_t off = 0;
+ 	GSList *exdate_list = NULL;
+-	gboolean repeats_until_date = FALSE;
+ 
+ 	icalrecurrencetype_clear (&rt);
+ 
+-	/* Reader version */
+-	flag16 = *((guint16 *)ptr);
+-	ptr += sizeof (guint16);
+-	if (READER_VERSION != flag16)
+-		return FALSE;
++	memset(&arp, 0, sizeof (struct ema_AppointmentRecurrencePattern));
++	if (! gba_to_arp (ba, &off, &arp))
++		goto cleanup;
+ 
+-	/* Writer version */
+-	flag16 = *((guint16 *)ptr);
+-	ptr += sizeof (guint16);
+-	if (WRITER_VERSION != flag16)
+-		return FALSE;
++	rp = &arp.RecurrencePattern;
+ 
+ 	/* FREQUENCY */
+-	flag16 = *((guint16 *)ptr);
+-	ptr += sizeof (guint16);
+-	if (flag16 == RecurFrequency_Daily) {
++
++	if (rp->RecurFrequency == RecurFrequency_Daily) {
+ 		rt.freq = ICAL_DAILY_RECURRENCE;
+ 
+-		flag16 = *((guint16 *)ptr);
+-		ptr += sizeof (guint16);
+-		if (flag16 == PatternType_Day) {
++		if (rp->PatternType == PatternType_Day) {
+ 			/* Daily every N days */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			check_calendar = TRUE;
+ 
+ 			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32 / (24 * 60));
+-
+-			/* some constant 0 for the stuff we handle */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
+-
+-		} else if (flag16 == PatternType_Week) {
++			rt.interval = (short) (rp->Period / (24 * 60));
++		} else if (rp->PatternType == PatternType_Week) {
+ 			/* Daily every weekday */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-	/* NOTE: Evolution does not handle daily-every-weekday any different
+-	 * from a weekly recurrence.
+-	 */
+-			rt.freq = ICAL_WEEKLY_RECURRENCE;
++			check_calendar = TRUE;
+ 
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			/* NOTE: Evolution does not handle daily-every-weekday
++			 * any different from a weekly recurrence.  */
++			rt.freq = ICAL_WEEKLY_RECURRENCE;
+ 
+ 			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32);
+-
+-			/* some constant 0 for the stuff we handle */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
+-
+-			/* BITMASK */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-
+-			i = 0;
+-			if (flag32 & olSunday)
+-				rt.by_day[i++] = ICAL_SUNDAY_WEEKDAY;
+-			if (flag32 & olMonday)
+-				rt.by_day[i++] = ICAL_MONDAY_WEEKDAY;
+-			if (flag32 & olTuesday)
+-				rt.by_day[i++] = ICAL_TUESDAY_WEEKDAY;
+-			if (flag32 & olWednesday)
+-				rt.by_day[i++] = ICAL_WEDNESDAY_WEEKDAY;
+-			if (flag32 & olThursday)
+-				rt.by_day[i++] = ICAL_THURSDAY_WEEKDAY;
+-			if (flag32 & olFriday)
+-				rt.by_day[i++] = ICAL_FRIDAY_WEEKDAY;
+-			if (flag32 & olSaturday)
+-				rt.by_day[i++] = ICAL_SATURDAY_WEEKDAY;
++			rt.interval = (short) (rp->Period);
+ 		}
+-
+-	} else if (flag16 == RecurFrequency_Weekly) {
++	} else if (rp->RecurFrequency == RecurFrequency_Weekly) {
+ 		rt.freq = ICAL_WEEKLY_RECURRENCE;
+ 
+-		flag16 = *((guint16 *)ptr);
+-		ptr += sizeof (guint16);
+-		if (flag16 == PatternType_Week) {
++		if (rp->PatternType == PatternType_Week) {
+ 			/* weekly every N weeks (for all events and non-regenerating tasks) */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			check_calendar = TRUE;
+ 
+ 			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32);
+-
+-			/* some constant 0 */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
+-
+-			/* BITMASK */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-
+-			i = 0;
+-			if (flag32 & olSunday)
+-				rt.by_day[i++] = ICAL_SUNDAY_WEEKDAY;
+-			if (flag32 & olMonday)
+-				rt.by_day[i++] = ICAL_MONDAY_WEEKDAY;
+-			if (flag32 & olTuesday)
+-				rt.by_day[i++] = ICAL_TUESDAY_WEEKDAY;
+-			if (flag32 & olWednesday)
+-				rt.by_day[i++] = ICAL_WEDNESDAY_WEEKDAY;
+-			if (flag32 & olThursday)
+-				rt.by_day[i++] = ICAL_THURSDAY_WEEKDAY;
+-			if (flag32 & olFriday)
+-				rt.by_day[i++] = ICAL_FRIDAY_WEEKDAY;
+-			if (flag32 & olSaturday)
+-				rt.by_day[i++] = ICAL_SATURDAY_WEEKDAY;
+-
+-		} else if (flag16 == 0x0) {
++			rt.interval = (short) (rp->Period);
++		} else if (rp->PatternType == 0x0) {
+ 			/* weekly every N weeks (for all regenerating tasks) */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
++			check_calendar = TRUE;
+ 
+ 			/* FIXME: we don't handle regenerating tasks */
+ 			g_warning ("Evolution does not handle recurring tasks.");
+-			return FALSE;
++			goto cleanup;
+ 		}
+ 
+-	} else if (flag16 == RecurFrequency_Monthly) {
++	} else if (rp->RecurFrequency == RecurFrequency_Monthly) {
+ 		rt.freq = ICAL_MONTHLY_RECURRENCE;
+ 
+-		flag16 = *((guint16 *)ptr);
+-		ptr += sizeof (guint16);
+-		if (flag16 == PatternType_Month || flag16 == PatternType_MonthEnd) {
+-			guint16 pattern = flag16;
++		if (rp->PatternType == PatternType_Month ||
++		    rp->PatternType == PatternType_MonthEnd) {
+ 			/* Monthly every N months on day D or last day. */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			check_calendar = TRUE;
+ 
+ 			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32);
+-
+-			/* some constant 0 for the stuff we handle */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
++			rt.interval = (short) (rp->Period);
+ 
+ 			/* MONTH_DAY */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (pattern == PatternType_Month)
+-				rt.by_month_day[0] = (short) (flag32);
+-			else if (pattern == PatternType_MonthEnd)
++			if (rp->PatternType == PatternType_Month)
++				rt.by_month_day[0] = (short) (rp->PatternTypeSpecific);
++			else if (rp->PatternType == PatternType_MonthEnd)
+ 				rt.by_month_day[0] = (short) (-1);
+ 
+-		} else if (flag16 == PatternType_MonthNth) {
++		} else if (rp->PatternType == PatternType_MonthNth) {
+ 			gboolean post_process = FALSE;
+-			guint32 mask = 0;
+ 			/* Monthly every N months on the Xth Y */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			check_calendar = TRUE;
+ 
+ 			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32);
+-
+-			/* some constant 0 for the stuff we handle */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
++			rt.interval = (short) (rp->Period);
+ 
+ 			/* BITMASK */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32 == olSunday)
++			if (rp->PatternTypeSpecific == olSunday)
+ 				rt.by_day[0] = ICAL_SUNDAY_WEEKDAY;
+-			else if (flag32 == olMonday)
++			else if (rp->PatternTypeSpecific == olMonday)
+ 				rt.by_day[0] = ICAL_MONDAY_WEEKDAY;
+-			else if (flag32 == olTuesday)
++			else if (rp->PatternTypeSpecific == olTuesday)
+ 				rt.by_day[0] = ICAL_TUESDAY_WEEKDAY;
+-			else if (flag32 == olWednesday)
++			else if (rp->PatternTypeSpecific == olWednesday)
+ 				rt.by_day[0] = ICAL_WEDNESDAY_WEEKDAY;
+-			else if (flag32 == olThursday)
++			else if (rp->PatternTypeSpecific == olThursday)
+ 				rt.by_day[0] = ICAL_THURSDAY_WEEKDAY;
+-			else if (flag32 == olFriday)
++			else if (rp->PatternTypeSpecific == olFriday)
+ 				rt.by_day[0] = ICAL_FRIDAY_WEEKDAY;
+-			else if (flag32 == olSaturday)
++			else if (rp->PatternTypeSpecific == olSaturday)
+ 				rt.by_day[0] = ICAL_SATURDAY_WEEKDAY;
+ 			else {
+ 				post_process = TRUE;
+-				mask = flag32;
+ 			}
+ 
+ 			/* RecurrenceN */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+ 			if (!post_process) {
+-				rt.by_set_pos[0] = get_ical_pos (flag32);
++				rt.by_set_pos[0] = get_ical_pos (rp->N);
+ 				if (rt.by_set_pos[0] == 0)
+-					return FALSE;
++					goto cleanup;
+ 			} else {
+-				if (mask == (olSunday | olMonday | olTuesday | olWednesday | olThursday | olFriday | olSaturday)) {
+-					rt.by_month_day[0] = get_ical_pos (flag32);
++				if (rp->PatternTypeSpecific == (olSunday | olMonday | olTuesday | olWednesday | olThursday | olFriday | olSaturday)) {
++					rt.by_month_day[0] = get_ical_pos (rp->N);
+ 					if (rt.by_month_day[0] == 0)
+-						return FALSE;
++						goto cleanup;
+ 				} else {
+ 				/* FIXME: Can we/LibICAL support any other types here? Namely, weekday and weekend-day */
+ 					g_warning ("Encountered a recurrence type Evolution cannot handle. ");
+-					return FALSE;
++					goto cleanup;
+ 				}
+ 			}
+ 		}
+ 
+-	} else if (flag16 == RecurFrequency_Yearly) {
++	} else if (rp->RecurFrequency == RecurFrequency_Yearly) {
+ 		rt.freq = ICAL_YEARLY_RECURRENCE;
+ 
+-		flag16 = *((guint16 *)ptr);
+-		ptr += sizeof (guint16);
+-		if (flag16 == PatternType_Month) {
++		if (rp->PatternType == PatternType_Month) {
+ 			/* Yearly on day D of month M */
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			check_calendar = TRUE;
+ 
+ 			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32 / 12);
+-
+-			/* some constant 0 for the stuff we handle */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
+-
+-			/* MONTH_DAY - but we don't need this */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
++			rt.interval = (short) (rp->Period / 12);
+ 
+-		} else if (flag16 == PatternType_MonthNth) {
++		} else if (rp->PatternType == PatternType_MonthNth) {
+ 			/* Yearly on the Xth Y of month M */
+ 
+ 			g_warning ("Encountered a recurrence pattern Evolution cannot handle.");
+ 
+-			/* Calendar Type */
+-			flag16 = *((guint16 *)ptr);
+-			ptr += sizeof (guint16);
+-			if (!check_calendar_type (flag16))
+-				return FALSE;
+-
+-			/* FirstDateTime (some crappy mod here) */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-
+-			/* INTERVAL */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			rt.interval = (short) (flag32 / 12);
+-
+-			/* some constant 0 */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-			if (flag32)
+-				return FALSE;
+-
+-			/* BITMASK */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-
+-			/* RecurrenceN */
+-			flag32 = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-
+ 			/* TODO: Add support for this kinda recurrence in Evolution */
+-			return FALSE;
++			goto cleanup;
+ 		}
+ 	} else
+-		return FALSE;
++		goto cleanup;
++
++	/* Process by_day<->PatternTypeSpecific bitmasks for events that can
++	 * occur on multiple days in a recurrence */
++	if ( (rp->RecurFrequency == RecurFrequency_Daily &&
++              rp->PatternType == PatternType_Week) ||
++	     (rp->RecurFrequency == RecurFrequency_Weekly &&
++	      rp->PatternType == PatternType_Week) ) {
++		i = 0;
++		if (rp->PatternTypeSpecific & olSunday)
++			rt.by_day[i++] = ICAL_SUNDAY_WEEKDAY;
++		if (rp->PatternTypeSpecific & olMonday)
++			rt.by_day[i++] = ICAL_MONDAY_WEEKDAY;
++		if (rp->PatternTypeSpecific & olTuesday)
++			rt.by_day[i++] = ICAL_TUESDAY_WEEKDAY;
++		if (rp->PatternTypeSpecific & olWednesday)
++			rt.by_day[i++] = ICAL_WEDNESDAY_WEEKDAY;
++		if (rp->PatternTypeSpecific & olThursday)
++			rt.by_day[i++] = ICAL_THURSDAY_WEEKDAY;
++		if (rp->PatternTypeSpecific & olFriday)
++			rt.by_day[i++] = ICAL_FRIDAY_WEEKDAY;
++		if (rp->PatternTypeSpecific & olSaturday)
++			rt.by_day[i++] = ICAL_SATURDAY_WEEKDAY;
++	}
++
++	/* Only some calendar types supported */
++	if (check_calendar && !check_calendar_type (rp->CalendarType))
++		goto cleanup;
+ 
+ 	/* End Type - followed by Occurence count */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (flag32 == END_AFTER_DATE) {
+-		flag32 = *((guint32 *)ptr);
+-		ptr += sizeof (guint32);
+-
+-		repeats_until_date = TRUE;
+-	} else if (flag32 == END_AFTER_N_OCCURRENCES) {
+-		flag32 = *((guint32 *)ptr);
+-		ptr += sizeof (guint32);
+-
+-		rt.count = flag32;
+-	} else if (flag32 == END_NEVER_END) {
+-		flag32 = *((guint32 *)ptr);
+-		ptr += sizeof (guint32);
++	if (rp->EndType == END_AFTER_N_OCCURRENCES) {
++		rt.count = rp->OccurrenceCount;
+ 	}
+ 
+ 	/* week_start */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	rt.week_start = get_ical_weekstart (flag32);
++	rt.week_start = get_ical_weekstart (rp->FirstDOW);
+ 
+ 	/* number of exceptions */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (flag32) {
+-		for (i = 0; i < flag32; ++i) {
+-			uint32_t exdate;
++	if (rp->DeletedInstanceCount) {
++		for (i = 0; i < rp->DeletedInstanceCount; ++i) {
+ 			struct icaltimetype tt, *val;
+ 			ECalComponentDateTime *dt = g_new0 (ECalComponentDateTime, 1);
++			time_t ictime = convert_recurrence_minutes_to_timet (rp->DeletedInstanceDates[i]);
+ 
+-			exdate = *((guint32 *)ptr);
+-			ptr += sizeof (guint32);
+-
+-			tt = icaltime_from_timet_with_zone (convert_recurrence_minutes_to_timet (exdate), 1, 0);
++			tt = icaltime_from_timet_with_zone (ictime, 1, 0);
+ 
+ 			val = g_new0(struct icaltimetype, 1);
+ 			memcpy (val, &tt, sizeof(struct icaltimetype));
+@@ -630,62 +918,12 @@ exchange_mapi_cal_util_bin_to_rrule (GBy
+ 		}
+ 	}
+ 
+-	/* number of changed exceptions */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	/* FIXME: Parse modified instances */
+-	if (flag32)
+-		ptr += flag32 * sizeof (guint32);
+-
+-	/* start date */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-
+ 	/* end date */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (repeats_until_date) {
+-		rt.until = icaltime_from_timet_with_zone (convert_recurrence_minutes_to_timet (flag32), 1, 0);
++	if (rp->EndType == END_AFTER_DATE) {
++		time_t ict = convert_recurrence_minutes_to_timet (rp->EndDate);
++		rt.until = icaltime_from_timet_with_zone (ict, 1, 0);
+ 	}
+ 
+-	/* some constant */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (flag32 != READER_VERSION2)
+-		return FALSE;
+-
+-	/* some constant */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (flag32 != WRITER_VERSION2)
+-		return FALSE;
+-
+-	/* start time in mins */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-
+-	/* end time in mins */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-
+-	/* modified exceptions */
+-	flag16 = *((guint16 *)ptr);
+-	ptr += sizeof (guint16);
+-	if (flag16 != 0x0)
+-		return FALSE;
+-
+-	/* reserved block1 size - has to be 0 */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (flag32 != 0x0)
+-		return FALSE;
+-
+-	/* reserved block2 size - has to be 0 */
+-	flag32 = *((guint32 *)ptr);
+-	ptr += sizeof (guint32);
+-	if (flag32 != 0x0)
+-		return FALSE;
+-
+ 	/* Set the recurrence */
+ 	{
+ 		GSList l;
+@@ -694,17 +932,99 @@ exchange_mapi_cal_util_bin_to_rrule (GBy
+ 		l.next = NULL;
+ 
+ 		e_cal_component_set_rrule_list (comp, &l);
++		e_cal_component_set_exdate_list (comp, exdate_list);
+ 	}
+ 
+-	/* FIXME: this also has modified instances */
+-	e_cal_component_set_exdate_list (comp, exdate_list);
++	/* Modified exceptions */
++	if (arp.ExceptionCount && extra_detached) {
++		ECalComponent **detached = g_new0 (ECalComponent *,
++		                                   arp.ExceptionCount);
++		struct icaltimetype tt;
++		ECalComponentDateTime edt;
++		ECalComponentRange rid;
++
++		e_cal_component_commit_sequence (comp);
++
++		for (i = 0; i < arp.ExceptionCount; i++) {
++			struct ema_ExceptionInfo *ei = &arp.ExceptionInfo[i];
++			struct ema_ExtendedException *ee = &arp.ExtendedException[i];
++
++			/* make a shallow clone of comp */
++			detached[i] = e_cal_component_clone (comp);
++
++			tt = icaltime_from_timet_with_zone (convert_recurrence_minutes_to_timet (ei->OriginalStartDate), 0, 0);
++			rid.type = E_CAL_COMPONENT_RANGE_SINGLE;
++			rid.datetime.value = &tt;
++			rid.datetime.tzid = recur_zone ? icaltimezone_get_tzid (recur_zone) : "UTC";
++			e_cal_component_set_recurid (detached[i], &rid);
++
++			tt = icaltime_from_timet_with_zone (convert_recurrence_minutes_to_timet (ei->StartDateTime), 0, 0);
++			edt.value = &tt;
++			edt.tzid = recur_zone ? icaltimezone_get_tzid (recur_zone) : "UTC";
++			e_cal_component_set_dtstart (detached[i], &edt);
++
++			tt = icaltime_from_timet_with_zone (convert_recurrence_minutes_to_timet (ei->EndDateTime), 0, 0);
++			edt.value = &tt;
++			edt.tzid = recur_zone ? icaltimezone_get_tzid (recur_zone) : "UTC";
++			e_cal_component_set_dtend (detached[i], &edt);
++
++			e_cal_component_set_rdate_list (detached[i], NULL);
++			e_cal_component_set_rrule_list (detached[i], NULL);
++			e_cal_component_set_exdate_list (detached[i], NULL);
++			e_cal_component_set_exrule_list (detached[i], NULL);
++
++			if (ee->WideCharSubject) {
++				ECalComponentText txt = { 0 };
++				gchar *str;
++
++				str = g_convert (ee->WideCharSubject,
++				                 2 * ee->WideCharSubjectLength,
++				                 "UTF-8", "UTF-16", NULL, NULL,
++				                 NULL);
++				txt.value = str;
++				e_cal_component_set_summary (detached[i], &txt);
++				g_free (str);
++			} else if (ei->Subject) {
++				ECalComponentText txt = { 0 };
+ 
+-	d(g_print ("\n== MAPI to ICAL == The recurrence blob data is as follows:\n");
+-	for (i = 0; i < ba->len; ++i)
+-		g_print ("0x%02X ", ba->data[i]);
+-	g_print("\n== End of stream ==\n");)
++				txt.value = ei->Subject;
++				e_cal_component_set_summary (detached[i], &txt);
++			}
+ 
+-	return TRUE;
++			/* FIXME: Handle MeetingType */
++			/* FIXME: Handle ReminderDelta */
++			/* FIXME: Handle Reminder */
++
++			if (ee->WideCharLocation) {
++				gchar *str;
++
++				/* LocationLength */
++				str = g_convert (ee->WideCharLocation,
++				                 2 * ee->WideCharLocationLength,
++				                 "UTF-8", "UTF-16", NULL, NULL,
++				                 NULL);
++				e_cal_component_set_location (detached[i], str);
++				g_free (str);
++			} else if (ei->Location) {
++				e_cal_component_set_location (detached[i], ei->Location);
++			}
++
++			/* FIXME: Handle BusyStatus? */
++			/* FIXME: Handle Attachment? */
++			/* FIXME: Handle SubType? */
++			/* FIXME: Handle AppointmentColor? */
++			/* FIXME: do we do anything with ChangeHighlight? */
++
++			*extra_detached = g_slist_append (*extra_detached,
++			                                  detached[i]);
++		}
++		g_free (detached);
++	}
++
++	success = TRUE;
++cleanup:
++	free_arp_contents(&arp);
++	return success;
+ }
+ 
+ static guint32
+@@ -816,11 +1136,11 @@ GByteArray *
+ exchange_mapi_cal_util_rrule_to_bin (ECalComponent *comp, GSList *modified_comps)
+ {
+ 	struct icalrecurrencetype *rt;
+-	guint16 flag16;
+-	guint32 flag32, end_type;
+ 	gint i;
+ 	GSList *rrule_list = NULL, *exdate_list = NULL;
+ 	GByteArray *ba = NULL;
++	struct ema_AppointmentRecurrencePattern arp;
++	struct ema_RecurrencePattern *rp; /* Convenience ptr */
+ 
+ 	if (!e_cal_component_has_recurrences (comp))
+ 		return NULL;
+@@ -834,93 +1154,69 @@ exchange_mapi_cal_util_rrule_to_bin (ECa
+ 	rt = (struct icalrecurrencetype *)(rrule_list->data);
+ 
+ 	ba = g_byte_array_new ();
++	memset(&arp, 0, sizeof (struct ema_AppointmentRecurrencePattern));
++	rp = &arp.RecurrencePattern;
+ 
+ 	/* Reader Version */
+-	flag16 = READER_VERSION;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++	rp->ReaderVersion = READER_VERSION;
++	rp->WriterVersion = WRITER_VERSION;
+ 
+-	/* Writer Version */
+-	flag16 = WRITER_VERSION;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++	/* Calendar Type */
++	rp->CalendarType = CAL_DEFAULT;
+ 
+ 	if (rt->freq == ICAL_DAILY_RECURRENCE) {
+-		flag16 = RecurFrequency_Daily;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		rp->RecurFrequency = RecurFrequency_Daily;
+ 
+-		/* Pattern Type - it would be PatternType_Day since we have only "Daily every N days"
+-		 * The other type would be parsed as a weekly recurrence.
+-		 */
+-		flag16 = PatternType_Day;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+-
+-		/* Calendar Type */
+-		flag16 = CAL_DEFAULT;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		/* Pattern Type - it would be PatternType_Day since we have
++		 * only "Daily every N days". The other type would be
++		 * parsed as a weekly recurrence. */
++		rp->PatternType = PatternType_Day;
+ 
+ 		/* FirstDateTime */
+-		flag32 = compute_rdaily_firstdatetime (comp, (rt->interval * (60 * 24)));
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->FirstDateTime = compute_rdaily_firstdatetime (comp, (rt->interval * (60 * 24)));
+ 
+ 		/* INTERVAL */
+-		flag32 = (rt->interval * (60 * 24));
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		/* This would be 0 for the stuff we handle */
+-		flag32 = 0x0;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->Period = (rt->interval * (60 * 24));
+ 
+ 		/* No PatternTypeSpecific for PatternType_Day */
+ 
+ 	} else if (rt->freq == ICAL_WEEKLY_RECURRENCE) {
+-		flag16 = RecurFrequency_Weekly;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		rp->RecurFrequency = RecurFrequency_Weekly;
+ 
+-		/* Pattern Type - it would be PatternType_Week since we don't support any other type. */
+-		flag16 = PatternType_Week;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+-
+-		/* Calendar Type */
+-		flag16 = CAL_DEFAULT;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		/* Pattern Type - it would be PatternType_Week since we don't
++		 * support any other type. */
++		rp->PatternType = PatternType_Week;
+ 
+ 		/* FirstDateTime */
+-		flag32 = compute_rweekly_firstdatetime (comp, rt->week_start, (rt->interval * (60 * 24 * 7)));
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->FirstDateTime = compute_rweekly_firstdatetime (comp, rt->week_start, (rt->interval * (60 * 24 * 7)));
+ 
+ 		/* INTERVAL */
+-		flag32 = rt->interval;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		/* This would be 0 for the stuff we handle */
+-		flag32 = 0x0;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->Period = rt->interval;
+ 
+ 		/* BITMASK */
+-		for (flag32 = 0x0, i = 0; i < ICAL_BY_DAY_SIZE; ++i) {
++		for (i = 0; i < ICAL_BY_DAY_SIZE; ++i) {
+ 			if (rt->by_day[i] == ICAL_SUNDAY_WEEKDAY)
+-				flag32 |= olSunday;
++				rp->PatternTypeSpecific |= olSunday;
+ 			else if (rt->by_day[i] == ICAL_MONDAY_WEEKDAY)
+-				flag32 |= olMonday;
++				rp->PatternTypeSpecific |= olMonday;
+ 			else if (rt->by_day[i] == ICAL_TUESDAY_WEEKDAY)
+-				flag32 |= olTuesday;
++				rp->PatternTypeSpecific |= olTuesday;
+ 			else if (rt->by_day[i] == ICAL_WEDNESDAY_WEEKDAY)
+-				flag32 |= olWednesday;
++				rp->PatternTypeSpecific |= olWednesday;
+ 			else if (rt->by_day[i] == ICAL_THURSDAY_WEEKDAY)
+-				flag32 |= olThursday;
++				rp->PatternTypeSpecific |= olThursday;
+ 			else if (rt->by_day[i] == ICAL_FRIDAY_WEEKDAY)
+-				flag32 |= olFriday;
++				rp->PatternTypeSpecific |= olFriday;
+ 			else if (rt->by_day[i] == ICAL_SATURDAY_WEEKDAY)
+-				flag32 |= olSaturday;
++				rp->PatternTypeSpecific |= olSaturday;
+ 			else
+ 				break;
+ 		}
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+ 
+ 	} else if (rt->freq == ICAL_MONTHLY_RECURRENCE) {
+ 		guint16 pattern = 0x0; guint32 mask = 0x0, flag = 0x0;
+ 
+-		flag16 = RecurFrequency_Monthly;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		rp->RecurFrequency = RecurFrequency_Monthly;
+ 
+ 		if (rt->by_month_day[0] >= 1 && rt->by_month_day[0] <= 31) {
+ 			pattern = PatternType_Month;
+@@ -935,147 +1231,97 @@ exchange_mapi_cal_util_rrule_to_bin (ECa
+ 			flag = get_mapi_pos (rt->by_set_pos[0]);
+ 		}
+ 
+-		/* Pattern Type */
+-		flag16 = pattern;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+-
+-		/* Calendar Type */
+-		flag16 = CAL_DEFAULT;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		rp->PatternType = pattern;
+ 
+ 		/* FirstDateTime */
+-		flag32 = compute_rmonthly_firstdatetime (comp, rt->interval);
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->FirstDateTime = compute_rmonthly_firstdatetime (comp, rt->interval);
+ 
+ 		/* INTERVAL */
+-		flag32 = rt->interval;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		/* This would be 0 for the stuff we handle */
+-		flag32 = 0x0;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->Period = rt->interval;
+ 
+ 		if (pattern == PatternType_Month) {
+-			flag32 = flag;
+-			ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-			if (!(flag))
+-				g_warning ("Possibly setting incorrect values in the stream. ");
++			rp->N = flag;
+ 		} else if (pattern == PatternType_MonthNth) {
+-			flag32 = mask;
+-			ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-			flag32 = flag;
+-			ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++			rp->PatternTypeSpecific = mask;
++			rp->N = flag;
++		}
+ 
+-			if (!(flag && mask))
+-				g_warning ("Possibly setting incorrect values in the stream. ");
+-		} else
++		/* Warn for different cases where we might be sending
++		 * untranslatable values */
++		if ( (pattern == PatternType_Month && !(flag)) ||
++		     (pattern == PatternType_MonthNth && !(flag && mask)) ||
++		     (pattern != PatternType_Month && pattern != PatternType_MonthNth) ) {
+ 			g_warning ("Possibly setting incorrect values in the stream. ");
++		}
+ 
+ 	} else if (rt->freq == ICAL_YEARLY_RECURRENCE) {
+-		flag16 = RecurFrequency_Yearly;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
++		rp->RecurFrequency = RecurFrequency_Yearly;
+ 
+-		/* Pattern Type - it would be PatternType_Month since we don't support any other type. */
+-		flag16 = PatternType_Month;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+-
+-		/* Calendar Type */
+-		flag16 = CAL_DEFAULT;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+-
+-		/* FirstDateTime - uses the same function as monthly recurrence */
+-		flag32 = compute_rmonthly_firstdatetime (comp, 0xC);
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		/* Pattern Type - it would be PatternType_Month since we don't
++		 * support any other type. */
++		rp->PatternType = PatternType_Month;
++
++		/* FirstDateTime - uses the same function as monthly
++		 * recurrence */
++		rp->FirstDateTime = compute_rmonthly_firstdatetime (comp, 0xC);
+ 
+ 		/* INTERVAL - should be 12 for yearly recurrence */
+-		flag32 = 0xC;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		/* This would be 0 for the stuff we handle */
+-		flag32 = 0x0;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++		rp->Period = 0xC;
+ 
+ 		/* MONTH_DAY */
+ 		{
+ 			ECalComponentDateTime dtstart;
+ 			e_cal_component_get_dtstart (comp, &dtstart);
+-			flag32 = dtstart.value->day;
++			rp->PatternTypeSpecific = dtstart.value->day;
+ 			e_cal_component_free_datetime (&dtstart);
+ 		}
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+ 	}
+ 
+ 	/* End Type followed by Occurence count */
+ 	if (!icaltime_is_null_time (rt->until)) {
+-		flag32 = END_AFTER_DATE;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		flag32 = calculate_no_of_occurrences (comp, rt);
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		end_type = END_AFTER_DATE;
++		rp->EndType = END_AFTER_DATE;
++		rp->OccurrenceCount = calculate_no_of_occurrences (comp, rt);
+ 	} else if (rt->count) {
+-		flag32 = END_AFTER_N_OCCURRENCES;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		flag32 = rt->count;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		end_type = END_AFTER_N_OCCURRENCES;
++		rp->EndType = END_AFTER_N_OCCURRENCES;
++		rp->OccurrenceCount = rt->count;
+ 	} else {
+-		flag32 = END_NEVER_END;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		flag32 = 0x0;
+-		ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-		end_type = END_NEVER_END;
++		rp->EndType = END_NEVER_END;
+ 	}
+ 
+ 	/* FirstDOW */
+-	flag32 = get_mapi_weekstart (rt->week_start);
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++	rp->FirstDOW = get_mapi_weekstart (rt->week_start);
+ 
+-	/* DeletedInstances */
+-	flag32 = g_slist_length (exdate_list);
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-	if (flag32) {
++	/* DeletedInstanceDates */
++	rp->DeletedInstanceCount = g_slist_length (exdate_list);
++	if (rp->DeletedInstanceCount) {
+ 		GSList *l;
+-		guint32 *sorted_list = g_new0(guint32, flag32);
++		ECalComponentDateTime *dt;
++		rp->DeletedInstanceDates = g_new0(guint32,
++		                              rp->DeletedInstanceCount);
+ 		/* FIXME: This should include modified dates */
+ 		for (i = 0, l = exdate_list; l; ++i, l = l->next) {
+-			ECalComponentDateTime *dt = (ECalComponentDateTime *)(l->data);
++			dt = (ECalComponentDateTime *)(l->data);
+ 			dt->value->hour = dt->value->minute = dt->value->second = 0;
+-			sorted_list[i] = convert_timet_to_recurrence_minutes (icaltime_as_timet_with_zone (*(dt->value), 0));
++			rp->DeletedInstanceDates[i] = convert_timet_to_recurrence_minutes (icaltime_as_timet_with_zone (*(dt->value), 0));
+ 		}
+ 
+-		g_qsort_with_data (sorted_list, flag32, sizeof (guint32), compare_guint32, NULL);
+-
+-		for (i = 0; i < flag32; ++i)
+-			ba = g_byte_array_append (ba, (const guint8 *)&(sorted_list[i]), sizeof (guint32));
+-
+-		g_free (sorted_list);
++		g_qsort_with_data (rp->DeletedInstanceDates,
++		                   rp->DeletedInstanceCount,
++		                   sizeof (guint32), compare_guint32, NULL);
+ 	}
+ 
+-	/* FIXME: Add support for modified instances */
+-	/* ModifiedInstanceCount */
+-	flag32 = 0x0;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-	if (flag32) {
+-	}
++	/* FIXME: Add support for modified instances
++	 * (currently we send valid data saying no modified instances) */
+ 
+ 	/* StartDate */
+-	flag32 = compute_startdate (comp);
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++	rp->StartDate = compute_startdate (comp);
+ 
+ 	/* EndDate */
+ 	{
+-		if (end_type == END_NEVER_END)
+-			flag32 = 0x5AE980DF;
+-		else if (end_type == END_AFTER_N_OCCURRENCES) {
++		if (rp->EndType == END_NEVER_END)
++			/* FIXME: named prop here? */
++			rp->EndDate = 0x5AE980DF;
++		else if (rp->EndType == END_AFTER_N_OCCURRENCES) {
+ 			ECalComponentDateTime dtstart;
+ 			gchar *rrule_str = icalrecurrencetype_as_string_r (rt);
+ 			time_t *array = g_new0 (time_t, rt->count);
+@@ -1085,65 +1331,48 @@ exchange_mapi_cal_util_rrule_to_bin (ECa
+ 
+ 			icalrecur_expand_recurrence (rrule_str, icaltime_as_timet_with_zone (*(dtstart.value), 0), rt->count, array);
+ 
+-			flag32 = convert_timet_to_recurrence_minutes (array[(rt->count) - 1]);
++			rp->EndDate = convert_timet_to_recurrence_minutes (array[(rt->count) - 1]);
+ 
+ 			g_free (array);
+ 			g_free (rrule_str);
+ 			e_cal_component_free_datetime (&dtstart);
+-		} else if (end_type == END_AFTER_DATE) {
++		} else if (rp->EndType == END_AFTER_DATE) {
+ 			struct icaltimetype until;
+ 			memcpy (&until, &(rt->until), sizeof(struct icaltimetype));
+ 			until.hour = until.minute = until.second = 0;
+-			flag32 = convert_timet_to_recurrence_minutes (icaltime_as_timet_with_zone (until, 0));
+-		} else
+-			flag32 = 0x0;
++			rp->EndDate = convert_timet_to_recurrence_minutes (icaltime_as_timet_with_zone (until, 0));
++		}
+ 	}
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+ 
+ 	/* Reader Version 2 */
+-	flag32 = READER_VERSION2;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
++	arp.ReaderVersion2 = READER_VERSION2;
+ 	/* Writer Version 2 */
+-	flag32 = WRITER_VERSION2;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++	arp.WriterVersion2 = WRITER_VERSION2;
+ 
+ 	/* StartTimeOffset */
+ 	{
+ 		ECalComponentDateTime dtstart;
+ 		e_cal_component_get_dtstart (comp, &dtstart);
+-		flag32 = (dtstart.value->hour * 60) + dtstart.value->minute;
++		arp.StartTimeOffset = (dtstart.value->hour * 60) + dtstart.value->minute;
+ 		e_cal_component_free_datetime (&dtstart);
+ 	}
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+ 
+ 	/* EndTimeOffset */
+ 	{
+ 		ECalComponentDateTime dtend;
+ 		e_cal_component_get_dtend (comp, &dtend);
+-		flag32 = (dtend.value->hour * 60) + dtend.value->minute;
++		arp.EndTimeOffset = (dtend.value->hour * 60) + dtend.value->minute;
+ 		e_cal_component_free_datetime (&dtend);
+ 	}
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+-
+-	/* FIXME: Add support for modified instances */
+-	/* ModifiedExceptionCount */
+-	flag16 = 0x0;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+-
+-	/* FIXME: Add the ExceptionInfo here */
+-
+-	/* Reserved Block 1 Size */
+-	flag32 = 0x0;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
+ 
++	/* FIXME: Add ExceptionInfo here */
+ 	/* FIXME: Add the ExtendedExceptionInfo here */
+ 
+ 	/* Reserved Block 2 Size */
+-	flag32 = 0x0;
+-	ba = g_byte_array_append (ba, (const guint8 *)&flag32, sizeof (guint32));
++	arp_to_gba(&arp, ba);
+ 
+ cleanup:
++	free_arp_contents(&arp);
+ 	e_cal_component_free_exdate_list (exdate_list);
+ 	e_cal_component_free_recur_list (rrule_list);
+ 
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.h.show-events-owa evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.h.show-events-owa	2011-02-07 04:45:47.000000000 +0100
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.h	2013-10-16 17:42:37.284591825 +0200
+@@ -30,11 +30,9 @@
+ 
+ G_BEGIN_DECLS
+ 
+-gboolean
+-exchange_mapi_cal_util_bin_to_rrule (GByteArray *ba, ECalComponent *comp);
++gboolean	exchange_mapi_cal_util_bin_to_rrule (GByteArray *ba, ECalComponent *comp, GSList **extra_detached, icaltimezone *recur_zone);
+ 
+-GByteArray *
+-exchange_mapi_cal_util_rrule_to_bin (ECalComponent *comp, GSList *modified_comps);
++GByteArray *	exchange_mapi_cal_util_rrule_to_bin (ECalComponent *comp, GSList *modified_comps);
+ 
+ G_END_DECLS
+ 
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.c.show-events-owa evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.c.show-events-owa	2013-10-16 17:42:37.218591825 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.c	2013-10-16 17:42:37.286591825 +0200
+@@ -286,167 +286,194 @@ exchange_mapi_cal_tz_util_dump ()
+ 	g_static_rec_mutex_unlock(&mutex);
+ }
+ 
+-#if 0
+-const WORD TZRULE_FLAG_RECUR_CURRENT_TZREG  = 0x0001; // see dispidApptTZDefRecur
+-const WORD TZRULE_FLAG_EFFECTIVE_TZREG      = 0x0002;
+-
+-// Allocates return value with new.
+-// clean up with delete[].
+-TZDEFINITION* BinToTZDEFINITION(ULONG cbDef, LPBYTE lpbDef)
++static void
++write_icaltime_as_systemtime (GByteArray *ba,
++			      struct icaltimetype icaltime)
+ {
+-    if (!lpbDef) return NULL;
++	guint16 flag16;
++
++	/* wYear */
++	flag16 = icaltime.year;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wMonth */
++	flag16 = icaltime.month;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wDayOfWeek */
++	flag16 = icaltime.year == 0 ? 0 : icaltime_day_of_week (icaltime);
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wDay */
++	flag16 = icaltime.day;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wHour */
++	flag16 = icaltime.hour;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wMinute */
++	flag16 = icaltime.minute;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wSecond */
++	flag16 = icaltime.second;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wMilliseconds */
++	flag16 = 0;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++}
++
++static void
++write_tz_rule (GByteArray *ba,
++	       gboolean is_recur,
++	       guint32 bias,
++	       guint32 standard_bias,
++	       guint32 daylight_bias,
++	       struct icaltimetype standard_date,
++	       struct icaltimetype daylight_date)
++{
++	guint8 flag8;
++	guint16 flag16;
++
++	g_return_if_fail (ba != NULL);
++
++	/* Major version */
++	flag8 = 0x02;
++	g_byte_array_append (ba, (const guint8 *) &flag8, sizeof (guint8));
++	
++	/* Minor version */
++	flag8 = 0x01;
++	g_byte_array_append (ba, (const guint8 *) &flag8, sizeof (guint8));
+ 
+-    // Update this if parsing code is changed!
+-    // this checks the size up to the flags member
+-    if (cbDef < 2*sizeof(BYTE) + 2*sizeof(WORD)) return NULL;
+-
+-    TZDEFINITION tzDef;
+-    TZRULE* lpRules = NULL;
+-    LPBYTE lpPtr = lpbDef;
+-    WORD cchKeyName = 0;
+-    WCHAR* szKeyName = NULL;
+-    WORD i = 0;
+-
+-    BYTE bMajorVersion = *((BYTE*)lpPtr);
+-    lpPtr += sizeof(BYTE);
+-    BYTE bMinorVersion = *((BYTE*)lpPtr);
+-    lpPtr += sizeof(BYTE);
+-
+-    // We only understand TZ_BIN_VERSION_MAJOR
+-    if (TZ_BIN_VERSION_MAJOR != bMajorVersion) return NULL;
+-
+-    // We only understand if >= TZ_BIN_VERSION_MINOR
+-    if (TZ_BIN_VERSION_MINOR > bMinorVersion) return NULL;
+-
+-    WORD cbHeader = *((WORD*)lpPtr);
+-    lpPtr += sizeof(WORD);
+-
+-    tzDef.wFlags = *((WORD*)lpPtr);
+-    lpPtr += sizeof(WORD);
+-
+-    if (TZDEFINITION_FLAG_VALID_GUID & tzDef.wFlags)
+-    {
+-        if (lpbDef + cbDef - lpPtr < sizeof(GUID)) return NULL;
+-        tzDef.guidTZID = *((GUID*)lpPtr);
+-        lpPtr += sizeof(GUID);
+-    }
+-
+-    if (TZDEFINITION_FLAG_VALID_KEYNAME & tzDef.wFlags)
+-    {
+-        if (lpbDef + cbDef - lpPtr < sizeof(WORD)) return NULL;
+-        cchKeyName = *((WORD*)lpPtr);
+-        lpPtr += sizeof(WORD);
+-        if (cchKeyName)
+-        {
+-            if (lpbDef + cbDef - lpPtr < (BYTE)sizeof(WORD)*cchKeyName) return NULL;
+-            szKeyName = (WCHAR*)lpPtr;
+-            lpPtr += cchKeyName*sizeof(WORD);
+-        }
+-    }
+-
+-    if (lpbDef+ cbDef - lpPtr < sizeof(WORD)) return NULL;
+-    tzDef.cRules = *((WORD*)lpPtr);
+-    lpPtr += sizeof(WORD);
+-
+-    /* FIXME: parse rules */
+-    if (tzDef.cRules) tzDef.cRules = 0;
+-#if 0
+-    if (tzDef.cRules)
+-    {
+-        lpRules = new TZRULE[tzDef.cRules];
+-        if (!lpRules) return NULL;
+-
+-        LPBYTE lpNextRule = lpPtr;
+-        BOOL bRuleOK = false;
+-
+-        for (i = 0;i < tzDef.cRules;i++)
+-        {
+-            bRuleOK = false;
+-            lpPtr = lpNextRule;
+-
+-            if (lpbDef + cbDef - lpPtr <
+-                2*sizeof(BYTE) + 2*sizeof(WORD) + 3*sizeof(long) + 2*sizeof(SYSTEMTIME)) return NULL;
+-            bRuleOK = true;
+-            BYTE bRuleMajorVersion = *((BYTE*)lpPtr);
+-            lpPtr += sizeof(BYTE);
+-            BYTE bRuleMinorVersion = *((BYTE*)lpPtr);
+-            lpPtr += sizeof(BYTE);
+-
+-            // We only understand TZ_BIN_VERSION_MAJOR
+-            if (TZ_BIN_VERSION_MAJOR != bRuleMajorVersion) return NULL;
+-
+-            // We only understand if >= TZ_BIN_VERSION_MINOR
+-            if (TZ_BIN_VERSION_MINOR > bRuleMinorVersion) return NULL;
+-
+-            WORD cbRule = *((WORD*)lpPtr);
+-            lpPtr += sizeof(WORD);
+-
+-            lpNextRule = lpPtr + cbRule;
+-
+-            lpRules[i].wFlags = *((WORD*)lpPtr);
+-            lpPtr += sizeof(WORD);
+-
+-            lpRules[i].stStart = *((SYSTEMTIME*)lpPtr);
+-            lpPtr += sizeof(SYSTEMTIME);
+-
+-            lpRules[i].TZReg.lBias = *((long*)lpPtr);
+-            lpPtr += sizeof(long);
+-            lpRules[i].TZReg.lStandardBias = *((long*)lpPtr);
+-            lpPtr += sizeof(long);
+-            lpRules[i].TZReg.lDaylightBias = *((long*)lpPtr);
+-            lpPtr += sizeof(long);
+-
+-            lpRules[i].TZReg.stStandardDate = *((SYSTEMTIME*)lpPtr);
+-            lpPtr += sizeof(SYSTEMTIME);
+-            lpRules[i].TZReg.stDaylightDate = *((SYSTEMTIME*)lpPtr);
+-            lpPtr += sizeof(SYSTEMTIME);
+-        }
+-        if (!bRuleOK)
+-        {
+-            delete[] lpRules;
+-            return NULL;
+-        }
+-    }
+-#endif
+-    // Now we've read everything - allocate a structure and copy it in
+-    gsize cbTZDef = sizeof(TZDEFINITION) +
+-        sizeof(WCHAR)*(cchKeyName+1) +
+-        sizeof(TZRULE)*tzDef.cRules;
+-
+-    TZDEFINITION* ptzDef = (TZDEFINITION*) malloc (cbTZDef);
+-
+-    if (ptzDef)
+-    {
+-        // Copy main struct over
+-        *ptzDef = tzDef;
+-        lpPtr = (LPBYTE) ptzDef;
+-        lpPtr += sizeof(TZDEFINITION);
+-
+-        if (szKeyName)
+-        {
+-            ptzDef->pwszKeyName = (WCHAR*)lpPtr;
+-            memcpy(lpPtr,szKeyName,cchKeyName*sizeof(WCHAR));
+-            ptzDef->pwszKeyName[cchKeyName] = 0;
+-            lpPtr += (cchKeyName+1)*sizeof(WCHAR);
+-        }
+-
+-        if (ptzDef -> cRules)
+-        {
+-            ptzDef -> rgRules = (TZRULE*)lpPtr;
+-            for (i = 0;i < ptzDef -> cRules;i++)
+-            {
+-                ptzDef -> rgRules[i] = lpRules[i];
+-            }
+-        }
+-    }
+-//    delete[] lpRules;
++	/* Reserved */
++	flag16 = 0x003e;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* TZRule flags */
++	flag16 = 0;
++	if (is_recur)
++		flag16 |= 1;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* wYear */
++	flag16 = standard_date.year;
++	g_byte_array_append (ba, (const guint8 *) &flag16, sizeof (guint16));
++
++	/* X - 14 times 0x00 */
++	flag8 = 0x00;
++	for (flag16 = 0; flag16 < 14; flag16++) {
++		g_byte_array_append (ba, (const guint8 *) &flag8, sizeof (guint8));
++	}
++
++	/* lBias */
++	g_byte_array_append (ba, (const guint8 *) &bias, sizeof (guint32));
++
++	/* lStandardBias */
++	g_byte_array_append (ba, (const guint8 *) &standard_bias, sizeof (guint32));
+ 
+-   free (ptzDef);
+-   ptzDef = NULL;
++	/* lDaylightBias */
++	g_byte_array_append (ba, (const guint8 *) &daylight_bias, sizeof (guint32));
+ 
+-    return ptzDef;
++	/* stStandardDate */
++	write_icaltime_as_systemtime (ba, standard_date);
++
++	/* stDaylightDate */
++	write_icaltime_as_systemtime (ba, daylight_date);
++}
++
++static void
++extract_bias_and_date (icalcomponent *comp,
++		       guint32 *bias,
++		       struct icaltimetype *start)
++{
++	icalproperty *prop;
++	gint tzoffset;
++
++	g_return_if_fail (comp != NULL);
++	g_return_if_fail (bias != NULL);
++	g_return_if_fail (start != NULL);
++
++	prop = icalcomponent_get_first_property (comp, ICAL_TZOFFSETTO_PROPERTY);
++	if (prop)
++		tzoffset = icalproperty_get_tzoffsetto (prop);
++	else
++		tzoffset = 0;
++
++	*bias = tzoffset / 60;
++	*start = icalcomponent_get_dtstart (comp);
++}
++
++static void
++write_tz_rule_comps (GByteArray *ba,
++		     gboolean is_recur,
++		     icalcomponent *standardcomp,
++		     icalcomponent *daylightcomp,
++		     icaltimezone *zone)
++{
++	struct icaltimetype standard_date, daylight_date, current_time;
++	guint32 bias, standard_bias, daylight_bias;
++
++	g_return_if_fail (ba != NULL);
++	g_return_if_fail (standardcomp != NULL);
++	g_return_if_fail (daylightcomp != NULL);
++
++	extract_bias_and_date (standardcomp, &standard_bias, &standard_date);
++	extract_bias_and_date (daylightcomp, &daylight_bias, &daylight_date);
++
++	current_time = icaltime_current_time_with_zone (zone);
++	bias = current_time.is_daylight ? daylight_bias : standard_bias;
++
++	write_tz_rule (ba, is_recur, bias, standard_bias, daylight_bias, standard_date, daylight_date);
++}
++
++static void
++add_timezone_rules (GByteArray *ba,
++		    gboolean is_recur,
++		    icalcomponent *vtimezone,
++		    icaltimezone *zone)
++{
++	gboolean any_added = FALSE;
++
++	g_return_if_fail (ba != NULL);
++
++	if (vtimezone) {
++		icalcomponent *subcomp, *standardcomp = NULL, *daylightcomp = NULL;
++
++		for (subcomp = icalcomponent_get_first_component (vtimezone, ICAL_ANY_COMPONENT);
++		     subcomp;
++		     subcomp = icalcomponent_get_next_component (vtimezone, ICAL_ANY_COMPONENT)) {
++			if (icalcomponent_isa (subcomp) == ICAL_XSTANDARD_COMPONENT)
++				standardcomp = subcomp;
++			if (icalcomponent_isa (subcomp) == ICAL_XDAYLIGHT_COMPONENT)
++				daylightcomp = subcomp;
++			if (standardcomp && daylightcomp) {
++				write_tz_rule_comps (ba, is_recur, standardcomp, daylightcomp, zone);
++
++				any_added = TRUE;
++				standardcomp = NULL;
++				daylightcomp = NULL;
++			}
++		}
++
++		if (standardcomp || daylightcomp) {
++			if (!standardcomp)
++				standardcomp = daylightcomp;
++			write_tz_rule_comps (ba, is_recur, standardcomp, daylightcomp, zone);
++			any_added = TRUE;
++		}
++	}
++
++	/* at least one should be always added, make it UTC */
++	if (!any_added) {
++		struct icaltimetype fake_utc;
++
++		memset (&fake_utc, 0, sizeof (struct icaltimetype));
++
++		write_tz_rule (ba, is_recur, 0, 0, 0, fake_utc, fake_utc);
++	}
+ }
+-#endif
+ 
+ #define TZDEFINITION_FLAG_VALID_GUID     0x0001 // the guid is valid
+ #define TZDEFINITION_FLAG_VALID_KEYNAME  0x0002 // the keyname is valid
+@@ -455,13 +482,28 @@ TZDEFINITION* BinToTZDEFINITION(ULONG cb
+ #define TZ_BIN_VERSION_MINOR  0x01 
+ 
+ void
+-exchange_mapi_cal_util_mapi_tz_to_bin (const gchar *mapi_tzid, struct Binary_r *sb)
++exchange_mapi_cal_util_mapi_tz_to_bin (const gchar *mapi_tzid, struct Binary_r *sb, gboolean is_recur)
+ {
+ 	GByteArray *ba;
+ 	guint8 flag8;
+ 	guint16 flag16;
+ 	gunichar2 *buf;
+ 	glong items_written;
++	icaltimezone *zone = NULL;
++	icalcomponent *vtimezone;
++	gint rules = 0;
++	const gchar *ical_location = exchange_mapi_cal_tz_util_get_ical_equivalent (mapi_tzid);
++
++	if (ical_location && *ical_location)
++		zone = icaltimezone_get_builtin_timezone (ical_location);
++	if (!zone)
++		zone = icaltimezone_get_utc_timezone ();
++	vtimezone = icaltimezone_get_component (zone);
++	if (vtimezone)
++		rules = (icalcomponent_count_components (vtimezone, ICAL_XSTANDARD_COMPONENT) + 
++			 icalcomponent_count_components (vtimezone, ICAL_XDAYLIGHT_COMPONENT)) / 2;
++	if (!rules)
++		rules = 1;
+ 
+ 	ba = g_byte_array_new ();
+ 
+@@ -473,8 +515,8 @@ exchange_mapi_cal_util_mapi_tz_to_bin (c
+ 	ba = g_byte_array_append (ba, (const guint8 *)buf, (sizeof (gunichar2) * items_written));
+ 	g_free (buf);
+ 
+-	/* number of rules *//* FIXME: Need to support rules */
+-	flag16 = 0x0000;
++	/* number of rules */
++	flag16 = rules;
+ 	ba = g_byte_array_append (ba, (const guint8 *)&flag16, sizeof (guint16));
+ 
+ 	/* wFlags: we know only keyname based names */
+@@ -493,7 +535,8 @@ exchange_mapi_cal_util_mapi_tz_to_bin (c
+ 	flag8 = TZ_BIN_VERSION_MAJOR;
+ 	ba = g_byte_array_prepend (ba, (const guint8 *)&flag8, sizeof (guint8));
+ 
+-	/* Rules may now be appended here */
++	/* Rules */
++	add_timezone_rules (ba, is_recur, vtimezone, zone);
+ 
+ 	sb->lpb = ba->data;
+ 	sb->cb = ba->len;
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.h.show-events-owa evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.h.show-events-owa	2013-10-16 17:43:32.634591778 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-tz-utils.h	2013-10-16 17:43:33.705591773 +0200
+@@ -46,7 +46,7 @@ void
+ exchange_mapi_cal_tz_util_dump (void);
+ 
+ void
+-exchange_mapi_cal_util_mapi_tz_to_bin (const gchar *mapi_tzid, struct Binary_r *sb);
++exchange_mapi_cal_util_mapi_tz_to_bin (const gchar *mapi_tzid, struct Binary_r *sb, gboolean is_recur);
+ 
+ int
+ exchange_mapi_cal_util_mapi_tz_pidlidtimezone (icaltimezone *ictz);
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c.show-events-owa evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c.show-events-owa	2013-10-16 17:42:37.235591825 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.c	2013-10-16 17:42:37.287591825 +0200
+@@ -657,14 +657,15 @@ globalid_to_string (GByteArray *ba)
+ }
+ 
+ ECalComponent *
+-exchange_mapi_cal_util_mapi_props_to_comp (ExchangeMapiConnection *conn, icalcomponent_kind kind, const gchar *mid, struct mapi_SPropValue_array *properties,
++exchange_mapi_cal_util_mapi_props_to_comp (ExchangeMapiConnection *conn, mapi_id_t fid, icalcomponent_kind kind, const gchar *mid, struct mapi_SPropValue_array *properties,
+ 					   GSList *streams, GSList *recipients, GSList *attachments,
+-					   const gchar *local_store_uri, const icaltimezone *default_zone, gboolean is_reply)
++					   const gchar *local_store_uri, const icaltimezone *default_zone, gboolean is_reply, GSList **detached_components)
+ {
+ 	ECalComponent *comp = NULL;
+ 	struct timeval t;
+ 	ExchangeMAPIStream *body_stream;
+ 	const gchar *subject = NULL, *body = NULL;
++	const struct StringArray_r *categories_array;
+ 	const uint32_t *ui32;
+ 	const bool *b;
+ 	icalcomponent *ical_comp;
+@@ -719,6 +720,25 @@ exchange_mapi_cal_util_mapi_props_to_com
+ 	icalcomponent_set_summary (ical_comp, subject);
+ 	icalcomponent_set_description (ical_comp, body);
+ 
++	categories_array = exchange_mapi_util_find_array_namedid (properties, conn, fid, PidNameKeywords);
++	if (categories_array) {
++		GSList *categories = NULL;
++		gint ii;
++
++		for (ii = 0; ii < categories_array->cValues; ii++) {
++			const gchar *category = categories_array->lppszA[ii];
++
++			if (!category || !*category)
++				continue;
++
++			categories = g_slist_append (categories, (gpointer) category);
++		}
++
++		e_cal_component_set_categories_list (comp, categories);
++
++		g_slist_free (categories);
++	}
++
+ 	if (icalcomponent_isa (ical_comp) == ICAL_VEVENT_COMPONENT) {
+ 		const gchar *location = NULL;
+ 		const gchar *dtstart_tz_location = NULL, *dtend_tz_location = NULL;
+@@ -922,7 +942,15 @@ exchange_mapi_cal_util_mapi_props_to_com
+ 		if (b && *b) {
+ 			stream = exchange_mapi_util_find_stream (streams, PROP_TAG(PT_BINARY, 0x8216));
+ 			if (stream) {
+-				exchange_mapi_cal_util_bin_to_rrule (stream->value, comp);
++				icaltimezone *recur_zone;
++				const gchar *recur_tz_location;
++
++				recur_tz_location = exchange_mapi_util_find_array_namedid (properties, conn, fid, PidLidTimeZoneDescription);
++				if (recur_tz_location)
++					recur_tz_location = exchange_mapi_cal_tz_util_get_ical_equivalent (recur_tz_location);
++				recur_zone = recur_tz_location ? icaltimezone_get_builtin_timezone (recur_tz_location) : (icaltimezone *) default_zone;
++
++				exchange_mapi_cal_util_bin_to_rrule (stream->value, comp, detached_components, recur_zone);
+ 			}
+ 		}
+ 
+@@ -1019,8 +1047,6 @@ exchange_mapi_cal_util_mapi_props_to_com
+ 		icalcomponent_add_property (ical_comp, prop);
+ 	}
+ 
+-	/* FIXME: categories */
+-
+ 	set_attachments_to_cal_component (comp, attachments, local_store_uri);
+ 
+ 	e_cal_component_rescan (comp);
+@@ -1039,6 +1065,7 @@ fetch_camel_cal_comp_cb (FetchItemsCallb
+ {
+ 	struct fetch_camel_cal_data *fccd = data;
+ 	ECalComponent *comp = NULL;
++	GSList *detached_recurrences = NULL, *d_i = NULL;
+ 	icalcomponent *icalcomp = NULL;
+ 	gchar *str = NULL, *smid = NULL, *fileuri;
+ 
+@@ -1053,9 +1080,9 @@ fetch_camel_cal_comp_cb (FetchItemsCallb
+ 			smid = exchange_mapi_util_mapi_id_to_string (item_data->mid);
+ 		else
+ 			smid = e_cal_component_gen_uid();
+-		comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, fccd->kind, smid,
++		comp = exchange_mapi_cal_util_mapi_props_to_comp (item_data->conn, item_data->fid, fccd->kind, smid,
+ 							item_data->properties, item_data->streams, item_data->recipients,
+-							NULL, NULL, NULL, fccd->method == ICAL_METHOD_REPLY);
++							NULL, NULL, NULL, fccd->method == ICAL_METHOD_REPLY, &detached_recurrences);
+ 		set_attachments_to_cal_component (comp, item_data->attachments, fileuri);
+ 		g_free (smid);
+ 	}
+@@ -1067,10 +1094,16 @@ fetch_camel_cal_comp_cb (FetchItemsCallb
+ 	if (comp)
+ 		icalcomponent_add_component (icalcomp,
+ 			icalcomponent_new_clone(e_cal_component_get_icalcomponent(comp)));
++	for (d_i = detached_recurrences; d_i; d_i = g_slist_next (d_i)) {
++		icalcomponent_add_component (icalcomp,
++				icalcomponent_new_clone (e_cal_component_get_icalcomponent (d_i->data)));
++		g_object_unref (d_i->data);
++	}
+ 	str = icalcomponent_as_ical_string_r (icalcomp);
+ 	icalcomponent_free (icalcomp);
+ 	if (comp)
+ 		g_object_unref (comp);
++	g_slist_free (detached_recurrences);
+ 
+ 	exchange_mapi_util_free_stream_list (&item_data->streams);
+ 	exchange_mapi_util_free_recipient_list (&item_data->recipients);
+@@ -1134,7 +1167,8 @@ exchange_mapi_cal_utils_add_named_ids (E
+ 		{ PidLidCommonEnd, 0 },
+ 		{ PidLidTaskMode, 0 },
+ 		{ PidLidReminderSignalTime, 0 },
+-		{ PidLidExceptionReplaceTime, 0 }
++		{ PidLidExceptionReplaceTime, 0 },
++		{ PidNameKeywords, 0 }
+ 	};
+ 	icalcomponent_kind kind = pkind;
+ 
+@@ -1287,10 +1321,12 @@ exchange_mapi_cal_utils_write_props_cb (
+ 	uint32_t flag32;
+ 	bool b;
+ 	icalproperty *prop;
+-	struct icaltimetype dtstart, dtend, utc_dtstart, utc_dtend;
++	struct icaltimetype dtstart, dtend, utc_dtstart, utc_dtend, all_day_dtstart = {0}, all_day_dtend = {0};
+ 	const icaltimezone *utc_zone;
+ 	const gchar *dtstart_tz_location, *dtend_tz_location, *text = NULL;
+ 	time_t tt;
++	GSList *categories = NULL;
++	gboolean is_all_day;
+ 
+ 	g_return_val_if_fail (conn != NULL, FALSE);
+ 	g_return_val_if_fail (mem_ctx != NULL, FALSE);
+@@ -1358,6 +1394,38 @@ exchange_mapi_cal_utils_write_props_cb (
+ 	dtstart_tz_location = get_tzid_location (icaltime_get_tzid (dtstart), cbdata);
+ 	dtend_tz_location = get_tzid_location (icaltime_get_tzid (dtend), cbdata);
+ 
++	is_all_day = kind == ICAL_VEVENT_COMPONENT && icaltime_is_date (dtstart) && icaltime_is_date (dtend);
++	if (is_all_day) {
++		const gchar *def_location;
++		icaltimezone *use_zone = NULL;
++
++		/* all-day events expect times not in UTC but in local time;
++		   if this differs from the server timezone, then the event
++		   is shown spread among (two) days */
++		def_location = get_tzid_location ("*default-zone*", cbdata);
++		if (def_location && *def_location)
++			use_zone = icaltimezone_get_builtin_timezone (def_location);
++
++		if (!use_zone)
++			use_zone = (icaltimezone *) utc_zone;
++
++		dtstart.is_date = 0;
++		dtstart.hour = 0;
++		dtstart.minute = 0;
++		dtstart.second = 0;
++		all_day_dtstart = icaltime_convert_to_zone (dtstart, use_zone);
++		dtstart.is_date = 1;
++		all_day_dtstart = icaltime_convert_to_zone (all_day_dtstart, (icaltimezone *) utc_zone);
++
++		dtend.is_date = 0;
++		dtend.hour = 0;
++		dtend.minute = 0;
++		dtend.second = 0;
++		all_day_dtend = icaltime_convert_to_zone (dtend, use_zone);
++		dtend.is_date = 1;
++		all_day_dtend = icaltime_convert_to_zone (all_day_dtend, (icaltimezone *) utc_zone);
++	}
++
+ 	utc_dtstart = icaltime_convert_to_zone (dtstart, (icaltimezone *)utc_zone);
+ 	utc_dtend = icaltime_convert_to_zone (dtend, (icaltimezone *)utc_zone);
+ 
+@@ -1381,6 +1449,33 @@ exchange_mapi_cal_utils_write_props_cb (
+ 	set_value (PR_BODY_UNICODE, text);
+ 	text = NULL;
+ 
++	e_cal_component_get_categories_list (comp, &categories);
++	if (categories) {
++		gint ii;
++		GSList *c;
++		struct StringArray_r *categories_array;
++
++		categories_array = talloc_zero (mem_ctx, struct StringArray_r);
++		categories_array->cValues = g_slist_length (categories);
++		categories_array->lppszA = (const char **) talloc_zero_array (mem_ctx, gchar *, categories_array->cValues);
++
++		for (c = categories, ii = 0; c; c = c->next, ii++) {
++			const gchar *category = c->data;
++
++			if (!category || !*category) {
++				ii--;
++				categories_array->cValues--;
++				continue;
++			}
++
++			categories_array->lppszA[ii] = talloc_strdup (mem_ctx, category);
++		}
++
++		set_named_value (PidNameKeywords, categories_array);
++
++		e_cal_component_free_categories_list (categories);
++	}
++
+ 	/* Priority and Importance */
+ 	prop = icalcomponent_get_first_property (ical_comp, ICAL_PRIORITY_PROPERTY);
+ 	flag32 = prop ? get_prio_prop_from_priority (icalproperty_get_priority (prop)) : PRIORITY_NORMAL;
+@@ -1510,8 +1605,12 @@ exchange_mapi_cal_utils_write_props_cb (
+ 		b = 0;
+ 		set_named_value (PidLidAutoFillLocation, &b);
+ 
++		/* All-day event */
++		b = is_all_day ? 1 : 0;
++		set_value (PidLidAppointmentSubType, &b);
++
+ 		/* Start */
+-		tt = icaltime_as_timet (utc_dtstart);
++		tt = icaltime_as_timet (is_all_day ? all_day_dtstart : utc_dtstart);
+ 		set_named_datetime_value (PidLidAppointmentStartWhole, tt);
+ 		/* FIXME: for recurrence */
+ 		set_named_datetime_value (PidLidClipStart, tt);
+@@ -1519,8 +1618,15 @@ exchange_mapi_cal_utils_write_props_cb (
+ 		/* Start TZ */
+ 		mapi_tzid = exchange_mapi_cal_tz_util_get_mapi_equivalent ((dtstart_tz_location && *dtstart_tz_location) ? dtstart_tz_location : "UTC");
+ 		if (mapi_tzid && *mapi_tzid) {
+-			exchange_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &start_tz);
++			exchange_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &start_tz, FALSE);
+ 			set_named_value (PidLidAppointmentTimeZoneDefinitionStartDisplay, &start_tz);
++
++			if (e_cal_component_has_recurrences (comp)) {
++				struct Binary_r recur_tz;
++
++				exchange_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &recur_tz, TRUE);
++				set_named_value (PidLidAppointmentTimeZoneDefinitionRecur, &recur_tz);
++			}
+ 		}
+ 
+ 		/* End */
+@@ -1532,7 +1638,7 @@ exchange_mapi_cal_utils_write_props_cb (
+ 		/* End TZ */
+ 		mapi_tzid = exchange_mapi_cal_tz_util_get_mapi_equivalent ((dtend_tz_location && *dtend_tz_location) ? dtend_tz_location : "UTC");
+ 		if (mapi_tzid && *mapi_tzid) {
+-			exchange_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &end_tz);
++			exchange_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &end_tz, FALSE);
+ 			set_named_value (PidLidAppointmentTimeZoneDefinitionEndDisplay, &end_tz);
+ 		}
+ 
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.h.show-events-owa evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.h
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.h.show-events-owa	2013-10-16 17:42:37.221591825 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-utils.h	2013-10-16 17:42:37.288591825 +0200
+@@ -83,9 +83,9 @@ void
+ exchange_mapi_cal_util_fetch_attachments (ECalComponent *comp, GSList **attach_list, const gchar *local_store_uri);
+ 
+ ECalComponent *
+-exchange_mapi_cal_util_mapi_props_to_comp (ExchangeMapiConnection *conn, icalcomponent_kind kind, const gchar *mid, struct mapi_SPropValue_array *properties,
++exchange_mapi_cal_util_mapi_props_to_comp (ExchangeMapiConnection *conn, mapi_id_t fid, icalcomponent_kind kind, const gchar *mid, struct mapi_SPropValue_array *properties,
+ 					   GSList *streams, GSList *recipients, GSList *attachments,
+-					   const gchar *local_store_uri, const icaltimezone *default_zone, gboolean is_reply);
++					   const gchar *local_store_uri, const icaltimezone *default_zone, gboolean is_reply, GSList **detached_components);
+ 
+ void
+ exchange_mapi_cal_util_generate_globalobjectid (gboolean is_clean, const gchar *uid, const struct timeval *exception_replace_time, const struct FILETIME *creation_time, struct Binary_r *sb);

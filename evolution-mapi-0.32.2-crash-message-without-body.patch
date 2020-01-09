@@ -1,0 +1,12 @@
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c.crash-message-without-body evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c.crash-message-without-body	2016-08-31 12:57:45.865954023 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-mail-utils.c	2016-08-31 12:57:45.897954023 +0200
+@@ -880,7 +880,7 @@ mapi_mail_item_to_mime_message (Exchange
+ 									inline_attachs);
+ 	} else if (build_related) {
+ 		multipart_body = mapi_mime_build_multipart_related (item,
+-								    item->msg.body_parts->data,
++								    item->msg.body_parts ? item->msg.body_parts->data : NULL,
+ 								    inline_attachs);
+ 	} else { /* Simple multipart/mixed */
+ 		CamelMimePart *part;

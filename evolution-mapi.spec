@@ -12,7 +12,7 @@
 
 Name: evolution-mapi
 Version: 0.32.2
-Release: 12%{?dist}
+Release: 13%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
@@ -71,6 +71,12 @@ Patch14: evolution-mapi-0.32.2-create-book-cal-source.patch
 # RH bug #1017108
 Patch15: evolution-mapi-0.32.2-shorten-delay-of-open.patch
 
+# RH bug #1026797
+Patch16: evolution-mapi-0.32.2-covscan-uninit-variable.patch
+
+# RH bug #1141662
+Patch17: evolution-mapi-0.32.2-crash-message-without-body.patch
+
 ### Build Dependencies ###
 
 BuildRequires: evolution-data-server-devel >= %{eds_version}
@@ -116,6 +122,8 @@ Development files needed for building things which link against %{name}.
 %patch13 -p1 -b .show-events-owa
 %patch14 -p1 -b .create-book-cal-source
 %patch15 -p1 -b .shorten-delay-of-open
+%patch16 -p1 -b .covscan-uninit-variable
+%patch17 -p1 -b .crash-message-without-body
 
 %build
 
@@ -172,6 +180,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/libexchangemapi-1.0.pc
 
 %changelog
+* Wed Aug 31 2016 Milan Crha <mcrha@redhat.com> - 0.32.2-13
+- Add patch for RH bug #1026797 (Coverity scan issue - uninitialized variable)
+- Add patch for RH bug #1141662 (Crash when receiving message without body)
+
 * Thu Oct 17 2013 Milan Crha <mcrha@redhat.com> - 0.32.2-12
 - Fix a copy&paste error in a patch update for RH bug #621941
 

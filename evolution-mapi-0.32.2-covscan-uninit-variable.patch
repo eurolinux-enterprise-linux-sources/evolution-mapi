@@ -1,0 +1,27 @@
+diff -up evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c.covscan-uninit-variable evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c
+--- evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c.covscan-uninit-variable	2016-08-31 12:52:56.838954396 +0200
++++ evolution-mapi-0.32.2/src/libexchangemapi/exchange-mapi-cal-recur-utils.c	2016-08-31 12:52:56.852954396 +0200
+@@ -1146,10 +1146,12 @@ exchange_mapi_cal_util_rrule_to_bin (ECa
+ 		return NULL;
+ 
+ 	e_cal_component_get_rrule_list (comp, &rrule_list);
+-	e_cal_component_get_exdate_list (comp, &exdate_list);
++	if (g_slist_length (rrule_list) != 1) {
++		e_cal_component_free_recur_list (rrule_list);
++		return NULL;
++	}
+ 
+-	if (g_slist_length (rrule_list) != 1)
+-		goto cleanup;
++	e_cal_component_get_exdate_list (comp, &exdate_list);
+ 
+ 	rt = (struct icalrecurrencetype *)(rrule_list->data);
+ 
+@@ -1371,7 +1373,6 @@ exchange_mapi_cal_util_rrule_to_bin (ECa
+ 	/* Reserved Block 2 Size */
+ 	arp_to_gba(&arp, ba);
+ 
+-cleanup:
+ 	free_arp_contents(&arp);
+ 	e_cal_component_free_exdate_list (exdate_list);
+ 	e_cal_component_free_recur_list (rrule_list);

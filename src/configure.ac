@@ -2,11 +2,12 @@ dnl Simple configuration script for openchange evolution plugin
 dnl Written by Julien Kerihuel <j.kerihuel@openchange.org>
 dnl Modified for GNOME Evolution MAPI Provider by Johnny Jacob <jjohnny@novell.com>
 
-m4_define([ema_version], [3.12.10])
+m4_define([ema_version], [3.22.6])
 
 AC_PREREQ(2.58)
 AC_INIT([evolution-mapi], [ema_version], [http://bugzilla.gnome.org/browse.cgi?product=evolution-mapi])
 AM_INIT_AUTOMAKE([gnu 1.9 dist-xz no-dist-gzip -Wno-portability])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(README)
 AC_CONFIG_HEADERS(config.h)
 
@@ -30,8 +31,8 @@ m4_define([evo_minimum_version], [ema_version])
 m4_define([libmapi_minimum_version], [2.0])
 
 dnl Keep these two definitions in agreement.
-m4_define([glib_minimum_version], [2.34])
-m4_define([glib_encoded_version], [GLIB_VERSION_2_34])
+m4_define([glib_minimum_version], [2.40])
+m4_define([glib_encoded_version], [GLIB_VERSION_2_40])
 
 dnl Keep these two definitions in agreement.
 m4_define([gdk_minimum_version], [3.0])
@@ -57,18 +58,31 @@ AC_PROG_MAKE_SET
 dnl ***********************
 dnl Compiler Warning Flags
 dnl ***********************
+proposed_warning_flags=
+append_warning_flags=
+
+if test "x$enable_maintainer_mode" = "xyes" ; then
+	proposed_warning_flags="-Wall -Wextra -Wdeprecated-declarations"
+else
+	proposed_warning_flags="-Wno-deprecated-declarations"
+fi
+
+if test "$CC" = "clang" ; then
+	append_warning_flags="-Wno-parentheses-equality -Wno-format-nonliteral"
+fi
+
 AS_COMPILER_FLAGS(WARNING_FLAGS,
-	"-Wall -Wextra
-	-Wdeprecated-declarations
+	"$proposed_warning_flags
 	-Wno-missing-field-initializers
 	-Wno-sign-compare
 	-Wno-unused-parameter
 	-Wdeclaration-after-statement
 	-Werror-implicit-function-declaration
-	-Wformat-nonliteral -Wformat-security -Winit-self
+	-Wformat -Wformat-nonliteral -Wformat-security -Winit-self
 	-Wmissing-declarations -Wmissing-include-dirs
 	-Wmissing-noreturn -Wnested-externs -Wpointer-arith
-	-Wundef -Wwrite-strings")
+	-Wundef -Wwrite-strings
+	$append_warning_flags")
 AC_SUBST(WARNING_FLAGS)
 
 dnl Other useful compiler warnings for test builds only.
@@ -126,9 +140,6 @@ GETTEXT_PACKAGE=evolution-mapi
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
 
-localedir='$(prefix)/$(DATADIRNAME)/locale'
-AC_SUBST(localedir)
-
 dnl ****************************
 dnl Initialize libtool
 dnl ****************************
@@ -136,6 +147,8 @@ AM_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
 PKG_PROG_PKG_CONFIG
+
+GNOME_CODE_COVERAGE
 
 dnl *****************************
 dnl Check for GNOME Platform
@@ -178,46 +191,61 @@ dnl Check for struct mapi_SNotRestriction availability
 dnl see http://tracker.openchange.org/issues/377
 dnl ****************************
 AC_MSG_CHECKING([libmapi struct mapi_SNotRestriction])
-save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
-save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+save_cflags="$CFLAGS"; CFLAGS="$LIBMAPI_CFLAGS $CFLAGS"
+save_libs="$LIBS"; LIBS="$LIBMAPI_LIBS $LIBS"
 AC_LINK_IFELSE([AC_LANG_PROGRAM(
 	[[#include <libmapi/libmapi.h>]],
 	[[struct mapi_SNotRestriction snot; snot.res->rt = RES_NOT]])],
 	[AC_DEFINE(HAVE_RES_NOT_SUPPORTED, 1, [libmapi supports RES_NOT restrictions]) ac_cv_have_rns=yes],[ac_cv_have_rns=no])
-CFLAGS=$save_cflags
-LIBS=$save_libs
+CFLAGS="$save_cflags"
+LIBS="$save_libs"
 AC_MSG_RESULT([$ac_cv_have_rns])
 
 dnl ****************************
 dnl Check for OpenChange 2.1 fast-transfer tags availability
 dnl ****************************
 AC_MSG_CHECKING([libmapi fast-transfer tags])
-save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
-save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+save_cflags="$CFLAGS"; CFLAGS="$LIBMAPI_CFLAGS $CFLAGS"
+save_libs="$LIBS"; LIBS="$LIBMAPI_LIBS $LIBS"
 AC_LINK_IFELSE([AC_LANG_PROGRAM(
 	[[#include <libmapi/libmapi.h>]],
 	[[uint32_t tag; tag = StartMessage; tag = EndMessage; tag = StartRecip; tag = EndToRecip; tag = NewAttach; tag = EndAttach; tag = StartEmbed; tag = EndEmbed;]])],
 	[AC_DEFINE(HAVE_FAST_TRANSFER_TAGS_2_1, 1, [libmapi supports fast-transfer tags from OpenChange 2.1]) ac_cv_have_ftt21=yes],[ac_cv_have_ftt21=no])
-CFLAGS=$save_cflags
-LIBS=$save_libs
+CFLAGS="$save_cflags"
+LIBS="$save_libs"
 AC_MSG_RESULT([$ac_cv_have_ftt21])
 
 dnl ****************************
 dnl Check for OpenChange 2.2 ecRpcFailed
 dnl ****************************
 AC_MSG_CHECKING([libmapi ecRpcFailed error code])
-save_cflags=$CFLAGS; CFLAGS=$LIBMAPI_CFLAGS
-save_libs=$LIBS; LIBS="$LIBMAPI_LIBS"
+save_cflags="$CFLAGS"; CFLAGS="$LIBMAPI_CFLAGS $CFLAGS"
+save_libs="$LIBS"; LIBS="$LIBMAPI_LIBS $LIBS"
 AC_LINK_IFELSE([AC_LANG_PROGRAM(
 	[[#include <libmapi/libmapi.h>]],
 	[[uint32_t err = ecRpcFailed;]])],
 	[AC_DEFINE(HAVE_ECPRCFAILED_ERROR, 1, [libmapi defines ecRpcFailed error code]) ac_cv_have_ecrpcfailed=yes],[ac_cv_have_ecrpcfailed=no])
-CFLAGS=$save_cflags
-LIBS=$save_libs
+CFLAGS="$save_cflags"
+LIBS="$save_libs"
 if [ test "x$ac_cv_have_ecrpcfailed" = "xno" ] ; then
 	CFLAGS="-DecRpcFailed=MAPI_E_NETWORK_ERROR $CFLAGS"
 fi
 AC_MSG_RESULT([$ac_cv_have_ecrpcfailed])
+
+dnl ****************************
+dnl Check for OpenChange 2.3 QueryRows
+dnl ****************************
+AC_MSG_CHECKING([libmapi QueryRows arguments])
+save_cflags="$CFLAGS"; CFLAGS="$LIBMAPI_CFLAGS $CFLAGS"
+save_libs="$LIBS"; LIBS="$LIBMAPI_LIBS $LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <libmapi/libmapi.h>]],
+	[[QueryRows(NULL, 1, TBL_ADVANCE, TBL_FORWARD_READ, NULL);]])],
+	[AC_DEFINE(HAVE_QUERYROWS_FORWARDREAD, 1, [libmapi defines QueryRows with ForwardRead argument]) ac_cv_have_queryrows_forwardread=yes],[ac_cv_have_queryrows_forwardread=no])
+CFLAGS="$save_cflags"
+LIBS="$save_libs"
+AC_MSG_RESULT([$ac_cv_have_queryrows_forwardread])
+
 
 dnl ****************************
 dnl Expose version information

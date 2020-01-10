@@ -1,63 +1,339 @@
-evolution-mapi 3.12.10 2015-01-12
+evolution-mapi 3.22.6 2017-03-13
+--------------------------------
+
+Translations:
+	Inaki Larranaga Murgoitio (eu)
+
+evolution-mapi 3.22.4 2017-01-16
+--------------------------------
+
+Bug Fixes:
+	Bug 775951 - Folder permission level change doesn't change read permission (Milan Crha)
+
+evolution-mapi 3.22.3 2016-12-12
+--------------------------------
+
+Bug Fixes:
+	Bug 775843 - Rejects to modify regular (non-recurring) appointment (Milan Crha)
+
+evolution-mapi 3.22.0 2016-09-19
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.21.92 2016-09-12
+---------------------------------
+
+Miscellaneous:
+	Include timezone components in meeting invitation mails/components (Milan Crha)
+
+Translations:
+	Piotr Drąg (pl)
+
+evolution-mapi 3.21.91 2016-08-29
+---------------------------------
+
+Miscellaneous:
+	Simplify and correct free/busy time calculation (Milan Crha)
+	Books do not recognize offline usage before being opened (Milan Crha)
+
+Translations:
+	Piotr Drąg (pl)
+	Matej Urbančič (sl)
+
+evolution-mapi 3.21.90 2016-08-15
+---------------------------------
+
+Translations:
+	Aurimas Černius (lt)
+
+evolution-mapi 3.21.4 2016-07-18
+--------------------------------
+
+Bug Fixes:
+	Bug 764065 - [Camel] Use get methods for CamelMessageInfo fields (Milan Crha)
+
+Miscellaneous:
+	Always build ESExp structure as a GObject descendant (Milan Crha)
+	Add Language headers to po files (Piotr Drąg)
+
+Translations:
+	Dušan Kazik (sk)
+	Andika Triwidada (id)
+
+evolution-mapi 3.21.3 2016-06-20
+--------------------------------
+
+Bug Fixes:
+	Bug 766682 - Three-state value for 'download messages for offline' per folder (Milan Crha)
+
+Miscellaneous:
+	Use newly introduced ENetworkMonitor (Milan Crha)
+	Address some of the clang compiler warnings (Milan Crha)
+
+Translations:
+	Andika Triwidada (id)
+
+evolution-mapi 3.21.2 2016-05-23
+--------------------------------
+
+Miscellaneous:
+	Fix an issue found by Coverity Scan (Milan Crha)
+
+Translations:
+	Tiago Santos (pt)
+
+evolution-mapi 3.21.1 2016-04-25
+--------------------------------
+
+Bug Fixes:
+	Bug 764109 - Typo in error message (Sebastian Rasmussen)
+
+Translations:
+	Sebastian Rasmussen (sv)
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+	Balázs Úr (hu)
+	Piotr Drąg (pl)
+	Mario Blättermann (de)
+	Rafael Fontenelle (pt_BR)
+	Marek Černocký (cs)
+	Daniel Mustieles (es)
+
+evolution-mapi 3.20.0 2016-03-21
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.19.92 2016-03-14
+---------------------------------
+
+Miscellaneous:
+	Correct URL in the README file (Milan Crha)
+
+Translations:
+	Rūdolfs Mazurs (lv)
+	Cédric Valmary (oc)
+
+evolution-mapi 3.19.90 2016-02-15
+---------------------------------
+
+Bug Fixes:
+	Bug 761346 - More Camel introspection fixes (Milan Crha)
+
+Miscellaneous:
+	[Camel] Reuse existing ESourceRegistry (Milan Crha)
+	Do not require gnome-common to run autogen.sh (Milan Crha)
+
+Translations:
+	Aurimas Černius (lt)
+
+evolution-mapi 3.19.4 2016-01-18
+--------------------------------
+
+Translations:
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+	Mario Blättermann (de)
+	Muhammet Kara (tr)
+
+evolution-mapi 3.19.3 2015-12-14
+--------------------------------
+
+Miscellaneous:
+	Add <kudos/> into a metainfo file (Milan Crha)
+
+evolution-mapi 3.19.1 2015-10-26
+--------------------------------
+
+Translations:
+	Jiri Grönroos (fi)
+
+evolution-mapi 3.18.0 2015-09-21
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.17.92 2015-09-14
+---------------------------------
+
+Miscellaneous:
+	Listen for ESource changes only after source-registry backend is populated (Milan Crha)
+
+Translations:
+	Pedro Albuquerque (pt)
+
+evolution-mapi 3.17.91 2015-08-31
+---------------------------------
+
+Translations:
+	Piotr Drąg (pl)
+
+evolution-mapi 3.17.90 2015-08-17
+---------------------------------
+
+Bug Fixes:
+	Bug 233140 - Show message counts in subscribe folders dialog (Milan Crha)
+
+Translations:
+	Necdet Yücel (tr)
+
+evolution-mapi 3.17.4 2015-07-20
+--------------------------------
+
+Bug Fixes:
+	Bug 692361 - e_cal_client_get_free_busy() broken (Milan Crha)
+
+evolution-mapi 3.17.3 2015-06-22
+--------------------------------
+
+Bug Fixes:
+	Bug 471791 - Move away from g_asserts to g_ret* (Milan Crha)
+
+Miscellaneous:
+	configure.ac: Do not override localedir variable (Milan Crha)
+	Use e_source_remove_sync() instead of e_source_registry_server_remove_source() (Milan Crha)
+	Make sure collection child sources are enabled when created (Milan Crha)
+
+evolution-mapi 3.17.2 2015-05-25
+--------------------------------
+
+Miscellaneous:
+	Fix a build break with OpenChange 2.3 QueryRows() API change (Milan Crha)
+	Inherit CFLAGS and LIBS in the 'Check for' configure test programs (Milan Crha)
+
+evolution-mapi 3.17.1 2015-04-27
+--------------------------------
+
+Bug Fixes:
+	Bug 746395 - Let the provider store sent messages on its own (Milan Crha)
+	Bug 747500 - Mail account connection settings change requires restart (Milan Crha)
+
+Miscellaneous:
+	Use common property lock provided by ESourceExtension (Milan Crha)
+	Add missing libcamelmapi library to link with module-mapi-configuration (Milan Crha)
+
+Translations:
+	Jordi Mas (ca)
+
+evolution-mapi 3.16.0 2015-03-23
+--------------------------------
+
+Translations:
+	Daniel Mustieles (es)
+
+evolution-mapi 3.15.92 2015-03-16
+---------------------------------
+
+Translations:
+	Rafael Ferreira (pt_BR)
+	Dušan Kazik (sk)
+	Samir Ribic (bs)
+	Aurimas Černius (lt)
+
+evolution-mapi 3.15.91 2015-03-02
+---------------------------------
+
+Miscellaneous:
+	Use thread safe variants of g_object_bind_property*() functions from evolution-data-server (Milan Crha)
+	Sync version with GNOME 3.15 series (Milan Crha)
+
+Translations:
+	Matej Urbančič (sl)
+
+evolution-mapi 3.13.90 2015-02-16
+---------------------------------
+
+Miscellaneous:
+	Move authentication of backends back to the client (Milan Crha)
+	Remove unused declarations of camel_application_is_exiting variable (Milan Crha)
+
+Translations:
+	Marek Černocký (cs)
+	Inaki Larranaga Murgoitio (eu)
+	Piotr Drąg (pl)
+	Balázs Úr (hu)
+
+evolution-mapi 3.13.10 2015-01-26
 ---------------------------------
 
 Translations:
 	Shankar Prasad (kn)
+	Daniel Mustieles (es)
 
-evolution-mapi 3.12.9 2014-12-08
+evolution-mapi 3.13.9 2014-12-22
 --------------------------------
 
 Translations:
-	Tom Tryfonidis (el)
+	Balázs Úr (hu)
+	Muhammet Kara (tr)
 
-evolution-mapi 3.12.8 2014-11-10
+evolution-mapi 3.13.8 2014-11-24
 --------------------------------
 
 Bug Fixes:
-	Bug 738512 - Build break with OpenChange 2.2 (Milan Crha)
 	Bug 683552 - Cannot receive recurring meetings (Milan Crha)
-
-Miscellaneous:
-	Always update local calendar content after successfully connected (Milan Crha)
 
 Translations:
 	Rafael Ferreira (pt_BR)
-	Marek Černocký (cs)
+	Tom Tryfonidis (el)
 
-evolution-mapi 3.12.7 2014-10-13
+evolution-mapi 3.13.7 2014-10-27
 --------------------------------
+
+Bug Fixes:
+	Bug 653157 - Enable extra compiler warnings in maintainer mode only (Milan Crha)
+	Bug 738512 - Build break with OpenChange 2.2 (Milan Crha)
 
 Miscellaneous:
 	Add evolution-mapi.metainfo.xml file (Milan Crha)
 	Use INTLTOOL_XML_RULE for appdata files (Milan Crha)
+	Always update local calendar content after successfully connected (Milan Crha)
 
 Translations:
-	Gábor Kelemen (hu)
+	Saibal Ray (bn_IN)
+	Nilamdyuti Goswami (as)
 	Piotr Drąg (pl)
+	Andika Triwidada (id)
+	Sweta Kothari (gu)
 	Мирослав Николић (sr)
 	Мирослав Николић (sr@latin)
-	Andika Triwidada (id)
+	Marek Černocký (cs)
 
-evolution-mapi 3.12.5 2014-08-11
+evolution-mapi 3.13.6 2014-09-22
 --------------------------------
 
 Miscellaneous:
+	No code change, just a release to adapt to folder changes in Evolution
+
+evolution-mapi 3.13.4 2014-07-28
+--------------------------------
+
+Miscellaneous:
+	Replace GtkSpinner with Evolution's ESpinner (Milan Crha)
+	Adapt evolution-mapi to support backend-per-process (Fabiano Fidêncio)
 	Add missing chain-up to parent's constructed() method (Milan Crha)
 
 Translations:
 	Inaki Larranaga Murgoitio (eu)
 
-evolution-mapi 3.12.2 2014-05-12
+evolution-mapi 3.13.2 2014-05-26
 --------------------------------
 
 Bugs:
 	Bug #729028 - Adapt to OpenChange 2.1 API changes (Jordi Mallach)
 
-evolution-mapi 3.12.1 2014-04-14
+evolution-mapi 3.13.1 2014-04-28
 --------------------------------
 
 Bugs:
 	Bug #684425 - Do not pass NULL text to gtk_entry_set_text() (Milan Crha)
+
+Miscellaneous:
+	Add an --enable-code-coverage configure option to enable gcov support (Milan Crha)
 
 evolution-mapi 3.12.0 2014-03-24
 --------------------------------

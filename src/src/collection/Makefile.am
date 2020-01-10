@@ -11,14 +11,13 @@ module_mapi_backend_la_CPPFLAGS =		\
 	$(LIBEBACKEND_CFLAGS)			\
 	$(LIBMAPI_CFLAGS)			\
 	$(CAMEL_CFLAGS)				\
+	$(CODE_COVERAGE_CFLAGS)			\
 	$(NULL)
 
 module_mapi_backend_la_SOURCES =	\
 	module-mapi-backend.c		\
 	e-mapi-backend.c		\
 	e-mapi-backend.h		\
-	e-mapi-backend-authenticator.c	\
-	e-mapi-backend-authenticator.h	\
 	e-mapi-backend-factory.c	\
 	e-mapi-backend-factory.h	\
 	$(NULL)
@@ -32,7 +31,7 @@ module_mapi_backend_la_LIBADD =		\
 	$(NULL)
 
 module_mapi_backend_la_LDFLAGS = \
-	-module -avoid-version $(NO_UNDEFINED) \
+	-module -avoid-version $(NO_UNDEFINED) $(CODE_COVERAGE_LDFLAGS) \
 	$(NULL)
 
 -include $(top_srcdir)/git.mk

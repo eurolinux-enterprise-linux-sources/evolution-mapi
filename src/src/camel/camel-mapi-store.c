@@ -732,7 +732,7 @@ mapi_get_folder_info_offline (CamelStore *store,
 	CamelSettings *settings;
 	CamelMapiSettings *mapi_settings;
 	CamelFolderInfo *fi;
-	ESourceRegistry *registry = NULL;
+	CamelSession *session = NULL;
 	GList *my_sources = NULL;
 	GPtrArray *folders;
 	GPtrArray *array;
@@ -755,11 +755,13 @@ mapi_get_folder_info_offline (CamelStore *store,
 	folders = g_ptr_array_new ();
 
 	if (subscription_list) {
-		GError *local_error = NULL;
+		session = camel_service_ref_session (CAMEL_SERVICE (store));
+		if (session) {
+			ESourceRegistry *registry;
+			GList *all_sources;
 
-		registry = e_source_registry_new_sync (cancellable, &local_error);
-		if (registry) {
-			GList *all_sources = e_source_registry_list_sources (registry, NULL);
+			registry = e_mail_session_get_registry (E_MAIL_SESSION (session));
+			all_sources = e_source_registry_list_sources (registry, NULL);
 
 			my_sources = e_mapi_utils_filter_sources_for_profile (all_sources, profile);
 
@@ -872,8 +874,7 @@ mapi_get_folder_info_offline (CamelStore *store,
 			_("No public folder found") : _("No folder found"));
 
 	g_list_free_full (my_sources, g_object_unref);
-	if (registry)
-		g_object_unref (registry);
+	g_clear_object (&session);
 
 	g_free (profile);
 
@@ -1283,7 +1284,7 @@ mapi_store_create_folder_sync (CamelStore *store,
 		g_set_error_literal (
 			error, CAMEL_SERVICE_ERROR,
 			CAMEL_SERVICE_ERROR_UNAVAILABLE,
-			_("MAPI folders can be created only within mailbox of the logged user"));
+			_("MAPI folders can be created only within mailbox of the logged in user"));
 		return NULL;
 	}
 
@@ -2144,10 +2145,14 @@ mapi_connect_sync (CamelService *service,
 	uint64_t current_size = -1, receive_quota = -1, send_quota = -1;
 	gchar *name;
 
+	/* Chain up to parent's method. */
+	if (!CAMEL_SERVICE_CLASS (camel_mapi_store_parent_class)->connect_sync (service, cancellable, error))
+		return FALSE;
+
 	if (!camel_offline_store_get_online (CAMEL_OFFLINE_STORE (store))) {
 		g_set_error_literal (
 			error, CAMEL_SERVICE_ERROR, CAMEL_SERVICE_ERROR_UNAVAILABLE,
-			_("Cannot connect MAPI store in offline mode"));
+			_("Cannot connect to MAPI store in offline mode"));
 		return FALSE;
 	}
 
@@ -2252,7 +2257,8 @@ mapi_disconnect_sync (CamelService *service,
 
 	store->priv->folders_synced = FALSE;
 
-	return TRUE;
+	/* Chain up to parent's method. */
+	return CAMEL_SERVICE_CLASS (camel_mapi_store_parent_class)->disconnect_sync (service, clean, cancellable, error);
 }
 
 struct ScheduleUpdateData
@@ -2602,7 +2608,7 @@ mapi_authenticate_sync (CamelService *service,
 	const gchar *profile;
 	const gchar *password;
 	GError *mapi_error = NULL;
-	GString *password_str;
+	ENamedParameters *credentials;
 
 	settings = camel_service_ref_settings (service);
 	mapi_settings = CAMEL_MAPI_SETTINGS (settings);
@@ -2634,14 +2640,15 @@ mapi_authenticate_sync (CamelService *service,
 		}
 	}
 
-	password_str = g_string_new (password);
+	credentials = e_named_parameters_new ();
+	e_named_parameters_set (credentials, E_SOURCE_CREDENTIAL_PASSWORD, password);
 	g_rec_mutex_lock (&store->priv->connection_lock);
 	session = camel_service_ref_session (service);
 	store->priv->connection = e_mapi_connection_new (
 		e_mail_session_get_registry (E_MAIL_SESSION (session)),
-		profile, password_str, cancellable, &mapi_error);
+		profile, credentials, cancellable, &mapi_error);
 	g_object_unref (session);
-	g_string_free (password_str, TRUE);
+	e_named_parameters_free (credentials);
 	if (store->priv->connection && e_mapi_connection_connected (store->priv->connection)) {
 		result = CAMEL_AUTHENTICATION_ACCEPTED;
 

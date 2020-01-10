@@ -51,8 +51,6 @@
 #define CAMEL_MAPI_FOLDER_UNLOCK(f, l) \
 	(g_mutex_unlock(&((CamelMapiFolder *)f)->priv->l))
 
-extern gint camel_application_is_exiting;
-
 struct _CamelMapiFolderPrivate {
 	GMutex search_lock;	/* for locking the search object */
 
@@ -175,27 +173,24 @@ mapi_set_message_id (CamelMapiMessageInfo *mapi_mi, const gchar *message_id)
 static void
 mapi_set_message_references (CamelMapiMessageInfo *mapi_mi, const gchar *references, const gchar *in_reply_to)
 {
-	struct _camel_header_references *refs, *irt, *scan;
+	GSList *refs, *irt, *scan;
 	guint8 *digest;
 	gint count;
 	gsize length;
 	CamelMessageInfoBase *mi = &mapi_mi->info;
 
 	refs = camel_header_references_decode (references);
-	irt = camel_header_references_inreplyto_decode (in_reply_to);
+	irt = camel_header_references_decode (in_reply_to);
 	if (refs || irt) {
 		if (irt) {
 			/* The References field is populated from the "References" and/or "In-Reply-To"
 			   headers. If both headers exist, take the first thing in the In-Reply-To header
 			   that looks like a Message-ID, and append it to the References header. */
 
-			if (refs)
-				irt->next = refs;
-
-			refs = irt;
+			refs = g_slist_concat (irt, refs);
 		}
 
-		count = camel_header_references_list_size(&refs);
+		count = g_slist_length (refs);
 		mi->references = g_malloc(sizeof(*mi->references) + ((count-1) * sizeof(mi->references->references[0])));
 
 		length = g_checksum_type_get_length (G_CHECKSUM_MD5);
@@ -207,16 +202,16 @@ mapi_set_message_references (CamelMapiMessageInfo *mapi_mi, const gchar *referen
 			GChecksum *checksum;
 
 			checksum = g_checksum_new (G_CHECKSUM_MD5);
-			g_checksum_update (checksum, (guchar *) scan->id, -1);
+			g_checksum_update (checksum, (guchar *) scan->data, -1);
 			g_checksum_get_digest (checksum, digest, &length);
 			g_checksum_free (checksum);
 
 			memcpy(mi->references->references[count].id.hash, digest, sizeof(mi->message_id.id.hash));
 			count++;
-			scan = scan->next;
+			scan = g_slist_next (scan);
 		}
 		mi->references->size = count;
-		camel_header_references_list_clear(&refs);
+		g_slist_free_full (refs, g_free);
 	}
 }
 
@@ -333,7 +328,7 @@ gather_changed_objects_to_slist (EMapiConnection *conn,
 
 				if ((minfo->info.flags & CAMEL_MAPI_MESSAGE_WITH_READ_RECEIPT) != 0) {
 					if ((object_data->msg_flags & MSGFLAG_RN_PENDING) == 0 &&
-					    !camel_message_info_user_flag (info, "receipt-handled")) {
+					    !camel_message_info_get_user_flag (info, "receipt-handled")) {
 						camel_message_info_set_user_flag (info, "receipt-handled", TRUE);
 						minfo->info.dirty = TRUE;
 
@@ -343,7 +338,7 @@ gather_changed_objects_to_slist (EMapiConnection *conn,
 
 				if ((minfo->info.flags & mask) != (flags & mask)) {
 					camel_message_info_set_flags (info, mask, flags);
-					minfo->server_flags = camel_message_info_flags (info);
+					minfo->server_flags = camel_message_info_get_flags (info);
 					minfo->info.dirty = TRUE;
 
 					camel_folder_summary_touch (gco->summary);
@@ -440,12 +435,12 @@ update_message_info (CamelMessageInfo *info,
 	if (pread_receipt && *pread_receipt && (msg_flags & MSGFLAG_RN_PENDING) == 0)
 		camel_message_info_set_user_flag (info, "receipt-handled", TRUE);
 
-	if ((camel_message_info_flags (info) & mask) != flags) {
+	if ((camel_message_info_get_flags (info) & mask) != flags) {
 		if (is_new)
 			minfo->info.flags = flags;
 		else
 			camel_message_info_set_flags (info, mask, flags);
-		minfo->server_flags = camel_message_info_flags (info);
+		minfo->server_flags = camel_message_info_get_flags (info);
 	}
 
 	minfo->info.dirty = TRUE;
@@ -541,7 +536,7 @@ gather_object_for_offline_cb (EMapiConnection *conn,
 			if (gos->is_public_folder) {
 				info = camel_folder_summary_get (gos->folder->summary, uid_str);
 				if (info) {
-					user_has_read = (camel_message_info_flags (info) & CAMEL_MESSAGE_SEEN) != 0;
+					user_has_read = (camel_message_info_get_flags (info) & CAMEL_MESSAGE_SEEN) != 0;
 					camel_message_info_unref (info);
 				}
 			}
@@ -564,10 +559,10 @@ gather_object_for_offline_cb (EMapiConnection *conn,
 			camel_message_info_ref (info);
 
 			if (is_new) {
-				camel_folder_change_info_add_uid (gos->changes, camel_message_info_uid (info));
-				camel_folder_change_info_recent_uid (gos->changes, camel_message_info_uid (info));
+				camel_folder_change_info_add_uid (gos->changes, camel_message_info_get_uid (info));
+				camel_folder_change_info_recent_uid (gos->changes, camel_message_info_get_uid (info));
 			} else {
-				camel_folder_change_info_change_uid (gos->changes, camel_message_info_uid (info));
+				camel_folder_change_info_change_uid (gos->changes, camel_message_info_get_uid (info));
 			}
 
 			add_message_to_cache (CAMEL_MAPI_FOLDER (gos->folder), uid_str, &msg, cancellable);
@@ -749,18 +744,18 @@ gather_object_summary_cb (EMapiConnection *conn,
 			minfo->info.date_received = minfo->info.date_sent;
 	}
 
-	user_has_read = (camel_message_info_flags (info) & CAMEL_MESSAGE_SEEN) != 0;
+	user_has_read = (camel_message_info_get_flags (info) & CAMEL_MESSAGE_SEEN) != 0;
 
 	update_message_info (info, object, is_new, gos->is_public_folder, user_has_read);
 
 	if (is_new) {
 		camel_folder_summary_add (gos->folder->summary, info);
-		camel_folder_change_info_add_uid (gos->changes, camel_message_info_uid (info));
-		camel_folder_change_info_recent_uid (gos->changes, camel_message_info_uid (info));
+		camel_folder_change_info_add_uid (gos->changes, camel_message_info_get_uid (info));
+		camel_folder_change_info_recent_uid (gos->changes, camel_message_info_get_uid (info));
 
 		camel_message_info_ref (info);
 	} else {
-		camel_folder_change_info_change_uid (gos->changes, camel_message_info_uid (info));
+		camel_folder_change_info_change_uid (gos->changes, camel_message_info_get_uid (info));
 	}
 
 	camel_message_info_unref (info);
@@ -778,7 +773,6 @@ camel_mapi_folder_fetch_summary (CamelFolder *folder, GCancellable *cancellable,
 {
 	gboolean status, has_obj_folder;
 	gboolean full_download;
-	CamelSettings *settings;
 	CamelStore *store = camel_folder_get_parent_store (folder);
 	CamelStoreInfo *si = NULL;
 	CamelMapiStoreInfo *msi = NULL;
@@ -794,13 +788,7 @@ camel_mapi_folder_fetch_summary (CamelFolder *folder, GCancellable *cancellable,
 
 	camel_folder_freeze (folder);
 
-	settings = camel_service_ref_settings (CAMEL_SERVICE (store));
-
-	full_download =
-		camel_offline_settings_get_stay_synchronized (CAMEL_OFFLINE_SETTINGS (settings)) ||
-		camel_offline_folder_get_offline_sync (CAMEL_OFFLINE_FOLDER (folder));
-
-	g_object_unref (settings);
+	full_download = camel_offline_folder_can_downsync (CAMEL_OFFLINE_FOLDER (folder));
 
 	camel_operation_push_message (cancellable, _("Refreshing folder '%s'"), camel_folder_get_display_name (folder));
 
@@ -1266,7 +1254,7 @@ mapi_folder_append_message_sync (CamelFolder *folder,
 		struct CamelMapiCreateData cmc;
 
 		cmc.message = message;
-		cmc.message_camel_flags = info ? camel_message_info_flags (info) : 0;
+		cmc.message_camel_flags = info ? camel_message_info_get_flags (info) : 0;
 
 		e_mapi_connection_create_object (conn, &obj_folder, E_MAPI_CREATE_FLAG_NONE, convert_message_to_object_cb, &cmc, &mid, cancellable, &mapi_error);
 
@@ -1389,7 +1377,7 @@ mapi_folder_expunge_sync (CamelFolder *folder,
 		info = camel_folder_summary_get (folder->summary, g_ptr_array_index (known_uids, i));
 		minfo = (CamelMapiMessageInfo *) info;
 		if (minfo && (minfo->info.flags & CAMEL_MESSAGE_DELETED)) {
-			const gchar *uid = camel_message_info_uid (info);
+			const gchar *uid = camel_message_info_get_uid (info);
 			mapi_id_t *mid = g_new0 (mapi_id_t, 1);
 
 			if (!e_mapi_util_mapi_id_from_string (uid, mid))
@@ -1700,8 +1688,8 @@ mapi_folder_synchronize_sync (CamelFolder *folder,
 			guint32 flags;
 			gboolean used = FALSE;
 
-			uid = camel_message_info_uid (info);
-			flags = camel_message_info_flags (info);
+			uid = camel_message_info_get_uid (info);
+			flags = camel_message_info_get_flags (info);
 
 			/* Why are we getting so much noise here :-/ */
 			if (!e_mapi_util_mapi_id_from_string (uid, mid)) {
@@ -1896,9 +1884,6 @@ mapi_folder_transfer_messages_to_sync (CamelFolder *source,
 			source, uids, destination, delete_originals,
 			transferred_uids, cancellable, error);
 	}
-
-	if (!conn)
-		return FALSE;
 
 	destination_parent_store = camel_folder_get_parent_store (destination);
 

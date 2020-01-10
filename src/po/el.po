@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: evolution-mapi.HEAD\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-mapi&keywords=I18N+L10N&component=miscellaneous\n"
-"POT-Creation-Date: 2014-11-17 05:29+0000\n"
+"POT-Creation-Date: 2014-11-17 05:30+0000\n"
 "PO-Revision-Date: 2014-11-17 11:29+0200\n"
 "Last-Translator: Tom Tryfonidis <tomtryf@gmail.com>\n"
 "Language-Team: team@gnome.gr\n"
@@ -278,7 +278,7 @@ msgid "Only check for Junk messag_es in the Inbox folder"
 msgstr "Να ελέγχονται ανεπιθύμητα _μηνύματα μόνο στον φάκελο Εισερχόμενα"
 
 #: ../src/camel/camel-mapi-provider.c:62
-#: ../src/configuration/e-mapi-config-utils.c:1642
+#: ../src/configuration/e-mapi-config-utils.c:1644
 msgid "Lis_ten for server notifications"
 msgstr "Α_κρόαση για ειδοποιήσεις διακομιστή"
 
@@ -489,19 +489,19 @@ msgstr "Η πηγή δεδομένων '%s' δεν αντιστοιχεί ένα
 msgid "Allow _partial search results"
 msgstr "Να επιτρέπονται _μερικά αποτελέσματα αναζήτησης"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:179
+#: ../src/configuration/e-mail-config-mapi-backend.c:125
 msgid "Select username"
 msgstr "Επιλέξτε όνομα χρήστη"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:189
+#: ../src/configuration/e-mail-config-mapi-backend.c:135
 msgid "Full name"
 msgstr "Πλήρες όνομα"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:194
+#: ../src/configuration/e-mail-config-mapi-backend.c:140
 msgid "Username"
 msgstr "Όνομα χρήστη"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:221
+#: ../src/configuration/e-mail-config-mapi-backend.c:167
 msgid ""
 "There are more users with similar user name on a server.\n"
 "Please select that you would like to use from the below list."
@@ -510,20 +510,20 @@ msgstr ""
 "Παρακαλούμε επιλέξτε αυτό που θα θέλατε να χρησιμοποιήσετε από την παρακάτω "
 "λίστα."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:449
+#: ../src/configuration/e-mail-config-mapi-backend.c:395
 msgid "Authentication finished successfully."
 msgstr "Η πιστοποίηση ολοκληρώθηκε επιτυχώς."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:451
-#: ../src/configuration/e-mail-config-mapi-backend.c:571
+#: ../src/configuration/e-mail-config-mapi-backend.c:397
+#: ../src/configuration/e-mail-config-mapi-backend.c:517
 msgid "Authentication failed."
 msgstr "Αποτυχία πιστοποίησης."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:512
+#: ../src/configuration/e-mail-config-mapi-backend.c:458
 msgid "Cannot authenticate MAPI accounts in offline mode"
 msgstr "Αδύνατη η πιστοποίηση λογαριασμών MAPI σε λειτουργία χωρίς σύνδεση."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:541
+#: ../src/configuration/e-mail-config-mapi-backend.c:487
 msgid ""
 "Server, username and domain name cannot be empty. Please fill them with "
 "correct values."
@@ -531,7 +531,7 @@ msgstr ""
 "Τα ονόματα διακομιστή, χρήστη και τομέα δεν μπορεί να είναι κενά. "
 "Παρακαλούμε συμπληρώστε τα με σωστές τιμές."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:544
+#: ../src/configuration/e-mail-config-mapi-backend.c:490
 msgid ""
 "Realm name cannot be empty when kerberos is selected. Please fill them with "
 "correct values."
@@ -539,39 +539,39 @@ msgstr ""
 "Το όνομα πεδίου δεν μπορεί να είναι κενό όταν επιλέγεται ο kerberos. "
 "Παρακαλούμε συμπληρώστε τα με σωστές τιμές."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:565
+#: ../src/configuration/e-mail-config-mapi-backend.c:511
 msgid "Connecting to the server, please wait..."
 msgstr "Συνδέεται με τον διακομιστή, παρακαλούμε περιμένετε..."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:770
+#: ../src/configuration/e-mail-config-mapi-backend.c:716
 msgid "Configuration"
 msgstr "Διαμόρφωση"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:779
+#: ../src/configuration/e-mail-config-mapi-backend.c:725
 msgid "_Server:"
 msgstr "_Διακομιστής:"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:796
+#: ../src/configuration/e-mail-config-mapi-backend.c:742
 msgid "User_name:"
 msgstr "Ό_νομα χρήστη:"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:821
+#: ../src/configuration/e-mail-config-mapi-backend.c:767
 msgid "_Domain name:"
 msgstr "Όνομα _τομέα:"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:834
+#: ../src/configuration/e-mail-config-mapi-backend.c:780
 msgid "_Authenticate"
 msgstr "_Πιστοποίηση"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:842
+#: ../src/configuration/e-mail-config-mapi-backend.c:788
 msgid "_Use secure connection"
 msgstr "_Χρήση ασφαλούς σύνδεσης"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:857
+#: ../src/configuration/e-mail-config-mapi-backend.c:803
 msgid "_Kerberos authentication"
 msgstr "Πιστοποίηση _Kerberos"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:869
+#: ../src/configuration/e-mail-config-mapi-backend.c:815
 msgid "_Realm name:"
 msgstr "Όνομα _πεδίου:"
 
@@ -588,99 +588,99 @@ msgstr "Προβολή του μεγέθους όλων των φακέλων τ
 msgid "Folder _Size"
 msgstr "_Μέγεθος φακέλου"
 
-#: ../src/configuration/e-mapi-config-utils.c:455
+#: ../src/configuration/e-mapi-config-utils.c:457
 msgid "Folder"
 msgstr "Φάκελος"
 
-#: ../src/configuration/e-mapi-config-utils.c:460
+#: ../src/configuration/e-mapi-config-utils.c:462
 msgid "Size"
 msgstr "Μέγεθος"
 
-#: ../src/configuration/e-mapi-config-utils.c:483
-#: ../src/configuration/e-mapi-config-utils.c:487
+#: ../src/configuration/e-mapi-config-utils.c:485
+#: ../src/configuration/e-mapi-config-utils.c:489
 msgid "Unable to retrieve folder size information"
 msgstr "Αδύνατη η λήψη πληροφοριών μεγέθους φακέλου"
 
-#: ../src/configuration/e-mapi-config-utils.c:554
+#: ../src/configuration/e-mapi-config-utils.c:556
 msgid "Folder Size"
 msgstr "Μέγεθος φακέλου"
 
-#: ../src/configuration/e-mapi-config-utils.c:568
+#: ../src/configuration/e-mapi-config-utils.c:570
 msgid "Fetching folder list…"
 msgstr "Λήψη της λίστας φακέλων…"
 
-#: ../src/configuration/e-mapi-config-utils.c:742
+#: ../src/configuration/e-mapi-config-utils.c:744
 #, c-format
 msgid "Cannot edit permissions of folder '%s', choose other folder."
 msgstr "Αδύνατη η επεξεργασία αδειών του φακέλου '%s', επιλέξτε άλλον φάκελο."
 
-#: ../src/configuration/e-mapi-config-utils.c:805
+#: ../src/configuration/e-mapi-config-utils.c:807
 msgid "Folder size..."
 msgstr "Μέγεθος φακέλου..."
 
-#: ../src/configuration/e-mapi-config-utils.c:812
+#: ../src/configuration/e-mapi-config-utils.c:814
 msgid "Subscribe to folder of other user..."
 msgstr "Εγγραφείτε στον φάκελο του άλλου χρήστη..."
 
-#: ../src/configuration/e-mapi-config-utils.c:821
-#: ../src/configuration/e-mapi-config-utils.c:1099
-#: ../src/configuration/e-mapi-config-utils.c:1129
-#: ../src/configuration/e-mapi-config-utils.c:1159
-#: ../src/configuration/e-mapi-config-utils.c:1189
+#: ../src/configuration/e-mapi-config-utils.c:823
+#: ../src/configuration/e-mapi-config-utils.c:1101
+#: ../src/configuration/e-mapi-config-utils.c:1131
+#: ../src/configuration/e-mapi-config-utils.c:1161
+#: ../src/configuration/e-mapi-config-utils.c:1191
 msgid "Permissions..."
 msgstr "Δικαιώματα..."
 
-#: ../src/configuration/e-mapi-config-utils.c:823
+#: ../src/configuration/e-mapi-config-utils.c:825
 msgid "Edit MAPI folder permissions"
 msgstr "Επεξεργασία των δικαιωμάτων φακέλου MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1101
+#: ../src/configuration/e-mapi-config-utils.c:1103
 msgid "Edit MAPI calendar permissions"
 msgstr "Επεξεργασία αδειών ημερολογίου MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1131
+#: ../src/configuration/e-mapi-config-utils.c:1133
 msgid "Edit MAPI tasks permissions"
 msgstr "Επεξεργασία δικαιωμάτων εργασιών MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1161
+#: ../src/configuration/e-mapi-config-utils.c:1163
 msgid "Edit MAPI memos permissions"
 msgstr "Επεξεργασία δικαιωμάτων υπενθυμίσεων MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1191
+#: ../src/configuration/e-mapi-config-utils.c:1193
 msgid "Edit MAPI contacts permissions"
 msgstr "Επεξεργασία των δικαιωμάτων επαφών MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1364
+#: ../src/configuration/e-mapi-config-utils.c:1366
 msgid "Personal Folders"
 msgstr "Προσωπικοί φάκελοι"
 
-#: ../src/configuration/e-mapi-config-utils.c:1595
+#: ../src/configuration/e-mapi-config-utils.c:1597
 msgid "Searching remote MAPI folder structure, please wait..."
 msgstr "Αναζήτηση δομής φακέλου απομακρυσμένου MAPI, παρακαλούμε περιμένετε..."
 
-#: ../src/configuration/e-mapi-config-utils.c:1663
+#: ../src/configuration/e-mapi-config-utils.c:1665
 msgid "Cannot create MAPI calendar in offline mode"
 msgstr "Αδύνατη η δημιουργία ημερολογίου MAPI σε λειτουργία χωρίς σύνδεση."
 
-#: ../src/configuration/e-mapi-config-utils.c:1666
+#: ../src/configuration/e-mapi-config-utils.c:1668
 msgid "Cannot create MAPI task list in offline mode"
 msgstr "Αδύνατη η δημιουργία λίστας εργασιών MAPI σε λειτουργία χωρίς σύνδεση."
 
-#: ../src/configuration/e-mapi-config-utils.c:1669
+#: ../src/configuration/e-mapi-config-utils.c:1671
 msgid "Cannot create MAPI memo list in offline mode"
 msgstr ""
 "Αδύνατη η δημιουργία λίστας υπενθυμίσεων MAPI σε λειτουργία χωρίς σύνδεση."
 
-#: ../src/configuration/e-mapi-config-utils.c:1672
+#: ../src/configuration/e-mapi-config-utils.c:1674
 msgid "Cannot create MAPI address book in offline mode"
 msgstr ""
 "Αδύνατη η δημιουργία βιβλίου διευθύνσεων MAPI σε λειτουργία χωρίς σύνδεση."
 
-#: ../src/configuration/e-mapi-config-utils.c:1677
+#: ../src/configuration/e-mapi-config-utils.c:1679
 msgid "Cannot create MAPI source in offline mode"
 msgstr "Αδύνατη η δημιουργία πηγής MAPI σε λειτουργία χωρίς σύνδεση."
 
-#: ../src/configuration/e-mapi-config-utils.c:1697
+#: ../src/configuration/e-mapi-config-utils.c:1699
 msgid "_Location:"
 msgstr "_Τοποθεσία:"
 

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: evolution-mapi.gnome-2-28.kn\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-mapi&keywords=I18N+L10N&component=miscellaneous\n"
-"POT-Creation-Date: 2014-12-12 05:34+0000\n"
-"PO-Revision-Date: 2014-12-12 17:07+0530\n"
+"POT-Creation-Date: 2014-12-24 05:35+0000\n"
+"PO-Revision-Date: 2014-12-24 15:55+0530\n"
 "Last-Translator: Shankar Prasad <svenkate AT redhat Dot com>\n"
 "Language-Team: Kannada <en@li.org>\n"
 "Language: kn\n"
@@ -277,7 +277,7 @@ msgid "Only check for Junk messag_es in the Inbox folder"
 msgstr "ಕೇವಲ ಒಳಪೆಟ್ಟಿಗೆ ಪತ್ರಕೋಶದಲ್ಲಿ ಮಾತ್ರವೆ ಕಸ ಸಂದೇಶಕ್ಕಾಗಿ ನೋಡು (_e)"
 
 #: ../src/camel/camel-mapi-provider.c:62
-#: ../src/configuration/e-mapi-config-utils.c:1642
+#: ../src/configuration/e-mapi-config-utils.c:1644
 msgid "Lis_ten for server notifications"
 msgstr "ಪೂರೈಕೆಗಣಕದ ಸೂಚನೆಗಳಿಗಾಗಿ ಆಲಿಸು (_t)"
 
@@ -490,19 +490,19 @@ msgstr "ದತ್ತಾಂಶ ಆಕರ '%s' ಯಾವುದೆ ಒಂದು MAP
 msgid "Allow _partial search results"
 msgstr "ಆಂಶಿಕ ಹುಡುಕಾಟದ ಫಲಿತಾಂಶಗಳನ್ನು ಅನುಮತಿಸು (_p)"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:179
+#: ../src/configuration/e-mail-config-mapi-backend.c:125
 msgid "Select username"
 msgstr "ಬಳಕೆದಾರ ಹೆಸರನ್ನು ಆಯ್ಕೆ ಮಾಡಿ"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:189
+#: ../src/configuration/e-mail-config-mapi-backend.c:135
 msgid "Full name"
 msgstr "ಪೂರ್ಣ ಹೆಸರು"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:194
+#: ../src/configuration/e-mail-config-mapi-backend.c:140
 msgid "Username"
 msgstr "ಬಳಕೆದಾರಹೆಸರು"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:221
+#: ../src/configuration/e-mail-config-mapi-backend.c:167
 msgid ""
 "There are more users with similar user name on a server.\n"
 "Please select that you would like to use from the below list."
@@ -510,20 +510,20 @@ msgstr ""
 "ಒಂದು ಪೂರೈಕೆಗಣಕದಲ್ಲಿ ಇದೇ ಹೆಸರಿನ ಹಲವಾರು ಬಳಕೆದಾರರು ಇದ್ದಾರೆ.\n"
 "ನೀವು ಬಳಸಬೇಕಿರುವುದನ್ನು ಈ ಕೆಳಗಿನ ಪಟ್ಟಿಯಿಂದ ಆಯ್ಕೆ ಮಾಡಿ."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:449
+#: ../src/configuration/e-mail-config-mapi-backend.c:395
 msgid "Authentication finished successfully."
 msgstr "ದೃಢೀಕರಣವು ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣಗೊಂಡಿದೆ."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:451
-#: ../src/configuration/e-mail-config-mapi-backend.c:571
+#: ../src/configuration/e-mail-config-mapi-backend.c:397
+#: ../src/configuration/e-mail-config-mapi-backend.c:517
 msgid "Authentication failed."
 msgstr "ದೃಢೀಕರಣವು ವಿಫಲಗೊಂಡಿದೆ."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:512
+#: ../src/configuration/e-mail-config-mapi-backend.c:458
 msgid "Cannot authenticate MAPI accounts in offline mode"
 msgstr "ಆಫ್‌ಲೈನಿನ ಸ್ಥಿತಿಯಲ್ಲಿ MAPI ಖಾತೆಗಳನ್ನು ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:541
+#: ../src/configuration/e-mail-config-mapi-backend.c:487
 msgid ""
 "Server, username and domain name cannot be empty. Please fill them with "
 "correct values."
@@ -532,7 +532,7 @@ msgstr ""
 "ಅವನ್ನು "
 "ಸೂಕ್ತ ಮೌಲ್ಯಗಳಿಂದ ತುಂಬಿಸಿ."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:544
+#: ../src/configuration/e-mail-config-mapi-backend.c:490
 msgid ""
 "Realm name cannot be empty when kerberos is selected. Please fill them with "
 "correct values."
@@ -541,39 +541,39 @@ msgstr ""
 "ಅವನ್ನು ಸೂಕ್ತ "
 "ಮೌಲ್ಯಗಳಿಂದ ತುಂಬಿಸಿ."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:565
+#: ../src/configuration/e-mail-config-mapi-backend.c:511
 msgid "Connecting to the server, please wait..."
 msgstr "ಪೂರೈಕೆಗಣಕದೊಂದಿಗೆ ಸಂಪರ್ಕ ಹೊಂದಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ಕಾಯಿರಿ..."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:770
+#: ../src/configuration/e-mail-config-mapi-backend.c:716
 msgid "Configuration"
 msgstr "ಸಂರಚನೆ"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:779
+#: ../src/configuration/e-mail-config-mapi-backend.c:725
 msgid "_Server:"
 msgstr "ಪೂರೈಕೆಗಣಕ (_S):"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:796
+#: ../src/configuration/e-mail-config-mapi-backend.c:742
 msgid "User_name:"
 msgstr "ಬಳಕೆದಾರ ಹೆಸರು (_n):"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:821
+#: ../src/configuration/e-mail-config-mapi-backend.c:767
 msgid "_Domain name:"
 msgstr "ಡೊಮೈನಿನ ಹೆಸರು(_D):"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:834
+#: ../src/configuration/e-mail-config-mapi-backend.c:780
 msgid "_Authenticate"
 msgstr "ದೃಢೀಕರಿಸು(_A)"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:842
+#: ../src/configuration/e-mail-config-mapi-backend.c:788
 msgid "_Use secure connection"
 msgstr "ಸುರಕ್ಷಾ ಸಂಪರ್ಕವನ್ನು ಬಳಸು (_U)"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:857
+#: ../src/configuration/e-mail-config-mapi-backend.c:803
 msgid "_Kerberos authentication"
 msgstr "ಕರ್ಬರೋಸ್ ದೃಢೀಕರಣ (_K)"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:869
+#: ../src/configuration/e-mail-config-mapi-backend.c:815
 msgid "_Realm name:"
 msgstr "ಕ್ಷೇತ್ರದ ಹೆಸರು (_R):"
 
@@ -590,99 +590,99 @@ msgstr "ಎಲ್ಲಾ ಎಕ್ಸ್‌ಚೇಂಜ್ ಪತ್ರಕೋಶ�
 msgid "Folder _Size"
 msgstr "ಪತ್ರಕೋಶದ ಗಾತ್ರ (_S)"
 
-#: ../src/configuration/e-mapi-config-utils.c:455
+#: ../src/configuration/e-mapi-config-utils.c:457
 msgid "Folder"
 msgstr "ಪತ್ರಕೋಶ"
 
-#: ../src/configuration/e-mapi-config-utils.c:460
+#: ../src/configuration/e-mapi-config-utils.c:462
 msgid "Size"
 msgstr "ಗಾತ್ರ"
 
-#: ../src/configuration/e-mapi-config-utils.c:483
-#: ../src/configuration/e-mapi-config-utils.c:487
+#: ../src/configuration/e-mapi-config-utils.c:485
+#: ../src/configuration/e-mapi-config-utils.c:489
 msgid "Unable to retrieve folder size information"
 msgstr "ಕಡತಕೋಶದ ಗಾತ್ರವನ್ನು ಮರಳಿ ಪಡೆಯಲಾಗಿಲ್ಲ"
 
-#: ../src/configuration/e-mapi-config-utils.c:554
+#: ../src/configuration/e-mapi-config-utils.c:556
 msgid "Folder Size"
 msgstr "ಪತ್ರಕೋಶ ಗಾತ್ರ"
 
-#: ../src/configuration/e-mapi-config-utils.c:568
+#: ../src/configuration/e-mapi-config-utils.c:570
 msgid "Fetching folder list…"
 msgstr "ಪತ್ರಕೋಶದ ಪಟ್ಟಿಯನ್ನು ಪಡೆಯಲಾಗುತ್ತಿದೆ ..."
 
-#: ../src/configuration/e-mapi-config-utils.c:742
+#: ../src/configuration/e-mapi-config-utils.c:744
 #, c-format
 msgid "Cannot edit permissions of folder '%s', choose other folder."
 msgstr ""
 "'%s' ಪತ್ರಕೋಶದ ಅನುಮತಿಗಳನ್ನು ಸಂಪಾದಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ, ಬೇರೊಂದು ಪತ್ರಕೋಶವನ್ನು ಆಯ್ಕೆ "
 "ಮಾಡಿ."
 
-#: ../src/configuration/e-mapi-config-utils.c:805
+#: ../src/configuration/e-mapi-config-utils.c:807
 msgid "Folder size..."
 msgstr "ಪತ್ರಕೋಶದ ಗಾತ್ರ..."
 
-#: ../src/configuration/e-mapi-config-utils.c:812
+#: ../src/configuration/e-mapi-config-utils.c:814
 msgid "Subscribe to folder of other user..."
 msgstr "ಇತರೆ ಬಳಕೆದಾರರ ಪತ್ರಕೋಶಕ್ಕೆ ಚಂದಾದಾರನಾಗು..."
 
-#: ../src/configuration/e-mapi-config-utils.c:821
-#: ../src/configuration/e-mapi-config-utils.c:1099
-#: ../src/configuration/e-mapi-config-utils.c:1129
-#: ../src/configuration/e-mapi-config-utils.c:1159
-#: ../src/configuration/e-mapi-config-utils.c:1189
+#: ../src/configuration/e-mapi-config-utils.c:823
+#: ../src/configuration/e-mapi-config-utils.c:1101
+#: ../src/configuration/e-mapi-config-utils.c:1131
+#: ../src/configuration/e-mapi-config-utils.c:1161
+#: ../src/configuration/e-mapi-config-utils.c:1191
 msgid "Permissions..."
 msgstr "ಅನುಮತಿಗಳು..."
 
-#: ../src/configuration/e-mapi-config-utils.c:823
+#: ../src/configuration/e-mapi-config-utils.c:825
 msgid "Edit MAPI folder permissions"
 msgstr "MAPI ಪತ್ರಕೋಶದ ಅನುಮತಿಗಳನ್ನು ಸಂಪಾದಿಸು"
 
-#: ../src/configuration/e-mapi-config-utils.c:1101
+#: ../src/configuration/e-mapi-config-utils.c:1103
 msgid "Edit MAPI calendar permissions"
 msgstr "MAPI ಕ್ಯಾಲೆಂಡರ್ ಅನುಮತಿಗಳನ್ನು ಸಂಪಾದಿಸು"
 
-#: ../src/configuration/e-mapi-config-utils.c:1131
+#: ../src/configuration/e-mapi-config-utils.c:1133
 msgid "Edit MAPI tasks permissions"
 msgstr "MAPI ಕಾರ್ಯಗಳ ಅನುಮತಿಗಳನ್ನು ಸಂಪಾದಿಸು"
 
-#: ../src/configuration/e-mapi-config-utils.c:1161
+#: ../src/configuration/e-mapi-config-utils.c:1163
 msgid "Edit MAPI memos permissions"
 msgstr "MAPI ಮೆಮೊಗಳ ಅನುಮತಿಗಳನ್ನು ಸಂಪಾದಿಸು"
 
-#: ../src/configuration/e-mapi-config-utils.c:1191
+#: ../src/configuration/e-mapi-config-utils.c:1193
 msgid "Edit MAPI contacts permissions"
 msgstr "MAPI ಸಂಪರ್ಕಗಳ ಅನುಮತಿಗಳನ್ನು ಸಂಪಾದಿಸು"
 
-#: ../src/configuration/e-mapi-config-utils.c:1364
+#: ../src/configuration/e-mapi-config-utils.c:1366
 msgid "Personal Folders"
 msgstr "ವೈಯಕ್ತಿಕ ಪತ್ರಕೋಶಗಳು"
 
-#: ../src/configuration/e-mapi-config-utils.c:1595
+#: ../src/configuration/e-mapi-config-utils.c:1597
 msgid "Searching remote MAPI folder structure, please wait..."
 msgstr "ದೂರಸ್ಥ MAPI ಪತ್ರಕೋಶದ ರಚನೆಗಾಗಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ಕಾಯಿರಿ..."
 
-#: ../src/configuration/e-mapi-config-utils.c:1663
+#: ../src/configuration/e-mapi-config-utils.c:1665
 msgid "Cannot create MAPI calendar in offline mode"
 msgstr "ಆಫ್‌ಲೈನಿನ ಸ್ಥಿತಿಯಲ್ಲಿ MAPI ಕ್ಯಾಲೆಂಡರನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
 
-#: ../src/configuration/e-mapi-config-utils.c:1666
+#: ../src/configuration/e-mapi-config-utils.c:1668
 msgid "Cannot create MAPI task list in offline mode"
 msgstr "ಆಫ್‌ಲೈನಿನ ಸ್ಥಿತಿಯಲ್ಲಿ MAPI ಕಾರ್ಯದ ಪಟ್ಟಿಯನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
 
-#: ../src/configuration/e-mapi-config-utils.c:1669
+#: ../src/configuration/e-mapi-config-utils.c:1671
 msgid "Cannot create MAPI memo list in offline mode"
 msgstr "ಆಫ್‌ಲೈನಿನ ಸ್ಥಿತಿಯಲ್ಲಿ MAPI ಮೆಮೊ ಪಟ್ಟಿಯನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
 
-#: ../src/configuration/e-mapi-config-utils.c:1672
+#: ../src/configuration/e-mapi-config-utils.c:1674
 msgid "Cannot create MAPI address book in offline mode"
 msgstr "ಆಫ್‌ಲೈನಿನ ಸ್ಥಿತಿಯಲ್ಲಿ MAPI ವಿಳಾಸ ಪುಸ್ತಕವನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
 
-#: ../src/configuration/e-mapi-config-utils.c:1677
+#: ../src/configuration/e-mapi-config-utils.c:1679
 msgid "Cannot create MAPI source in offline mode"
 msgstr "ಆಫ್‌ಲೈನಿನ ಸ್ಥಿತಿಯಲ್ಲಿ MAPI ಮೂಲವನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ"
 
-#: ../src/configuration/e-mapi-config-utils.c:1697
+#: ../src/configuration/e-mapi-config-utils.c:1699
 msgid "_Location:"
 msgstr "ಸ್ಥಳ(_L):"
 

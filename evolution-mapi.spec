@@ -1,32 +1,24 @@
 %define openchange_version 2.3
 %define intltool_version 0.35.5
 
-%define evo_base_version 3.12
+%define evo_base_version 3.22
 
 %define strict_build_settings 0
 
 ### Abstract ###
 
 Name: evolution-mapi
-Version: 3.12.10
-Release: 5%{?dist}
+Version: 3.22.6
+Release: 1%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
 URL: https://wiki.gnome.org/Apps/Evolution
-Source: http://ftp.gnome.org/pub/gnome/sources/evolution-mapi/3.12/evolution-mapi-%{version}.tar.xz
+Source: http://download.gnome.org/sources/%{name}/3.22/%{name}-%{version}.tar.xz
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-### Patches ###
-
-# RH bug #1314261
-Patch01: evolution-mapi-3.12.10-openchange-2.3.patch
-
-# RH bug #1366206
-Patch02: evolution-mapi-3.12.10-freebusy-time-calc.patch
-
-# RH bug #1367455
-Patch03: evolution-mapi-3.12.10-book-recognize-offline.patch
+# GN-bug #729028
+#Patch0: evolution-mapi-3.12.1-openchange-2.1-changes.patch
 
 ### Dependencies ###
 
@@ -80,9 +72,7 @@ Development files needed for building things which link against %{name}.
 
 %prep
 %setup -q
-%patch01 -p1 -b .openchange-2.3
-%patch02 -p1 -b .freebusy-time-calc
-%patch03 -p1 -b .book-recognize-offline
+#%patch0 -p1 -b .openchange-2.1-changes
 
 %build
 
@@ -128,7 +118,6 @@ find $RPM_BUILD_ROOT/%{_libdir} -name '*.la' -exec rm {} \;
 rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}.lang
-%defattr(-,root,root,-)
 %doc AUTHORS ChangeLog COPYING INSTALL README
 %{_libdir}/libexchangemapi-1.0.so.*
 %{_libdir}/evolution-data-server/camel-providers/libcamelmapi.so
@@ -136,17 +125,22 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/evolution-data-server/addressbook-backends/libebookbackendmapi.so
 %{_libdir}/evolution-data-server/calendar-backends/libecalbackendmapi.so
 %{_libdir}/evolution-data-server/registry-modules/module-mapi-backend.so
-%{_libdir}/evolution/%{evo_base_version}/modules/module-mapi-configuration.so
+%{_libdir}/evolution/modules/module-mapi-configuration.so
 %{_datadir}/appdata/evolution-mapi.metainfo.xml
 %{_datadir}/evolution-data-server/mapi
 
 %files devel
-%defattr(-,root,root,-)
 %{_includedir}/evolution-data-server/mapi
 %{_libdir}/libexchangemapi-1.0.so
 %{_libdir}/pkgconfig/libexchangemapi-1.0.pc
 
 %changelog
+* Mon Mar 13 2017 Milan Crha <mcrha@redhat.com> - 3.22.6-1
+- Update to 3.22.6 upstream release
+
+* Thu Feb 16 2017 Milan Crha <mcrha@redhat.com> - 3.22.4-1
+- Rebase to 3.22.4
+
 * Tue Aug 16 2016 Milan Crha <mcrha@redhat.com> - 3.12.10-5
 - Add patch for RH bug #1366206 (Free/Busy Information returns wrong time)
 - Add patch for RH bug #1367455 (No contacts are displayed until search is started)

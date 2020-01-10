@@ -10,24 +10,33 @@ msgstr ""
 "Project-Id-Version: evolution-mapi\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-mapi&keywords=I18N+L10N&component=miscellaneous\n"
-"POT-Creation-Date: 2013-05-18 05:19+0000\n"
-"PO-Revision-Date: 2013-05-26 11:57+0100\n"
-"Last-Translator: Marián Čavojský <cavo+gnomel10n@cavo.sk>\n"
+"POT-Creation-Date: 2016-05-19 05:29+0000\n"
+"PO-Revision-Date: 2016-06-21 07:28+0200\n"
+"Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 1 : (n>=2 && n<=4) ? 2 : 0;\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
-#: ../src/addressbook/e-book-backend-mapi.c:734
+#: ../evolution-mapi.metainfo.xml.in.h:1
+msgid "Exchange MAPI"
+msgstr "Exchange MAPI"
+
+#: ../evolution-mapi.metainfo.xml.in.h:2 ../src/camel/camel-mapi-provider.c:73
+msgid "For accessing Microsoft Exchange 2007/OpenChange servers via MAPI"
+msgstr "Na prístup k serverom Microsoft Exchange 2007/OpenChange pomocou MAPI"
+
+#: ../src/addressbook/e-book-backend-mapi.c:744
 msgid "Searching"
 msgstr "Hľadá sa"
 
-#: ../src/addressbook/e-book-backend-mapi.c:1734
-#: ../src/calendar/e-cal-backend-mapi.c:193
-#: ../src/calendar/e-cal-backend-mapi.c:491
-#: ../src/camel/camel-mapi-folder.c:1900 ../src/camel/camel-mapi-folder.c:1980
+#: ../src/addressbook/e-book-backend-mapi.c:1739
+#: ../src/calendar/e-cal-backend-mapi.c:189
+#: ../src/calendar/e-cal-backend-mapi.c:488
+#: ../src/camel/camel-mapi-folder.c:1929 ../src/camel/camel-mapi-folder.c:2009
 msgid "Unknown error"
 msgstr "Neznáma chyba"
 
@@ -40,8 +49,8 @@ msgid "The backend does not support bulk additions"
 msgstr "Obslužný softvér nepodporuje hromadné pridávanie"
 
 #: ../src/addressbook/e-book-backend-mapi-contacts.c:510
-#: ../src/calendar/e-cal-backend-mapi.c:1699
-#: ../src/calendar/e-cal-backend-mapi.c:2210
+#: ../src/calendar/e-cal-backend-mapi.c:1719
+#: ../src/calendar/e-cal-backend-mapi.c:2230
 msgid "Failed to create item on a server"
 msgstr "Zlyhalo vytvorenie položky na serveri"
 
@@ -50,7 +59,7 @@ msgid "The backend does not support bulk modifications"
 msgstr "Obslužný softvér nepodporuje hromadné úpravy"
 
 #: ../src/addressbook/e-book-backend-mapi-contacts.c:672
-#: ../src/calendar/e-cal-backend-mapi.c:1912
+#: ../src/calendar/e-cal-backend-mapi.c:1932
 msgid "Failed to modify item on a server"
 msgstr "Zlyhalo upravenie položky na serveri"
 
@@ -111,41 +120,41 @@ msgid "Failed to fetch GAL entries"
 msgstr "Zlyhalo získanie položiek z GAL"
 
 #. To translators: This message is displayed on the status bar when calendar/tasks/memo items are being fetched from the server.
-#: ../src/calendar/e-cal-backend-mapi.c:416
+#: ../src/calendar/e-cal-backend-mapi.c:413
 #, c-format
 msgid "Loading items in folder %s"
 msgstr "Načítavajú sa položky v priečinku %s"
 
-#: ../src/calendar/e-cal-backend-mapi.c:783
+#: ../src/calendar/e-cal-backend-mapi.c:780
 #, c-format
 msgid "Failed to open folder: %s"
 msgstr "Zlyhalo otvorenie priečinka: %s"
 
-#: ../src/calendar/e-cal-backend-mapi.c:791
+#: ../src/calendar/e-cal-backend-mapi.c:788
 #, c-format
 msgid "Failed to get folder properties: %s"
 msgstr "Zlyhalo získanie vlastností priečinka: %s"
 
-#: ../src/calendar/e-cal-backend-mapi.c:832
+#: ../src/calendar/e-cal-backend-mapi.c:829
 #, c-format
 msgid "Failed to list objects: %s"
 msgstr "Zlyhalo získanie zoznamu objektov: %s"
 
-#: ../src/calendar/e-cal-backend-mapi.c:858
+#: ../src/calendar/e-cal-backend-mapi.c:855
 #, c-format
 msgid "Failed to transfer objects: %s"
 msgstr "Zlyhalo presúvanie objektov: %s"
 
-#: ../src/calendar/e-cal-backend-mapi.c:877
+#: ../src/calendar/e-cal-backend-mapi.c:874
 #, c-format
 msgid "Failed to close folder: %s"
 msgstr "Zlyhalo zatvorenie priečinka: „%s“"
 
-#: ../src/calendar/e-cal-backend-mapi.c:1366
+#: ../src/calendar/e-cal-backend-mapi.c:1383
 msgid "Could not create cache file"
 msgstr "Nepodarilo sa vytvoriť súbor vyrovnávacej pamäte"
 
-#: ../src/calendar/e-cal-backend-mapi.c:1820
+#: ../src/calendar/e-cal-backend-mapi.c:1840
 msgid ""
 "Support for modifying single instances of a recurring appointment is not yet "
 "implemented. No change was made to the appointment on the server."
@@ -153,91 +162,91 @@ msgstr ""
 "Podpora pre úpravu jednotlivých inštancií opakujúceho sa stretnutia nie je "
 "ešte implementovaná. Na serveri nebola vykonaná žiadna zmena v stretnutí."
 
-#: ../src/calendar/e-cal-backend-mapi.c:2025
+#: ../src/calendar/e-cal-backend-mapi.c:2045
 msgid "Cannot remove items from a server"
 msgstr "Nedajú sa odstrániť položky zo servera"
 
-#: ../src/calendar/e-cal-backend-mapi.c:2461
+#: ../src/calendar/e-cal-backend-mapi.c:2476
 msgid "Failed to get Free/Busy data"
 msgstr "Zlyhalo získavanie údajov diára"
 
-#: ../src/camel/camel-mapi-folder.c:777
+#: ../src/camel/camel-mapi-folder.c:800
 #, c-format
 msgid "Refreshing folder '%s'"
 msgstr "Obnovuje sa priečinok „%s“"
 
-#: ../src/camel/camel-mapi-folder.c:845
+#: ../src/camel/camel-mapi-folder.c:868
 #, c-format
 msgid "Downloading messages in folder '%s'"
 msgstr "Načítavajú sa správy v priečinku „%s“"
 
-#: ../src/camel/camel-mapi-folder.c:933 ../src/camel/camel-mapi-folder.c:1532
+#: ../src/camel/camel-mapi-folder.c:956 ../src/camel/camel-mapi-folder.c:1564
 #, c-format
 msgid "This message is not available in offline mode."
 msgstr "Táto správa nie je dostupná v odpojenom režime."
 
-#: ../src/camel/camel-mapi-folder.c:943 ../src/camel/camel-mapi-folder.c:961
+#: ../src/camel/camel-mapi-folder.c:966 ../src/camel/camel-mapi-folder.c:984
 #, c-format
 msgid "Fetching items failed: %s"
 msgstr "Získavanie položiek zlyhalo: %s"
 
-#: ../src/camel/camel-mapi-folder.c:948 ../src/camel/camel-mapi-folder.c:966
+#: ../src/camel/camel-mapi-folder.c:971 ../src/camel/camel-mapi-folder.c:989
 msgid "Fetching items failed"
 msgstr "Získavanie položiek zlyhalo"
 
-#: ../src/camel/camel-mapi-folder.c:1217
+#: ../src/camel/camel-mapi-folder.c:1243
 #, c-format
 msgid "Cannot append message to folder '%s'"
 msgstr "Nedá sa pridať správu do priečinka „%s“"
 
-#: ../src/camel/camel-mapi-folder.c:1226 ../src/camel/camel-mapi-folder.c:1256
+#: ../src/camel/camel-mapi-folder.c:1252 ../src/camel/camel-mapi-folder.c:1282
 #, c-format
 msgid "Offline."
 msgstr "Odpojený."
 
-#: ../src/camel/camel-mapi-folder.c:1339
+#: ../src/camel/camel-mapi-folder.c:1365
 #, c-format
 msgid "Failed to empty Trash: %s"
 msgstr "Zlyhalo vyprázdnenie Koša: %s"
 
-#: ../src/camel/camel-mapi-folder.c:1345
+#: ../src/camel/camel-mapi-folder.c:1371
 msgid "Failed to empty Trash"
 msgstr "Zlyhalo vyprázdnenie Koša"
 
-#: ../src/camel/camel-mapi-folder.c:1517
+#: ../src/camel/camel-mapi-folder.c:1549
 #, c-format
 msgid "Cannot get message %s: %s"
 msgstr "Nedá sa získať správa %s: %s"
 
-#: ../src/camel/camel-mapi-folder.c:1518
+#: ../src/camel/camel-mapi-folder.c:1550
 msgid "No such message"
 msgstr "Taká správa neexistuje"
 
-#: ../src/camel/camel-mapi-folder.c:1543 ../src/camel/camel-mapi-folder.c:1575
+#: ../src/camel/camel-mapi-folder.c:1575 ../src/camel/camel-mapi-folder.c:1607
 #, c-format
 msgid "Could not get message: %s"
 msgstr "Nepodarilo sa získať správu: %s"
 
-#: ../src/camel/camel-mapi-folder.c:1549 ../src/camel/camel-mapi-folder.c:1582
+#: ../src/camel/camel-mapi-folder.c:1581 ../src/camel/camel-mapi-folder.c:1614
 #, c-format
 msgid "Could not get message"
 msgstr "Nepodarilo sa získať správu"
 
 # názov kvóty.
-#: ../src/camel/camel-mapi-folder.c:1957
+#: ../src/camel/camel-mapi-folder.c:1986
 msgid "Receive quota"
 msgstr "Kvóta na príjem"
 
 # názov kvóty
-#: ../src/camel/camel-mapi-folder.c:1963
+#: ../src/camel/camel-mapi-folder.c:1992
 msgid "Send quota"
 msgstr "Kvóta na odosielanie"
 
-#: ../src/camel/camel-mapi-folder.c:1985
+#: ../src/camel/camel-mapi-folder.c:2014
 msgid "No quota information available"
 msgstr "Nie sú dostupné informácie o kvóte"
 
-#: ../src/camel/camel-mapi-folder.c:2087
+#: ../src/camel/camel-mapi-folder.c:2116
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Nepodarilo sa načítať súhrn pre %s"
@@ -275,13 +284,9 @@ msgstr ""
 "Kontrolovať nevyžiad_anú poštu v správach iba v priečinku Doručená pošta"
 
 #: ../src/camel/camel-mapi-provider.c:62
-#: ../src/configuration/e-mapi-config-utils.c:1642
+#: ../src/configuration/e-mapi-config-utils.c:1604
 msgid "Lis_ten for server notifications"
 msgstr "Očakávať upo_zornenia zo servera"
-
-#: ../src/camel/camel-mapi-provider.c:73
-msgid "For accessing Microsoft Exchange 2007/OpenChange servers via MAPI"
-msgstr "Na prístup k serverom Microsoft Exchange 2007/OpenChange pomocou MAPI"
 
 #: ../src/camel/camel-mapi-provider.c:88
 msgid "Password"
@@ -307,116 +312,115 @@ msgstr ""
 msgid "Cannot find folder in a local cache"
 msgstr "Nedá sa nájsť priečinok v lokálnej vyrovnávacej pamäti"
 
-#: ../src/camel/camel-mapi-store.c:491 ../src/camel/camel-mapi-store.c:1212
+#: ../src/camel/camel-mapi-store.c:492 ../src/camel/camel-mapi-store.c:1180
 msgid "Folder list is not available in offline mode"
 msgstr "Zoznam priečinkov je nedostupný v odpojenom režime."
 
-#: ../src/camel/camel-mapi-store.c:879
+#: ../src/camel/camel-mapi-store.c:874
 msgid "No public folder found"
 msgstr "Nenašli sa žiadne verejné priečinky"
 
-#: ../src/camel/camel-mapi-store.c:879
+#: ../src/camel/camel-mapi-store.c:874
 msgid "No folder found"
 msgstr "Nenašli sa žiadne priečinky"
 
-#: ../src/camel/camel-mapi-store.c:1234 ../src/camel/camel-mapi-store.c:2211
+#: ../src/camel/camel-mapi-store.c:1202 ../src/camel/camel-mapi-store.c:2173
 #, c-format
 msgid "Connecting to '%s'"
 msgstr "Pripája sa ku „%s“"
 
-#: ../src/camel/camel-mapi-store.c:1293
+#: ../src/camel/camel-mapi-store.c:1261
 msgid "Cannot create MAPI folders in offline mode"
 msgstr "Nepodarilo sa vytvoriť priečinky MAPI v odpojenom režime"
 
-#: ../src/camel/camel-mapi-store.c:1300
+#: ../src/camel/camel-mapi-store.c:1268
 #, c-format
 msgid "Cannot create new folder '%s'"
 msgstr "Nedá sa vytvoriť nový priečinok „%s“"
 
-#: ../src/camel/camel-mapi-store.c:1309
+#: ../src/camel/camel-mapi-store.c:1277
 #, c-format
 msgid "Authentication failed"
 msgstr "Overenie totožnosti zlyhalo"
 
-#: ../src/camel/camel-mapi-store.c:1319
-msgid "MAPI folders can be created only within mailbox of the logged user"
+#: ../src/camel/camel-mapi-store.c:1287
+msgid "MAPI folders can be created only within mailbox of the logged in user"
 msgstr ""
 "Priečinky MAPI môžu byť vytvorené len vo vnútri poštového priečinka "
 "prihláseného používateľa"
 
-#: ../src/camel/camel-mapi-store.c:1332 ../src/camel/camel-mapi-store.c:1445
+#: ../src/camel/camel-mapi-store.c:1300 ../src/camel/camel-mapi-store.c:1413
 #, c-format
 msgid "Cannot find folder '%s'"
 msgstr "Nedá sa nájsť priečinok „%s“"
 
-#: ../src/camel/camel-mapi-store.c:1387
+#: ../src/camel/camel-mapi-store.c:1355
 #, c-format
 msgid "Cannot create folder '%s': %s"
 msgstr "Nedá sa vytvoriť nový priečinok „%s“: %s"
 
-#: ../src/camel/camel-mapi-store.c:1393
+#: ../src/camel/camel-mapi-store.c:1361
 #, c-format
 msgid "Cannot create folder '%s'"
 msgstr "Nedá sa vytvoriť priečinok „%s“"
 
-#: ../src/camel/camel-mapi-store.c:1423 ../src/camel/camel-mapi-store.c:1435
+#: ../src/camel/camel-mapi-store.c:1391 ../src/camel/camel-mapi-store.c:1403
 msgid "Cannot delete MAPI folders in offline mode"
 msgstr "Nedajú sa odstrániť priečinky MAPI v odpojenom režime"
 
-#: ../src/camel/camel-mapi-store.c:1491
+#: ../src/camel/camel-mapi-store.c:1459
 #, c-format
 msgid "Cannot remove folder '%s': %s"
 msgstr "Nedá sa odstrániť priečinok „%s“: %s"
 
-#: ../src/camel/camel-mapi-store.c:1499
+#: ../src/camel/camel-mapi-store.c:1467
 #, c-format
 msgid "Cannot remove folder '%s'"
 msgstr "Nedá sa odstrániť priečinok „%s“"
 
-#: ../src/camel/camel-mapi-store.c:1529 ../src/camel/camel-mapi-store.c:1544
+#: ../src/camel/camel-mapi-store.c:1497 ../src/camel/camel-mapi-store.c:1512
 msgid "Cannot rename MAPI folders in offline mode"
 msgstr "Nedajú sa premenovať priečinky MAPI v odpojenom režime"
 
-#: ../src/camel/camel-mapi-store.c:1555
+#: ../src/camel/camel-mapi-store.c:1523
 #, c-format
 msgid "Cannot rename MAPI folder '%s'. Folder does not exist"
 msgstr "Nedá sa premenovať priečinok MAPI „%s“. Priečinok neexistuje"
 
-#: ../src/camel/camel-mapi-store.c:1566
+#: ../src/camel/camel-mapi-store.c:1534
 #, c-format
 msgid "Cannot rename MAPI default folder '%s' to '%s'"
 msgstr "Nedá sa premenovať predvolený MAPI priečinok „%s“ na „%s“"
 
 #. Translators: '%s to %s' is current name of the folder and new name of the folder.
-#: ../src/camel/camel-mapi-store.c:1592 ../src/camel/camel-mapi-store.c:1635
-#: ../src/camel/camel-mapi-store.c:1715
+#: ../src/camel/camel-mapi-store.c:1560 ../src/camel/camel-mapi-store.c:1603
+#: ../src/camel/camel-mapi-store.c:1683
 #, c-format
 msgid "Cannot rename MAPI folder '%s' to '%s'"
 msgstr "Nedá sa premenovať priečinok MAPI „%s“ na „%s“"
 
 #. Translators: '%s to %s' is current name of the folder and new name of the folder.
 #. The last '%s' is a detailed error message.
-#: ../src/camel/camel-mapi-store.c:1627 ../src/camel/camel-mapi-store.c:1708
+#: ../src/camel/camel-mapi-store.c:1595 ../src/camel/camel-mapi-store.c:1676
 #, c-format
 msgid "Cannot rename MAPI folder '%s' to '%s': %s"
 msgstr "Nedá sa premenovať priečinok MAPI „%s“ na „%s“: %s"
 
-#: ../src/camel/camel-mapi-store.c:1813
+#: ../src/camel/camel-mapi-store.c:1773
 msgid "Cannot subscribe MAPI folders in offline mode"
 msgstr "Nedá sa prihlásiť k odberu priečinkov MAPI v odpojenom režime"
 
-#: ../src/camel/camel-mapi-store.c:1830
+#: ../src/camel/camel-mapi-store.c:1790
 #, c-format
 msgid "Folder '%s' not found"
 msgstr "Priečinok „%s“ nebol nájdený"
 
-#: ../src/camel/camel-mapi-store.c:1948
+#: ../src/camel/camel-mapi-store.c:1908
 msgid "Cannot unsubscribe MAPI folders in offline mode"
 msgstr "Nedá sa odhlásiť z odberu priečinkov MAPI v odpojenom režime"
 
 #. Translators: The %s is replaced with a server's host name
-#: ../src/camel/camel-mapi-store.c:2162
-#: ../src/camel/camel-mapi-transport.c:195
+#: ../src/camel/camel-mapi-store.c:2120 ../src/camel/camel-mapi-transport.c:196
 #, c-format
 msgid "Exchange MAPI server %s"
 msgstr "Server Exchange MAPI %s"
@@ -424,17 +428,16 @@ msgstr "Server Exchange MAPI %s"
 #. To translators : Example string : Exchange MAPI service for
 #. _username_ on _server host name__
 #. Translators: The first %s is replaced with a user name, the second with a server's host name
-#: ../src/camel/camel-mapi-store.c:2166
-#: ../src/camel/camel-mapi-transport.c:198
+#: ../src/camel/camel-mapi-store.c:2124 ../src/camel/camel-mapi-transport.c:199
 #, c-format
 msgid "Exchange MAPI service for %s on %s"
 msgstr "Služba Exchange MAPI pre používateľa %s na serveri %s"
 
-#: ../src/camel/camel-mapi-store.c:2193
-msgid "Cannot connect MAPI store in offline mode"
-msgstr "Nedá sa pripojiť sklad MAPI v odpojenom režime"
+#: ../src/camel/camel-mapi-store.c:2155
+msgid "Cannot connect to MAPI store in offline mode"
+msgstr "Nedá sa pripojiť k úložisku MAPI v odpojenom režime"
 
-#: ../src/camel/camel-mapi-store.c:2246
+#: ../src/camel/camel-mapi-store.c:2208
 #, c-format
 msgid "Mailbox '%s' is full, no new messages will be received or sent."
 msgstr ""
@@ -442,45 +445,49 @@ msgstr ""
 "odoslané."
 
 # PK: peti toto rozhodni, moc mi to nesedi
-#: ../src/camel/camel-mapi-store.c:2248
-#, fuzzy, c-format
+#: ../src/camel/camel-mapi-store.c:2210
+#, c-format
 msgid ""
 "Mailbox '%s' is near its size limit, message send will be disabled soon."
 msgstr ""
-"Poštová schránka „%s“ je blízko obmedzenia na veľkosť, posielanie správ bude "
-"v blízkej budúcnosti zakázané."
+"Veľkosť poštovej schránky „%s“ sa blíži k stanovenej hranici. Odosielanie "
+"správ bude v blízkej budúcnosti zakázané."
 
-#: ../src/camel/camel-mapi-store.c:2252
+#: ../src/camel/camel-mapi-store.c:2214
 #, c-format
 msgid "Mailbox '%s' is full, no new messages will be received."
 msgstr "Poštová schránka „%s“ je plná, žiadne správy nebudú prijaté."
 
-#: ../src/camel/camel-mapi-store.c:2254
-#, fuzzy, c-format
+#: ../src/camel/camel-mapi-store.c:2216
+#, c-format
 msgid "Mailbox '%s' is near its size limit."
-msgstr "Poštová schránka „%s“ je blízko obmedzenia na veľkosť."
+msgstr "Veľkosť poštovej schránky „%s“ sa blíži k stanovenej hranici."
 
-#: ../src/camel/camel-mapi-store.c:2674
+#: ../src/camel/camel-mapi-store.c:2637
 msgid "Authentication password not available"
 msgstr "Overenie totožnosti heslom nie je dostupné"
 
-#: ../src/camel/camel-mapi-transport.c:146
-#: ../src/camel/camel-mapi-transport.c:168
+#: ../src/camel/camel-mapi-transport.c:147
+#: ../src/camel/camel-mapi-transport.c:169
 #, c-format
 msgid "Could not send message."
 msgstr "Nepodarilo sa odoslať správu."
 
-#: ../src/camel/camel-mapi-transport.c:163
+#: ../src/camel/camel-mapi-transport.c:164
 #, c-format
 msgid "Could not send message: %s"
 msgstr "Nepodarilo sa odoslať správu: %s"
 
-#: ../src/collection/e-mapi-backend.c:278
+#: ../src/collection/e-mapi-backend.c:78
+msgid "Cannot connect, no credentials provided"
+msgstr "Nedá sa pripojiť, pretože neboli poskytnuté poverenia"
+
+#: ../src/collection/e-mapi-backend.c:343
 msgid "Global Address List"
 msgstr "Globálny zoznam adries (GAL)"
 
-#: ../src/collection/e-mapi-backend.c:651
-#: ../src/collection/e-mapi-backend.c:737
+#: ../src/collection/e-mapi-backend.c:698
+#: ../src/collection/e-mapi-backend.c:795
 #, c-format
 msgid "Data source '%s' does not represent a MAPI folder"
 msgstr "Zdroj údajov „%s“ nemá význam priečinka MAPI"
@@ -510,20 +517,20 @@ msgstr ""
 "Na serveri existuje viac používateľov s podobným menom.\n"
 "Prosím, vyberte si z nasledujúceho zoznamu to, ktoré chcete použiť."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:395
+#: ../src/configuration/e-mail-config-mapi-backend.c:363
 msgid "Authentication finished successfully."
 msgstr "Overenie totožnosti skončilo úspešne."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:397
-#: ../src/configuration/e-mail-config-mapi-backend.c:518
+#: ../src/configuration/e-mail-config-mapi-backend.c:365
+#: ../src/configuration/e-mail-config-mapi-backend.c:485
 msgid "Authentication failed."
 msgstr "Overenie totožnosti zlyhalo."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:459
+#: ../src/configuration/e-mail-config-mapi-backend.c:428
 msgid "Cannot authenticate MAPI accounts in offline mode"
 msgstr "Nedá sa overiť totožnosť účtov MAPI v odpojenom režime."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:488
+#: ../src/configuration/e-mail-config-mapi-backend.c:457
 msgid ""
 "Server, username and domain name cannot be empty. Please fill them with "
 "correct values."
@@ -531,7 +538,7 @@ msgstr ""
 "Server, používateľské meno a názov domény nemôžu byť prázdne. Prosím, "
 "vyplňte ich správnymi hodnotami."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:491
+#: ../src/configuration/e-mail-config-mapi-backend.c:460
 msgid ""
 "Realm name cannot be empty when kerberos is selected. Please fill them with "
 "correct values."
@@ -539,146 +546,146 @@ msgstr ""
 "Názov domény nemôže byť prázdny, keď je vybraný protokol kerberos. Prosím, "
 "vyplňte ho správnymi hodnotami."
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:512
+#: ../src/configuration/e-mail-config-mapi-backend.c:479
 msgid "Connecting to the server, please wait..."
 msgstr "Pripája sa k serveru, čakajte, prosím…"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:720
+#: ../src/configuration/e-mail-config-mapi-backend.c:681
 msgid "Configuration"
 msgstr "Konfigurácia"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:729
+#: ../src/configuration/e-mail-config-mapi-backend.c:690
 msgid "_Server:"
 msgstr "_Server:"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:746
+#: ../src/configuration/e-mail-config-mapi-backend.c:707
 msgid "User_name:"
 msgstr "Používateľské _meno"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:771
+#: ../src/configuration/e-mail-config-mapi-backend.c:732
 msgid "_Domain name:"
 msgstr "Názov _domény:"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:784
+#: ../src/configuration/e-mail-config-mapi-backend.c:745
 msgid "_Authenticate"
 msgstr "_Overiť totožnosť"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:792
+#: ../src/configuration/e-mail-config-mapi-backend.c:753
 msgid "_Use secure connection"
 msgstr "_Použiť zabezpečené pripojenie"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:807
+#: ../src/configuration/e-mail-config-mapi-backend.c:768
 msgid "_Kerberos authentication"
 msgstr "Overenie totožnosti pomocou _Kerberos"
 
-#: ../src/configuration/e-mail-config-mapi-backend.c:819
+#: ../src/configuration/e-mail-config-mapi-backend.c:780
 msgid "_Realm name:"
 msgstr "Názov pôso_biska:"
 
-#: ../src/configuration/e-mail-config-mapi-page.c:186
-#: ../src/configuration/e-mail-config-mapi-page.c:247
+#: ../src/configuration/e-mail-config-mapi-page.c:191
+#: ../src/configuration/e-mail-config-mapi-page.c:252
 msgid "MAPI Settings"
 msgstr "Nastavenia MAPI"
 
-#: ../src/configuration/e-mail-config-mapi-page.c:192
+#: ../src/configuration/e-mail-config-mapi-page.c:197
 msgid "View the size of all Exchange folders"
 msgstr "Zobraziť veľkosť všetkých priečinkov Exchange"
 
-#: ../src/configuration/e-mail-config-mapi-page.c:196
+#: ../src/configuration/e-mail-config-mapi-page.c:201
 msgid "Folder _Size"
 msgstr "_Veľkosť priečinka"
 
-#: ../src/configuration/e-mapi-config-utils.c:455
+#: ../src/configuration/e-mapi-config-utils.c:417
 msgid "Folder"
 msgstr "Priečinok"
 
-#: ../src/configuration/e-mapi-config-utils.c:460
+#: ../src/configuration/e-mapi-config-utils.c:422
 msgid "Size"
 msgstr "Veľkosť"
 
-#: ../src/configuration/e-mapi-config-utils.c:483
-#: ../src/configuration/e-mapi-config-utils.c:487
+#: ../src/configuration/e-mapi-config-utils.c:445
+#: ../src/configuration/e-mapi-config-utils.c:449
 msgid "Unable to retrieve folder size information"
 msgstr "Nepodarilo sa získať informácie o veľkosti priečinka"
 
-#: ../src/configuration/e-mapi-config-utils.c:554
+#: ../src/configuration/e-mapi-config-utils.c:516
 msgid "Folder Size"
 msgstr "Veľkosť priečinka"
 
-#: ../src/configuration/e-mapi-config-utils.c:568
+#: ../src/configuration/e-mapi-config-utils.c:530
 msgid "Fetching folder list…"
 msgstr "Získava sa zoznam priečinkov…"
 
-#: ../src/configuration/e-mapi-config-utils.c:742
+#: ../src/configuration/e-mapi-config-utils.c:704
 #, c-format
 msgid "Cannot edit permissions of folder '%s', choose other folder."
 msgstr "Nedajú sa upraviť práva k priečinku „%s“, zvoľte iný priečinok."
 
-#: ../src/configuration/e-mapi-config-utils.c:805
+#: ../src/configuration/e-mapi-config-utils.c:767
 msgid "Folder size..."
 msgstr "Veľkosť priečinka…"
 
-#: ../src/configuration/e-mapi-config-utils.c:812
+#: ../src/configuration/e-mapi-config-utils.c:774
 msgid "Subscribe to folder of other user..."
 msgstr "Prihlásiť sa k odberu priečinka iného používateľa…"
 
-#: ../src/configuration/e-mapi-config-utils.c:821
-#: ../src/configuration/e-mapi-config-utils.c:1099
-#: ../src/configuration/e-mapi-config-utils.c:1129
-#: ../src/configuration/e-mapi-config-utils.c:1159
-#: ../src/configuration/e-mapi-config-utils.c:1189
+#: ../src/configuration/e-mapi-config-utils.c:783
+#: ../src/configuration/e-mapi-config-utils.c:1061
+#: ../src/configuration/e-mapi-config-utils.c:1091
+#: ../src/configuration/e-mapi-config-utils.c:1121
+#: ../src/configuration/e-mapi-config-utils.c:1151
 msgid "Permissions..."
 msgstr "Práva…"
 
-#: ../src/configuration/e-mapi-config-utils.c:823
+#: ../src/configuration/e-mapi-config-utils.c:785
 msgid "Edit MAPI folder permissions"
 msgstr "Upraviť práva priečinka MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1101
+#: ../src/configuration/e-mapi-config-utils.c:1063
 msgid "Edit MAPI calendar permissions"
 msgstr "Upraviť práva kalendára MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1131
+#: ../src/configuration/e-mapi-config-utils.c:1093
 msgid "Edit MAPI tasks permissions"
 msgstr "Upraviť práva úloh MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1161
+#: ../src/configuration/e-mapi-config-utils.c:1123
 msgid "Edit MAPI memos permissions"
 msgstr "Upraviť práva poznámok MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1191
+#: ../src/configuration/e-mapi-config-utils.c:1153
 msgid "Edit MAPI contacts permissions"
 msgstr "Upraviť práva kontaktov MAPI"
 
-#: ../src/configuration/e-mapi-config-utils.c:1364
+#: ../src/configuration/e-mapi-config-utils.c:1326
 msgid "Personal Folders"
 msgstr "Osobné priečinky"
 
-#: ../src/configuration/e-mapi-config-utils.c:1595
+#: ../src/configuration/e-mapi-config-utils.c:1557
 msgid "Searching remote MAPI folder structure, please wait..."
 msgstr "Prehľadávanie štruktúry vzdialeného MAPI priečinka, čakajte, prosím…"
 
-#: ../src/configuration/e-mapi-config-utils.c:1663
+#: ../src/configuration/e-mapi-config-utils.c:1625
 msgid "Cannot create MAPI calendar in offline mode"
 msgstr "Nepodarilo sa vytvoriť kalendár MAPI v odpojenom režime."
 
-#: ../src/configuration/e-mapi-config-utils.c:1666
+#: ../src/configuration/e-mapi-config-utils.c:1628
 msgid "Cannot create MAPI task list in offline mode"
 msgstr "Nepodarilo sa vytvoriť úlohy MAPI v odpojenom režime."
 
-#: ../src/configuration/e-mapi-config-utils.c:1669
+#: ../src/configuration/e-mapi-config-utils.c:1631
 msgid "Cannot create MAPI memo list in offline mode"
 msgstr "Nepodarilo sa vytvoriť poznámky MAPI v odpojenom režime."
 
-#: ../src/configuration/e-mapi-config-utils.c:1672
+#: ../src/configuration/e-mapi-config-utils.c:1634
 msgid "Cannot create MAPI address book in offline mode"
 msgstr "Nepodarilo sa vytvoriť adresár kontaktov MAPI v odpojenom režime."
 
-#: ../src/configuration/e-mapi-config-utils.c:1676
+#: ../src/configuration/e-mapi-config-utils.c:1639
 msgid "Cannot create MAPI source in offline mode"
 msgstr "Nepodarilo sa vytvoriť zdroj MAPI v odpojenom režime."
 
-#: ../src/configuration/e-mapi-config-utils.c:1696
+#: ../src/configuration/e-mapi-config-utils.c:1659
 msgid "_Location:"
 msgstr "_Umiestnenie:"
 
@@ -1025,19 +1032,19 @@ msgid "_Folder name:"
 msgstr "Názov priečinka:"
 
 #. Translators: This is a meeting response prefix which will be shown in a message Subject
-#: ../src/libexchangemapi/e-mapi-cal-utils.c:2077
+#: ../src/libexchangemapi/e-mapi-cal-utils.c:2080
 msgctxt "MeetingResp"
 msgid "Accepted:"
 msgstr "Akceptované:"
 
 #. Translators: This is a meeting response prefix which will be shown in a message Subject
-#: ../src/libexchangemapi/e-mapi-cal-utils.c:2082
+#: ../src/libexchangemapi/e-mapi-cal-utils.c:2085
 msgctxt "MeetingResp"
 msgid "Tentative:"
 msgstr "Predbežné:"
 
 #. Translators: This is a meeting response prefix which will be shown in a message Subject
-#: ../src/libexchangemapi/e-mapi-cal-utils.c:2087
+#: ../src/libexchangemapi/e-mapi-cal-utils.c:2090
 msgctxt "MeetingResp"
 msgid "Declined:"
 msgstr "Odmietnuté:"
@@ -1141,12 +1148,12 @@ msgid "Folder of user '%s' not found"
 msgstr "Priečinok používateľa „%s“ nebol nájdený"
 
 #. Translators: %s is replaced with an email address which was found ambiguous on a remote server
-#: ../src/libexchangemapi/e-mapi-connection.c:3840
+#: ../src/libexchangemapi/e-mapi-connection.c:3863
 #, c-format
 msgid "Recipient '%s' is ambiguous"
 msgstr "Príjemca „%s“ je nejednoznačný"
 
-#: ../src/libexchangemapi/e-mapi-connection.c:4932
+#: ../src/libexchangemapi/e-mapi-connection.c:4955
 #, c-format
 msgid ""
 "Search result exceeded allowed size limit. Use more specific search term, "
@@ -1155,16 +1162,16 @@ msgstr ""
 "Výsledky hľadania prekročili povolenú veľkosť. Použite, prosím, presnejší "
 "vyhľadávací reťazec"
 
-#: ../src/libexchangemapi/e-mapi-connection.c:6532
+#: ../src/libexchangemapi/e-mapi-connection.c:6556
 msgid "All Public Folders"
 msgstr "Všetky verejné priečinky"
 
-#: ../src/libexchangemapi/e-mapi-connection.c:6799
+#: ../src/libexchangemapi/e-mapi-connection.c:6823
 #, c-format
 msgid "User name '%s' is ambiguous"
 msgstr "Používateľské meno „%s“ je nejednoznačné"
 
-#: ../src/libexchangemapi/e-mapi-connection.c:6802
+#: ../src/libexchangemapi/e-mapi-connection.c:6826
 #, c-format
 msgid "User name '%s' not found"
 msgstr "Používateľské meno „%s“ nebolo nájdené"

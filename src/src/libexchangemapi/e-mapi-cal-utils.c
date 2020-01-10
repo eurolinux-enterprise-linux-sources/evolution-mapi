@@ -21,9 +21,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "evolution-mapi-config.h"
 
 #include <glib/gstdio.h>
 #include <glib/gi18n-lib.h>
@@ -762,28 +760,27 @@ populate_ical_attendees (EMapiConnection *conn,
 static void
 set_attachments_to_comp (EMapiConnection *conn,
 			 EMapiAttachment *attachments,
-			 ECalComponent *comp,
-			 const gchar *local_store_path)
+			 ECalComponent *comp)
 {
-	GSList *comp_attach_list = NULL;
 	EMapiAttachment *attach;
-	const gchar *uid;
+	icalcomponent *icalcomp;
 
 	g_return_if_fail (comp != NULL);
-	g_return_if_fail (local_store_path != NULL);
 
 	if (!attachments)
 		return;
 
-	e_cal_component_get_uid (comp, &uid);
+	icalcomp = e_cal_component_get_icalcomponent (comp);
+	g_return_if_fail (icalcomp != NULL);
 
 	for (attach = attachments; attach; attach = attach->next) {
 		uint64_t data_cb = 0;
 		const uint8_t *data_lpb = NULL;
 		const gchar *filename;
-		const uint32_t *ui32;
-		gchar *path, *attach_uri;
-		GError *error = NULL;
+		icalattach *new_attach;
+		icalparameter *param;
+		gchar *base64;
+		icalproperty *prop;
 
 		if (!e_mapi_attachment_get_bin_prop (attach, PidTagAttachDataBinary, &data_cb, &data_lpb)) {
 			g_debug ("%s: Skipping calendar attachment without data", G_STRFUNC);
@@ -794,31 +791,28 @@ set_attachments_to_comp (EMapiConnection *conn,
 		if (!filename || !*filename)
 			filename = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachFilename);
 
-		ui32 = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachNumber);
-		path = e_filename_mkdir_encoded (local_store_path, uid, filename, ui32 ? *ui32 : 0);
+		base64 = g_base64_encode ((const guchar *) data_lpb, data_cb);
+		new_attach = icalattach_new_from_data (base64, NULL, NULL);
+		g_free (base64);
 
-		attach_uri = g_filename_to_uri (path, NULL, &error);
-		if (!attach_uri) {
-			g_debug ("%s: Could not get attach_uri from '%s': %s", G_STRFUNC, path, error ? error->message : "Unknown error");
-			g_clear_error (&error);
-			g_free (path);
-			continue;
+		prop = icalproperty_new_attach (new_attach);
+		icalattach_unref (new_attach);
+
+		param = icalparameter_new_value (ICAL_VALUE_BINARY);
+		icalproperty_add_parameter (prop, param);
+
+		param = icalparameter_new_encoding (ICAL_ENCODING_BASE64);
+		icalproperty_add_parameter (prop, param);
+
+		if (filename && *filename) {
+			param = icalparameter_new_filename (filename);
+			icalproperty_add_parameter (prop, param);
 		}
 
-		if (!g_file_set_contents (path, (const gchar *) data_lpb, data_cb, &error)) {
-			g_debug ("%s: Failed to write attachment content to '%s': %s", G_STRFUNC, path, error ? error->message : "Unknown error");
-			g_free (attach_uri);
-			g_clear_error (&error);
-		} else {
-			comp_attach_list = g_slist_append (comp_attach_list, attach_uri);
-		}
-
-		g_free (path);
+		icalcomponent_add_property (icalcomp, prop);
 	}
 
-	e_cal_component_set_attachment_list (comp, comp_attach_list);
-
-	g_slist_free_full (comp_attach_list, g_free);
+	e_cal_component_rescan (comp);
 }
 
 ECalComponent *
@@ -826,7 +820,6 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 				EMapiObject *object,
 				icalcomponent_kind kind,
 				gboolean is_reply,
-				const gchar *local_store_uri,
 				const gchar *use_uid,
 				GSList **detached_components)
 {
@@ -869,8 +862,6 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 	}
 
 	utc_zone = icaltimezone_get_utc_timezone ();
-	if (!local_store_uri)
-		local_store_uri = g_get_tmp_dir ();
 
 	str = e_mapi_util_find_array_propval (&object->properties, PidTagSubject);
 	str = str ? str : e_mapi_util_find_array_propval (&object->properties, PidTagNormalizedSubject);
@@ -1235,7 +1226,7 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 			icalcomponent_set_status (ical_comp, get_taskstatus_from_prop (*status));
 			if (*status == olTaskComplete
 			    && e_mapi_util_find_array_datetime_propval (&t, &object->properties, PidLidTaskDateCompleted) == MAPI_E_SUCCESS) {
-				prop = icalproperty_new_completed (icaltime_from_timet_with_zone (t.tv_sec, 1, utc_zone));
+				prop = icalproperty_new_completed (icaltime_from_timet_with_zone (t.tv_sec, 0, utc_zone));
 				icalcomponent_add_property (ical_comp, prop);
 			}
 		}
@@ -1293,7 +1284,7 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 		icalcomponent_add_property (ical_comp, prop);
 	}
 
-	set_attachments_to_comp (conn, object->attachments, comp, local_store_uri);
+	set_attachments_to_comp (conn, object->attachments, comp);
 
 	e_cal_component_rescan (comp);
 
@@ -2179,20 +2170,29 @@ e_mapi_cal_utils_comp_to_object (EMapiConnection *conn,
 			prop = icalcomponent_get_first_property (ical_comp, ICAL_COMPLETED_PROPERTY);
 			completed = icalproperty_get_completed (prop);
 
-			completed.hour = completed.minute = completed.second = 0; completed.is_date = completed.is_utc = 1;
+			completed.hour = completed.minute = completed.second = 0;
+			completed.is_date = 1;
+			completed.zone = utc_zone;
+
 			tt = icaltime_as_timet (completed);
 			set_timet_value (PidLidTaskDateCompleted, tt);
 		}
 
 		/* Start */
-		dtstart.hour = dtstart.minute = dtstart.second = 0; dtstart.is_date = dtstart.is_utc = 1;
+		dtstart.hour = dtstart.minute = dtstart.second = 0;
+		dtstart.is_date = 1;
+		dtstart.zone = utc_zone;
+
 		tt = icaltime_as_timet (dtstart);
 		if (!icaltime_is_null_time (dtstart)) {
 			set_timet_value (PidLidTaskStartDate, tt);
 		}
 
 		/* Due */
-		dtend.hour = dtend.minute = dtend.second = 0; dtend.is_date = dtend.is_utc = 1;
+		dtend.hour = dtend.minute = dtend.second = 0;
+		dtend.is_date = 1;
+		dtend.zone = utc_zone;
+
 		tt = icaltime_as_timet (dtend);
 		if (!icaltime_is_null_time (dtend)) {
 			set_timet_value (PidLidTaskDueDate, tt);

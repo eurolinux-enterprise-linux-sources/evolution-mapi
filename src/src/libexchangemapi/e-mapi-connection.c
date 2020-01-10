@@ -22,9 +22,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "evolution-mapi-config.h"
 
 #include <glib/gi18n-lib.h>
 #include <camel/camel.h>
@@ -743,7 +741,7 @@ can_reach_mapi_server (const gchar *server_address,
 		if (local_error)
 			g_propagate_error (perror, local_error);
 		else
-			g_set_error (perror, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE, _("Server '%s' cannot be reached"), server_address);
+			g_set_error (perror, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE, _("Server “%s” cannot be reached"), server_address);
 	}
 
 	return reachable;
@@ -871,7 +869,7 @@ e_mapi_connection_test_foreign_folder (EMapiConnection *conn,
 			def_folder_id = olFolderJunk;
 		} else if (!e_mapi_util_mapi_id_from_string (folder_name, &foreign_fid)) {
 			ms = MAPI_E_CALL_FAILED;
-			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder name '%s' is not a known default folder name, nor folder ID."), folder_name));
+			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder name “%s” is not a known default folder name, nor folder ID."), folder_name));
 			goto cleanup;
 		}
 
@@ -1202,7 +1200,7 @@ e_mapi_connection_open_foreign_folder (EMapiConnection *conn,
 	if (!ensure_foreign_store (conn->priv, username, &msg_store, perror)) {
 		ms = MAPI_E_CALL_FAILED;
 		if (perror && !*perror)
-			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Failed to open store for user '%s'"), username));
+			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Failed to open store for user “%s”"), username));
 	} else {
 		ms = MAPI_E_SUCCESS;
 	}
@@ -1210,7 +1208,7 @@ e_mapi_connection_open_foreign_folder (EMapiConnection *conn,
 	if (ms == MAPI_E_SUCCESS) {
 		ms = OpenFolder (msg_store, fid, obj_folder);
 		if (ms == MAPI_E_NOT_FOUND)
-			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder of user '%s' not found"), username));
+			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder of user “%s” not found"), username));
 		else if (ms != MAPI_E_SUCCESS)
 			make_mapi_error (perror, "OpenFolder", ms);
 	}
@@ -3862,7 +3860,7 @@ add_object_recipients (EMapiConnection *conn,
 			 * However, if we do still get an ambiguous entry, we can't handle it :-( */
 			ms = MAPI_E_AMBIGUOUS_RECIP;
 			/* Translators: %s is replaced with an email address which was found ambiguous on a remote server */
-			g_set_error (perror, E_MAPI_ERROR, ms, _("Recipient '%s' is ambiguous"), users[ii]);
+			g_set_error (perror, E_MAPI_ERROR, ms, _("Recipient “%s” is ambiguous"), users[ii]);
 			goto cleanup;
 		} else if (flagList->aulPropTag[ii] == MAPI_UNRESOLVED) {
 			uint32_t last;
@@ -6138,46 +6136,27 @@ get_folder_hierarchy_cb (EMapiConnection *conn,
 	return TRUE;
 }
 
-static gboolean
-get_child_folders (EMapiConnection *conn,
-		   TALLOC_CTX *mem_ctx,
-		   EMapiFolderCategory folder_hier,
-		   mapi_object_t *parent,
-		   mapi_id_t folder_id,
-		   GSList **mapi_folders,
-		   ProgressNotifyCB cb,
-		   gpointer cb_user_data,
-		   GCancellable *cancellable,
-		   GError **perror)
+static enum MAPISTATUS
+get_child_folders_of_folder (EMapiConnection *conn,
+			     TALLOC_CTX *mem_ctx,
+			     mapi_object_t *folder,
+			     EMapiFolderCategory folder_hier,
+			     GSList **mapi_folders,
+			     ProgressNotifyCB cb,
+			     gpointer cb_user_data,
+			     GCancellable *cancellable,
+			     GError **perror)
 {
-	enum MAPISTATUS		ms;
-	mapi_object_t		obj_folder;
-	mapi_object_t		obj_table;
-	struct SPropTagArray	*spropTagArray = NULL;
+	enum MAPISTATUS ms;
+	mapi_object_t obj_table;
+	struct SPropTagArray *spropTagArray = NULL;
 	uint32_t row_count = 0;
 	struct GetFolderHierarchyCBData gfh;
 
-	/* sanity check */
-	e_return_val_mapi_error_if_fail (mem_ctx != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
-	e_return_val_mapi_error_if_fail (parent != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
-
-	mapi_object_init (&obj_folder);
 	mapi_object_init (&obj_table);
 
-	/* Attempt to open the folder */
-	ms = OpenFolder (parent, folder_id, &obj_folder);
-	if (ms != MAPI_E_SUCCESS) {
-		make_mapi_error (perror, "OpenFolder", ms);
-		goto cleanup;
-	}
-
-	if (g_cancellable_set_error_if_cancelled (cancellable, perror)) {
-		ms = MAPI_E_USER_CANCEL;
-		goto cleanup;
-	}
-
 	/* Get the hierarchy table */
-	ms = GetHierarchyTable (&obj_folder, &obj_table, TableFlags_Depth | TableFlags_NoNotifications, &row_count);
+	ms = GetHierarchyTable (folder, &obj_table, TableFlags_Depth | TableFlags_NoNotifications, &row_count);
 	if (ms != MAPI_E_SUCCESS) {
 		make_mapi_error (perror, "GetHierarchyTable", ms);
 		goto cleanup;
@@ -6210,17 +6189,59 @@ get_child_folders (EMapiConnection *conn,
 	}
 
 	gfh.folder_hier = folder_hier;
-	gfh.folder_id = folder_id;
+	gfh.folder_id = mapi_object_get_id (folder);
 	gfh.mapi_folders = mapi_folders;
 	gfh.cb = cb;
 	gfh.cb_user_data = cb_user_data;
 
 	ms = foreach_tablerow (conn, mem_ctx, &obj_table, get_folder_hierarchy_cb, &gfh, cancellable, perror);
 
+	*mapi_folders = g_slist_reverse (*mapi_folders);
+
  cleanup:
 	talloc_free (spropTagArray);
-	mapi_object_release (&obj_folder);
 	mapi_object_release (&obj_table);
+
+	return ms;
+}
+
+static gboolean
+get_child_folders (EMapiConnection *conn,
+		   TALLOC_CTX *mem_ctx,
+		   EMapiFolderCategory folder_hier,
+		   mapi_object_t *parent,
+		   mapi_id_t folder_id,
+		   GSList **mapi_folders,
+		   ProgressNotifyCB cb,
+		   gpointer cb_user_data,
+		   GCancellable *cancellable,
+		   GError **perror)
+{
+	enum MAPISTATUS		ms;
+	mapi_object_t		obj_folder;
+
+	/* sanity check */
+	e_return_val_mapi_error_if_fail (mem_ctx != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+	e_return_val_mapi_error_if_fail (parent != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+
+	mapi_object_init (&obj_folder);
+
+	/* Attempt to open the folder */
+	ms = OpenFolder (parent, folder_id, &obj_folder);
+	if (ms != MAPI_E_SUCCESS) {
+		make_mapi_error (perror, "OpenFolder", ms);
+		goto cleanup;
+	}
+
+	if (g_cancellable_set_error_if_cancelled (cancellable, perror)) {
+		ms = MAPI_E_USER_CANCEL;
+		goto cleanup;
+	}
+
+	ms = get_child_folders_of_folder (conn, mem_ctx, &obj_folder, folder_hier, mapi_folders, cb, cb_user_data, cancellable, perror);
+
+ cleanup:
+	mapi_object_release (&obj_folder);
 
 	return ms == MAPI_E_SUCCESS;
 }
@@ -6493,8 +6514,6 @@ e_mapi_connection_get_folders_list (EMapiConnection *conn,
 	/* FIXME: check status of get_child_folders */
 	result = get_child_folders (conn, mem_ctx, E_MAPI_FOLDER_CATEGORY_PERSONAL, &priv->msg_store, mailbox_id, mapi_folders, cb, cb_user_data, cancellable, perror);
 
-	*mapi_folders = g_slist_reverse (*mapi_folders);
-
 	if (result && !set_default_folders (mem_ctx, &priv->msg_store, mapi_folders, cancellable, perror)) {
 		goto cleanup;
 	}
@@ -6560,7 +6579,6 @@ e_mapi_connection_get_pf_folders_list (EMapiConnection *conn,
 	folder->default_type = olPublicFoldersAllPublicFolders;
 	*mapi_folders = g_slist_prepend (*mapi_folders, folder);
 	result = get_child_folders (conn, mem_ctx, E_MAPI_FOLDER_CATEGORY_PUBLIC, &priv->public_store, mailbox_id, mapi_folders, cb, cb_user_data, cancellable, perror);
-	*mapi_folders = g_slist_reverse (*mapi_folders);
 
  cleanup:
 	talloc_free (mem_ctx);
@@ -6570,6 +6588,48 @@ e_mapi_connection_get_pf_folders_list (EMapiConnection *conn,
 	e_mapi_debug_print("%s: Leaving %s ", G_STRLOC, G_STRFUNC);
 
 	return result;
+}
+
+gboolean
+e_mapi_connection_get_subfolders_list (EMapiConnection *conn,
+				       mapi_object_t *folder,
+				       EMapiFolderCategory folder_hier,
+				       GSList **mapi_folders,
+				       ProgressNotifyCB cb,
+				       gpointer cb_user_data,
+				       GCancellable *cancellable,
+				       GError **perror)
+{
+	enum MAPISTATUS ms;
+	TALLOC_CTX *mem_ctx;
+
+	CHECK_CORRECT_CONN_AND_GET_PRIV (conn, FALSE);
+	e_return_val_mapi_error_if_fail (folder != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+	e_return_val_mapi_error_if_fail (priv->session != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+
+	e_mapi_debug_print("%s: Entering %s ", G_STRLOC, G_STRFUNC);
+
+	LOCK (cancellable, perror, FALSE);
+	mem_ctx = talloc_new (priv->session);
+
+	if (g_cancellable_set_error_if_cancelled (cancellable, perror)) {
+		ms = MAPI_E_USER_CANCEL;
+	} else {
+		*mapi_folders = NULL;
+
+		ms = get_child_folders_of_folder (conn, mem_ctx, folder, folder_hier, mapi_folders, cb, cb_user_data, cancellable, perror);
+	}
+
+	talloc_free (mem_ctx);
+
+	if (ms != MAPI_E_SUCCESS)
+		make_mapi_error (perror, "get_subfolders_list", ms);
+
+	UNLOCK ();
+
+	e_mapi_debug_print("%s: Leaving %s ", G_STRLOC, G_STRFUNC);
+
+	return ms == MAPI_E_SUCCESS;
 }
 
 GSList *
@@ -6822,10 +6882,10 @@ e_mapi_connection_resolve_username (EMapiConnection *conn,
 	} else if (ms == MAPI_E_SUCCESS) {
 		if (flaglist && flaglist->aulPropTag[0] == MAPI_AMBIGUOUS) {
 			ms = MAPI_E_AMBIGUOUS_RECIP;
-			g_set_error (perror, E_MAPI_ERROR, ms, _("User name '%s' is ambiguous"), to_resolve);
+			g_set_error (perror, E_MAPI_ERROR, ms, _("User name “%s” is ambiguous"), to_resolve);
 		} else {
 			ms = MAPI_E_NOT_FOUND;
-			g_set_error (perror, E_MAPI_ERROR, ms, _("User name '%s' not found"), to_resolve);
+			g_set_error (perror, E_MAPI_ERROR, ms, _("User name “%s” not found"), to_resolve);
 		}
 	}
 

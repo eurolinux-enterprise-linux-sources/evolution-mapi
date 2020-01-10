@@ -17,9 +17,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "evolution-mapi-config.h"
 
 #include <camel/camel.h>
 #include <libecal/libecal.h>
@@ -358,9 +356,9 @@ build_ical_string (EMapiConnection *conn,
 	if (pmid)
 		use_uid = e_mapi_util_mapi_id_to_string (*pmid);
 	else
-		use_uid = e_cal_component_gen_uid ();
+		use_uid = e_util_generate_uid ();
 
-	comp = e_mapi_cal_util_object_to_comp (conn, object, ical_kind, ical_method == ICAL_METHOD_REPLY, NULL, use_uid, &detached_components);
+	comp = e_mapi_cal_util_object_to_comp (conn, object, ical_kind, ical_method == ICAL_METHOD_REPLY, use_uid, &detached_components);
 
 	g_free (use_uid);
 
@@ -460,7 +458,7 @@ classify_attachments (EMapiConnection *conn,
 		if (!filename || !*filename)
 			filename = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachFilename);
 		camel_mime_part_set_filename (part, filename);
-		camel_content_type_set_param (((CamelDataWrapper *) part)->mime_type, "name", filename);
+		camel_content_type_set_param (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part)), "name", filename);
 
 		if (is_apple) {
 			CamelMultipart *mp;
@@ -780,20 +778,27 @@ e_mapi_mail_utils_object_to_message (EMapiConnection *conn, /* const */ EMapiObj
 		g_object_unref (stream);
 
 		if (camel_mime_part_construct_from_parser_sync (part, parser, NULL, NULL)) {
-			struct _camel_header_raw *h;
+			const CamelNameValueArray *headers;
+			CamelMedium *msg_medium = CAMEL_MEDIUM (msg);
+			guint ii, len;
 
-			for (h = part->headers; h; h = h->next) {
-				const gchar *value = h->value;
+			headers = camel_medium_get_headers (CAMEL_MEDIUM (part));
+			len = camel_name_value_array_get_length (headers);
+
+			for (ii = 0; ii < len; ii++) {
+				const gchar *header_name = NULL, *header_value = NULL;
 
 				/* skip all headers describing content of a message,
 				   because it's overwritten on message decomposition */
-				if (g_ascii_strncasecmp (h->name, "Content", 7) == 0)
+				if (!camel_name_value_array_get (headers, ii, &header_name, &header_value) ||
+				    !header_name ||
+				    g_ascii_strncasecmp (header_name, "Content", 7) == 0)
 					continue;
 
-				while (value && camel_mime_is_lwsp (*value))
-					value++;
+				while (header_value && camel_mime_is_lwsp (*header_value))
+					header_value++;
 
-				camel_medium_add_header (CAMEL_MEDIUM (msg), h->name, value);
+				camel_medium_add_header (msg_medium, header_name, header_value);
 			}
 		}
 
@@ -1166,6 +1171,24 @@ e_mapi_mail_content_stream_to_bin (CamelStream *content_stream,
 	*plpb = lpb;
 }
 
+static gboolean
+e_mapi_mail_part_is_attachment (CamelMimePart *part)
+{
+	const CamelContentDisposition *content_disposition;
+
+	g_return_val_if_fail (CAMEL_IS_MIME_PART (part), FALSE);
+
+	content_disposition = camel_mime_part_get_content_disposition (part);
+
+	if (!content_disposition)
+		return FALSE;
+
+	return content_disposition &&
+		content_disposition->disposition && (
+		g_ascii_strcasecmp (content_disposition->disposition, "attachment") == 0 ||
+		g_ascii_strcasecmp (content_disposition->disposition, "inline") == 0);
+}
+
 #define set_attach_value(pt,vl) {						\
 	if (!e_mapi_utils_add_property (&attach->properties, pt, vl, attach)) {	\
 		g_warning ("%s: Failed to set property 0x%x", G_STRFUNC, pt);	\
@@ -1399,9 +1422,13 @@ e_mapi_mail_do_multipart (EMapiObject *object,
 	CamelStream *content_stream;
 	CamelContentType *type;
 	CamelMimePart *part;
+	gboolean parent_is_alternative;
 	gint nn, ii;
 
 	g_return_val_if_fail (is_first != NULL, FALSE);
+
+	type = camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (mp));
+	parent_is_alternative = type && camel_content_type_is (type, "multipart", "alternative");
 
 	nn = camel_multipart_get_number (mp);
 	for (ii = 0; ii < nn; ii++) {
@@ -1454,7 +1481,9 @@ e_mapi_mail_do_multipart (EMapiObject *object,
 		if (ii == 0 && (*is_first) && camel_content_type_is (type, "text", "plain")) {
 			e_mapi_mail_add_body (object, content_stream, PidTagBody, cancellable);
 			*is_first = FALSE;
-		} else if (camel_content_type_is (type, "text", "html")) {
+		} else if ((ii == 0 || parent_is_alternative) &&
+			   camel_content_type_is (type, "text", "html") &&
+			   !e_mapi_mail_part_is_attachment (part)) {
 			e_mapi_mail_add_body (object, content_stream, PidTagHtml, cancellable);
 		} else {
 			e_mapi_mail_add_attach (object, part, content_stream, cancellable);
@@ -1555,7 +1584,7 @@ e_mapi_mail_utils_message_to_object (struct _CamelMimeMessage *message,
 	if ((create_flags & E_MAPI_CREATE_FLAG_SUBMIT) == 0) {
 		time_t msg_time = 0;
 		gint msg_time_offset = 0;
-		GArray *headers;
+		CamelNameValueArray *headers;
 
 		if (namep && *namep)
 			set_value (PidTagSentRepresentingName, namep);
@@ -1585,20 +1614,24 @@ e_mapi_mail_utils_message_to_object (struct _CamelMimeMessage *message,
 			set_value (PidTagMessageDeliveryTime, &msg_date);
 		}
 
-		headers = camel_medium_get_headers (CAMEL_MEDIUM (message));
+		headers = camel_medium_dup_headers (CAMEL_MEDIUM (message));
 		if (headers) {
 			GString *hstr = g_string_new ("");
+			guint len;
 
-			for (ii = 0; ii < headers->len; ii++) {
-				CamelMediumHeader *h = &g_array_index (headers, CamelMediumHeader, ii);
+			len = camel_name_value_array_get_length (headers);
 
-				if (!h->name || !*h->name || g_ascii_strncasecmp (h->name, "X-Evolution", 11) == 0)
+			for (ii = 0; ii < len; ii++) {
+				const gchar *header_name = NULL, *header_value = NULL;
+
+				if (!camel_name_value_array_get (headers, ii, &header_name, &header_value) ||
+				    !header_name || !*header_name || g_ascii_strncasecmp (header_name, "X-Evolution", 11) == 0)
 					continue;
 
-				g_string_append_printf (hstr, "%s: %s\n", h->name, h->value ? h->value : "");
+				g_string_append_printf (hstr, "%s: %s\n", header_name, header_value ? header_value : "");
 			}
 
-			camel_medium_free_headers (CAMEL_MEDIUM (message), headers);
+			camel_name_value_array_free (headers);
 
 			if (hstr->len && hstr->str)
 				set_value (PidTagTransportMessageHeaders, hstr->str);

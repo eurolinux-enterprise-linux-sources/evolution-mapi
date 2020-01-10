@@ -1,80 +1,71 @@
 %define openchange_version 2.3
 %define intltool_version 0.35.5
 
-%define evo_base_version 3.22
-
 %define strict_build_settings 0
 
 ### Abstract ###
 
 Name: evolution-mapi
-Version: 3.22.6
-Release: 1%{?dist}
+Version: 3.28.3
+Release: 2%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
 URL: https://wiki.gnome.org/Apps/Evolution
-Source: http://download.gnome.org/sources/%{name}/3.22/%{name}-%{version}.tar.xz
-BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+Source: http://download.gnome.org/sources/%{name}/3.28/%{name}-%{version}.tar.xz
 
-# GN-bug #729028
-#Patch0: evolution-mapi-3.12.1-openchange-2.1-changes.patch
+Obsoletes: evolution-mapi-devel <= 3.23.1
+
+%global eds_evo_version %{version}
+
+Patch01: evolution-mapi-3.28.2-cmake-version.patch
 
 ### Dependencies ###
 
-Requires: evolution >= %{version}
-Requires: evolution-data-server >= %{version}
+Requires: evolution >= %{eds_evo_version}
+Requires: evolution-data-server >= %{eds_evo_version}
+Requires: %{name}-langpacks = %{version}-%{release}
 
 ### Build Dependencies ###
 
-BuildRequires: autoconf
-BuildRequires: automake
+BuildRequires: cmake
+BuildRequires: gcc
 BuildRequires: gettext
-BuildRequires: gnome-common
 BuildRequires: intltool >= %{intltool_version}
-BuildRequires: libtool >= 1.5
 
-BuildRequires: pkgconfig(camel-1.2) >= %{version}
-BuildRequires: pkgconfig(evolution-data-server-1.2) >= %{version}
-BuildRequires: pkgconfig(evolution-mail-3.0) >= %{version}
-BuildRequires: pkgconfig(evolution-shell-3.0) >= %{version}
+BuildRequires: pkgconfig(camel-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(evolution-data-server-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(evolution-mail-3.0) >= %{eds_evo_version}
+BuildRequires: pkgconfig(evolution-shell-3.0) >= %{eds_evo_version}
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gtk+-3.0)
-BuildRequires: pkgconfig(libebackend-1.2) >= %{version}
-BuildRequires: pkgconfig(libebook-1.2) >= %{version}
-BuildRequires: pkgconfig(libecal-1.2) >= %{version}
-BuildRequires: pkgconfig(libedata-book-1.2) >= %{version}
-BuildRequires: pkgconfig(libedata-cal-1.2) >= %{version}
-BuildRequires: pkgconfig(libemail-engine) >= %{version}
+BuildRequires: pkgconfig(libebackend-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(libebook-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(libecal-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(libedata-book-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(libedata-cal-1.2) >= %{eds_evo_version}
+BuildRequires: pkgconfig(libemail-engine) >= %{eds_evo_version}
 BuildRequires: pkgconfig(libmapi) >= %{openchange_version}
 
 %description
 This package allows Evolution to interact with MS Exchange 2007 servers.
 
-%package devel
-Summary: Development files for building against %{name}
-Group: Development/Libraries
+%package langpacks
+Summary: Translations for %{name}
+BuildArch: noarch
 Requires: %{name} = %{version}-%{release}
-Requires: pkgconfig(camel-1.2) >= %{version}
-Requires: pkgconfig(evolution-data-server-1.2) >= %{version}
-Requires: pkgconfig(evolution-mail-3.0) >= %{version}
-Requires: pkgconfig(evolution-shell-3.0) >= %{version}
-Requires: pkgconfig(libebackend-1.2) >= %{version}
-Requires: pkgconfig(libebook-1.2) >= %{version}
-Requires: pkgconfig(libecal-1.2) >= %{version}
-Requires: pkgconfig(libedata-book-1.2) >= %{version}
-Requires: pkgconfig(libedata-cal-1.2) >= %{version}
-Requires: pkgconfig(libemail-engine) >= %{version}
-Requires: pkgconfig(libmapi) >= %{openchange_version}
 
-%description devel
-Development files needed for building things which link against %{name}.
+%description langpacks
+This package contains translations for %{name}.
 
 %prep
 %setup -q
-#%patch0 -p1 -b .openchange-2.1-changes
+%patch01 -p1 -b .cmake-version
 
 %build
+
+mkdir _build
+cd _build
 
 CFLAGS="$RPM_OPT_FLAGS"
 
@@ -99,42 +90,48 @@ CFLAGS="$CFLAGS \
 
 export CFLAGS="$CFLAGS -Wno-deprecated-declarations"
 
-# Regenerate configure to pick up changes
-autoreconf --force --install
-
-%configure --disable-maintainer-mode
+%cmake -G "Unix Makefiles" ..
 
 make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
 
-find $RPM_BUILD_ROOT/%{_libdir} -name '*.la' -exec rm {} \;
+cd _build
+make install DESTDIR=$RPM_BUILD_ROOT
 
 %find_lang %{name}
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
-%files -f %{name}.lang
-%doc AUTHORS ChangeLog COPYING INSTALL README
-%{_libdir}/libexchangemapi-1.0.so.*
+%files
+%license COPYING
+%doc AUTHORS ChangeLog INSTALL README
+%{_libdir}/evolution/modules/module-mapi-configuration.so
 %{_libdir}/evolution-data-server/camel-providers/libcamelmapi.so
 %{_libdir}/evolution-data-server/camel-providers/libcamelmapi.urls
 %{_libdir}/evolution-data-server/addressbook-backends/libebookbackendmapi.so
 %{_libdir}/evolution-data-server/calendar-backends/libecalbackendmapi.so
 %{_libdir}/evolution-data-server/registry-modules/module-mapi-backend.so
-%{_libdir}/evolution/modules/module-mapi-configuration.so
-%{_datadir}/appdata/evolution-mapi.metainfo.xml
+%{_libdir}/evolution-mapi/libcamelmapi-priv.so
+%{_libdir}/evolution-mapi/libevolution-mapi.so
+%{_datadir}/metainfo/org.gnome.Evolution-mapi.metainfo.xml
 %{_datadir}/evolution-data-server/mapi
 
-%files devel
-%{_includedir}/evolution-data-server/mapi
-%{_libdir}/libexchangemapi-1.0.so
-%{_libdir}/pkgconfig/libexchangemapi-1.0.pc
+%files langpacks -f _build/%{name}.lang
 
 %changelog
+* Tue Oct 02 2018 Milan Crha <mcrha@redhat.com> - 3.28.3-2
+- Add missing Obsoletes for evolution-mapi-devel subpackage (RH bug #1633828)
+
+* Mon Jun 18 2018 Milan Crha <mcrha@redhat.com> - 3.28.3-1
+- Update to 3.28.3
+
+* Wed May 30 2018 Milan Crha <mcrha@redhat.com> - 3.28.2-1
+- Update to 3.28.2
+- Resolves: #1575500
+
+* Thu Apr 26 2018 Milan Crha <mcrha@redhat.com> - 3.22.6-2
+- Add patch for RH bug #1520936 (Unable to authenticate using Kerberos without krb5-auth-dialog package)
+
 * Mon Mar 13 2017 Milan Crha <mcrha@redhat.com> - 3.22.6-1
 - Update to 3.22.6 upstream release
 

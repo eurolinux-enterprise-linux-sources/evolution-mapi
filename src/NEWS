@@ -1,20 +1,274 @@
-evolution-mapi 3.22.6 2017-03-13
+evolution-mapi 3.28.3 2018-06-18
+--------------------------------
+
+Miscellaneous:
+	Address some of the compiler and static analyzers warnings (Milan Crha)
+	Update bug URL and switch to https:// in the DOAP file (Milan Crha)
+
+evolution-mapi 3.28.2 2018-05-07
 --------------------------------
 
 Translations:
-	Inaki Larranaga Murgoitio (eu)
+	Rūdolfs Mazurs (lv)
 
-evolution-mapi 3.22.4 2017-01-16
+evolution-mapi 3.28.1 2018-04-09
+--------------------------------
+
+Miscellaneous:
+	Cannot use Kerberos without org.gnome.KrbAuthDialog D-Bus interface installed (Milan Crha)
+
+evolution-mapi 3.28.0 2018-03-12
+--------------------------------
+
+Translations:
+	Joe Hansen (da)
+	Anders Jonsson (sv)
+
+evolution-mapi 3.27.92 2018-03-05
+---------------------------------
+
+Bug Fixes:
+	Bug 793835 - HTML attachment overwrites message text or get removed (Milan Crha)
+
+Translations:
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+	Balázs Úr (hu)
+	Mario Blättermann (de)
+
+evolution-mapi 3.27.91 2018-02-19
+---------------------------------
+
+Bug Fixes:
+	Bug 793104 - COMPLETED in libical 3.0+ is DATE-TIME only (Milan Crha)
+	Bug 793368 - Install AppStream metadata to /usr/share/metainfo/ (Jeremy Bicha)
+
+evolution-mapi 3.27.90 2018-02-05
+---------------------------------
+
+Translations:
+	Rafael Fontenelle (pt_BR)
+	Marek Cernocky (cs)
+
+evolution-mapi 3.27.4 2018-01-08
+--------------------------------
+
+Translations:
+	Daniel Mustieles (es)
+
+evolution-mapi 3.27.3 2017-12-11
 --------------------------------
 
 Bug Fixes:
+	Bug 788373 - Option to subscribe to other user's folder with subfolders (Milan Crha)
+
+Translations:
+	Kukuh Syafaat (id)
+	Piotr Drąg (pl)
+
+evolution-mapi 3.27.2 2017-11-13
+--------------------------------
+
+Translations:
+	Alan Mortensen (da)
+	Ask Hjorth Larsen (da)
+
+evolution-mapi 3.27.1 2017-10-16
+--------------------------------
+
+Bug Fixes:
+	Bug 781645 - Skip GSettings schema compile when DESTDIR is set (Milan Crha)
+
+Miscellaneous:
+	Adapt to rename of evolution.desktop to org.gnome.Evolution.desktop (Milan Crha)
+	Use icaltime_is_utc() instead of icaltimetype::is_utc (Milan Crha)
+
+Translations:
+	Mario Blättermann (de)
+	Dušan Kazik (sk)
+	Aurimas Černius (lt)
+
+evolution-mapi 3.26.0 2017-09-11
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.25.92.2 2017-09-04
+-----------------------------------
+
+Miscellaneous:
+	Do not use PROJECT_VERSION_TWEAK when searching for eds/evo dependencies (Milan Crha)
+
+
+evolution-mapi 3.25.92.1 2017-09-04
+-----------------------------------
+
+Miscellaneous:
+	Revert "Adapt to rename of evolution.desktop to org.gnome.Evolution.desktop" (Milan Crha)
+
+
+evolution-mapi 3.25.92 2017-09-04
+---------------------------------
+
+Miscellaneous:
+	Adapt to rename of evolution.desktop to org.gnome.Evolution.desktop (Milan Crha)
+
+Translations:
+	Balázs Úr (hu)
+
+evolution-mapi 3.25.91 2017-08-21
+---------------------------------
+
+Translations:
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+
+evolution-mapi 3.25.90 2017-08-07
+---------------------------------
+
+Bug Fixes:
+	Bug 785188 - Do not add LIB_INSTALL_DIR into RPATH (Milan Crha)
+
+evolution-mapi 3.25.4 2017-07-17
+--------------------------------
+
+Bug Fixes:
+	Bug 783987 - Mail account assistant/editor too tall for small resolution (Milan Crha)
+
+Miscellaneous:
+	Messages moved on the server not deleted from local cache (Milan Crha)
+
+Translations:
+	Daniel Mustieles (es)
+	Rafael Fontenelle (pt_BR)
+	Marek Černocký (cs)
+	Kukuh Syafaat (id)
+
+evolution-mapi 3.25.3 2017-06-19
+--------------------------------
+
+Miscellaneous:
+	Derive from EBookMetaBackend and ECalMetaBackend (Milan Crha)
+	Return back Free/Busy lookup in calendar backend (Milan Crha)
+	Allow overwrite of CMAKE_SKIP_RPATH variable (Milan Crha)
+
+Translations:
+	Piotr Drąg (pl)
+	Kristjan SCHMIDT (eo)
+	Anders Jonsson (sv)
+
+evolution-mapi 3.25.2 2017-05-22
+--------------------------------
+
+Bug Fixes:
+	Bug 781833 - Do not set '-Wl,--no-undefined' on BSD (Antoine Jacoutot)
+
+Miscellaneous:
+	Use new e_util_generate_uid() instead of e_cal_component_gen_uid() (Milan Crha)
+
+evolution-mapi 3.25.1 2017-04-24
+--------------------------------
+
+Miscellaneous:
+	Sources always enabled, even when their part is disabled (Milan Crha)
+
+Translations:
+	Kukuh Syafaat (id)
+
+evolution-mapi 3.24.0 2017-03-20
+--------------------------------
+
+Miscellaneous:
+	No code/translation changes
+
+evolution-mapi 3.23.92 2017-03-13
+---------------------------------
+
+Translations:
+	Inaki Larranaga Murgoitio (eu)
+	Gábor Kelemen (hu)
+	Aurimas Černius (lt)
+
+evolution-mapi 3.23.91 2017-02-27
+---------------------------------
+
+Translations:
+	Мирослав Николић (sr)
+	Мирослав Николић (sr@latin)
+	Joe Hansen (da)
+
+evolution-mapi 3.23.90 2017-02-13
+---------------------------------
+
+Miscellaneous:
+	Avoid local message cache expiry clean up when being offline (Milan Crha)
+
+Translations:
+	Mario Blättermann (de)
+
+evolution-mapi 3.23.4 2017-01-16
+--------------------------------
+
+Bug Fixes:
+	Bug 773419 - Age limit for offline message download (Milan Crha)
 	Bug 775951 - Folder permission level change doesn't change read permission (Milan Crha)
 
-evolution-mapi 3.22.3 2016-12-12
+Translations:
+	Piotr Drąg (pl)
+	Marek Cernocky (cs)
+	Josef Andersson (sv)
+	Daniel Mustieles (es)
+	Rafael Fontenelle (pt_BR)
+
+evolution-mapi 3.23.3 2016-12-12
 --------------------------------
 
 Bug Fixes:
+	Bug 774365 - Use Unicode in translatable strings (Piotr Drąg)
+	Bug 775363 - Bump minimum CMake version to 3.1 (Milan Crha)
+	Bug 775395 - Allow to override some (most) of the RPATH related settings (Dominique Leuenberger)
 	Bug 775843 - Rejects to modify regular (non-recurring) appointment (Milan Crha)
+
+Miscellaneous:
+	Make glib_mkenums() files depend on the source enum file (Milan Crha)
+
+Translations:
+	Piotr Drąg (pl)
+	Anders Jonsson (sv)
+	Muhammet Kara (tr)
+	Christian Kirbach (de)
+	Gábor Kelemen (hu)
+
+evolution-mapi 3.23.2 2016-11-21
+--------------------------------
+
+Bug Fixes:
+	Bug 769573 - Allow also time part set for Tasks, not only date part (Milan Crha)
+	Bug 773659 - Don't set CFLAGS returned by pkg-config as CMAKE_REQUIRED_FLAGS (Milan Crha)
+	Bug 764065 - [Camel] Port more classes to GObject (Milan Crha)
+	Bug 774524 - Translator comments are missing in the .pot/.po files (Piotr Drąg)
+
+Miscellaneous:
+	Do not require C++ compiler, when not used (Milan Crha)
+	Ensure CMAKE_SKIP_RPATH is OFF, the RPATH is used here (Milan Crha)
+
+evolution-mapi 3.23.1 2016-10-24
+--------------------------------
+
+* Evolution-MAPI uses CMake instead of autotools now. At the end of
+  the configure phase are printed all the available options and their
+  values. These can be used for the cmake command to tweak the build.
+
+Miscellaneous:
+	Convert from autotools to CMake (Milan Crha)
+	Require as hard dependency some dependencies (Milan Crha)
+	Add a helper script for a 'dist' target (Milan Crha)
+	Rename SHARE_INSTALL_DIR to SHARE_INSTALL_PREFIX (Milan Crha)
+	Hard-break `make dist` when there are uncommitted changes (Milan Crha)
+
+Translations:
+	Kjartan Maraas (nb)
 
 evolution-mapi 3.22.0 2016-09-19
 --------------------------------

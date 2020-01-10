@@ -21,10 +21,9 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "evolution-mapi-config.h"
 
+#include "e-mapi-cal-utils.h"
 #include "e-mapi-cal-tz-utils.h"
 
 #define d(x) 
@@ -96,7 +95,7 @@ e_mapi_tm_to_icaltimetype (struct tm *tm,
 	itt.month = dst ? 6 : 1;
 	itt.year = tm->tm_year + 1900;
 
-	itt.is_utc = 0;
+	itt.zone = NULL;
 	itt.is_date = 0;
 
 	return itt;

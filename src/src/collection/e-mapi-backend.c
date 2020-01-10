@@ -16,7 +16,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gi18n-lib.h>
 
@@ -26,6 +28,7 @@
 #include <e-source-mapi-folder.h>
 #include <camel-mapi-settings.h>
 
+#include "e-mapi-backend-authenticator.h"
 #include "e-mapi-backend.h"
 
 #define E_MAPI_BACKEND_GET_PRIVATE(obj) \
@@ -37,81 +40,18 @@ struct _EMapiBackendPrivate {
 	GHashTable *folders;
 
 	gboolean need_update_folders;
-	gulong source_changed_handler_id;
-
-	GMutex credentials_lock;
-	ENamedParameters *credentials;
 };
 
-G_DEFINE_DYNAMIC_TYPE (EMapiBackend, e_mapi_backend, E_TYPE_COLLECTION_BACKEND)
+static void e_mapi_backend_authenticator_init (ESourceAuthenticatorInterface *interface);
 
-typedef gboolean (* EMapiBackendAuthenticatorFunc) (EBackend *backend,
-						    CamelMapiSettings *settings,
-						    EMapiConnection *conn,
-						    gpointer user_data,
-						    GCancellable *cancellable,
-						    GError **error);
-
-static gboolean
-e_mapi_backend_authenticator_run (EBackend *backend,
-				  CamelMapiSettings *settings,
-				  const ENamedParameters *credentials,
-				  EMapiBackendAuthenticatorFunc func,
-			          gpointer user_data,
-				  GCancellable *cancellable,
-				  GError **error)
-{
-	EMapiProfileData empd = { 0 };
-	EMapiConnection *conn;
-	CamelNetworkSettings *network_settings;
-	GError *mapi_error = NULL;
-	gboolean success;
-
-	g_return_val_if_fail (E_IS_BACKEND (backend), FALSE);
-	g_return_val_if_fail (CAMEL_IS_MAPI_SETTINGS (settings), FALSE);
-	g_return_val_if_fail (func != NULL, FALSE);
-
-	if (!credentials) {
-		g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_INITIALIZED,
-			_("Cannot connect, no credentials provided"));
-		return FALSE;
-	}
-
-	g_object_ref (backend);
-	g_object_ref (settings);
-
-	network_settings = CAMEL_NETWORK_SETTINGS (settings);
-
-	empd.server = camel_network_settings_get_host (network_settings);
-	empd.username = camel_network_settings_get_user (network_settings);
-	e_mapi_util_profiledata_from_settings (&empd, settings);
-
-	conn = e_mapi_connection_new (
-		NULL,
-		camel_mapi_settings_get_profile (settings),
-		credentials, cancellable, &mapi_error);
-
-	if (mapi_error) {
-		g_warn_if_fail (!conn);
-
-		g_object_unref (backend);
-		g_object_unref (settings);
-
-		g_propagate_error (error, mapi_error);
-
-		return FALSE;
-	}
-
-	g_warn_if_fail (conn != NULL);
-
-	success = func (backend, settings, conn, user_data, cancellable, error);
-
-	g_object_unref (conn);
-	g_object_unref (backend);
-	g_object_unref (settings);
-
-	return success;
-}
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (
+	EMapiBackend,
+	e_mapi_backend,
+	E_TYPE_COLLECTION_BACKEND,
+	0,
+	G_IMPLEMENT_INTERFACE_DYNAMIC (
+		E_TYPE_SOURCE_AUTHENTICATOR,
+		e_mapi_backend_authenticator_init))
 
 static CamelMapiSettings *
 mapi_backend_get_settings (EMapiBackend *backend)
@@ -148,38 +88,6 @@ sync_folders_data_free (gpointer data)
 	g_object_unref (sfd->backend);
 	g_free (sfd->profile);
 	g_free (sfd);
-}
-
-static void
-mapi_backend_update_enabled (ESource *data_source,
-			     ESource *collection_source)
-{
-	ESourceCollection *collection_extension = NULL;
-	gboolean part_enabled = TRUE;
-
-	g_return_if_fail (E_IS_SOURCE (data_source));
-
-	if (!collection_source || !e_source_get_enabled (collection_source)) {
-		e_source_set_enabled (data_source, FALSE);
-		return;
-	}
-
-	if (e_source_has_extension (collection_source, E_SOURCE_EXTENSION_COLLECTION))
-		collection_extension = e_source_get_extension (collection_source, E_SOURCE_EXTENSION_COLLECTION);
-
-	if (e_source_has_extension (data_source, E_SOURCE_EXTENSION_CALENDAR) ||
-	    e_source_has_extension (data_source, E_SOURCE_EXTENSION_TASK_LIST) ||
-	    e_source_has_extension (data_source, E_SOURCE_EXTENSION_MEMO_LIST)) {
-		part_enabled = !collection_extension || e_source_collection_get_calendar_enabled (collection_extension);
-	} else if (e_source_has_extension (data_source, E_SOURCE_EXTENSION_ADDRESS_BOOK)) {
-		part_enabled = !collection_extension || e_source_collection_get_contacts_enabled (collection_extension);
-	} else if (e_source_has_extension (data_source, E_SOURCE_EXTENSION_MAIL_ACCOUNT) ||
-		   e_source_has_extension (data_source, E_SOURCE_EXTENSION_MAIL_IDENTITY) ||
-		   e_source_has_extension (data_source, E_SOURCE_EXTENSION_MAIL_TRANSPORT)) {
-		part_enabled = !collection_extension || e_source_collection_get_mail_enabled (collection_extension);
-	}
-
-	e_source_set_enabled (data_source, part_enabled);
 }
 
 static gboolean
@@ -229,8 +137,6 @@ mapi_backend_sync_folders_idle_cb (gpointer user_data)
 
 		source = e_mapi_utils_get_source_for_folder (configured, sfd->profile, e_mapi_folder_get_id (folder));
 		if (source) {
-			mapi_backend_update_enabled (source, e_backend_get_source (E_BACKEND (backend)));
-
 			if (g_strcmp0 (e_source_get_display_name (source), e_mapi_folder_get_name (folder)) != 0)
 				e_source_set_display_name (source, e_mapi_folder_get_name (folder));
 
@@ -263,7 +169,6 @@ mapi_backend_sync_folders_idle_cb (gpointer user_data)
 				NULL,
 				NULL)) {
 				color_seed++;
-				mapi_backend_update_enabled (source, e_backend_get_source (E_BACKEND (backend)));
 				e_server_side_source_set_writable (E_SERVER_SIDE_SOURCE (source), TRUE);
 				e_server_side_source_set_remote_deletable (E_SERVER_SIDE_SOURCE (source), TRUE);
 				e_source_registry_server_add_source (server, source);
@@ -307,7 +212,7 @@ mapi_backend_sync_folders_idle_cb (gpointer user_data)
 				continue;
 		}
 
-		e_source_remove_sync (source, NULL, NULL);
+		e_source_registry_server_remove_source (server, source);
 	}
 
 	all_sources = e_collection_backend_claim_all_resources (E_COLLECTION_BACKEND (backend));
@@ -398,6 +303,30 @@ mapi_backend_sync_folders_idle_cb (gpointer user_data)
 	return FALSE;
 }
 
+static ESourceAuthenticationResult
+mapi_backend_try_password_sync (ESourceAuthenticator *authenticator,
+				const GString *password,
+				GCancellable *cancellable,
+				GError **error);
+
+static gpointer
+mapi_backend_authenticate_kerberos_thread (gpointer user_data)
+{
+	EMapiBackend *mapi_backend = user_data;
+	CamelMapiSettings *mapi_settings;
+
+	g_return_val_if_fail (E_IS_MAPI_BACKEND (mapi_backend), NULL);
+
+	mapi_settings = mapi_backend_get_settings (mapi_backend);
+	e_mapi_util_trigger_krb_auth_from_settings (mapi_settings, NULL);
+
+	mapi_backend_try_password_sync (E_SOURCE_AUTHENTICATOR (mapi_backend), NULL, NULL, NULL);
+
+	g_object_unref (mapi_backend);
+
+	return NULL;
+}
+
 static void
 mapi_backend_queue_auth_session (EMapiBackend *backend)
 {
@@ -423,14 +352,19 @@ mapi_backend_queue_auth_session (EMapiBackend *backend)
 
 	/* kerberos doesn't use passwords, do it directly */
 	if (camel_mapi_settings_get_kerberos (mapi_settings)) {
-		e_backend_schedule_authenticate (E_BACKEND (backend), NULL);
+		GThread *thread;
+
+		thread = g_thread_new (NULL, mapi_backend_authenticate_kerberos_thread, g_object_ref (backend));
+		g_thread_unref (thread);
+
 		return;
 	}
 
 	/* For now at least, we don't need to know the
 	 * results, so no callback function is needed. */
-	e_backend_credentials_required (
-		E_BACKEND (backend), E_SOURCE_CREDENTIALS_REASON_REQUIRED, NULL, 0, NULL,
+	e_backend_authenticate (
+		E_BACKEND (backend),
+		E_SOURCE_AUTHENTICATOR (backend),
 		NULL, NULL, NULL);
 }
 
@@ -466,6 +400,10 @@ mapi_backend_constructed (GObject *object)
 	 *     of weird races with clients trying to create folders. */
 	e_server_side_source_set_remote_creatable (
 		E_SERVER_SIDE_SOURCE (source), TRUE);
+
+	g_signal_connect (
+		source, "changed",
+		G_CALLBACK (mapi_backend_source_changed_cb), backend);
 }
 
 static void
@@ -476,11 +414,6 @@ mapi_backend_dispose (GObject *object)
 	priv = E_MAPI_BACKEND_GET_PRIVATE (object);
 
 	g_hash_table_remove_all (priv->folders);
-
-	if (priv->source_changed_handler_id) {
-		g_signal_handler_disconnect (e_backend_get_source (E_BACKEND (object)), priv->source_changed_handler_id);
-		priv->source_changed_handler_id = 0;
-	}
 
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (e_mapi_backend_parent_class)->dispose (object);
@@ -494,9 +427,6 @@ mapi_backend_finalize (GObject *object)
 	priv = E_MAPI_BACKEND_GET_PRIVATE (object);
 
 	g_hash_table_destroy (priv->folders);
-
-	g_mutex_clear (&priv->credentials_lock);
-	e_named_parameters_free (priv->credentials);
 
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (e_mapi_backend_parent_class)->finalize (object);
@@ -515,11 +445,6 @@ mapi_backend_populate (ECollectionBackend *backend)
 	/* do not do anything, if account is disabled */
 	if (!e_source_get_enabled (source))
 		return;
-
-	if (!mapi_backend->priv->source_changed_handler_id)
-		mapi_backend->priv->source_changed_handler_id = g_signal_connect (
-			source, "changed",
-			G_CALLBACK (mapi_backend_source_changed_cb), backend);
 
 	/* We test authentication passwords by attempting to synchronize
 	 * the folder hierarchy.  Since we want to synchronize the folder
@@ -586,7 +511,7 @@ mapi_backend_child_added (ECollectionBackend *backend,
 		auth_child_extension = e_source_get_extension (
 			child_source, extension_name);
 
-		e_binding_bind_property (
+		g_object_bind_property (
 			collection_extension, "identity",
 			auth_child_extension, "user",
 			G_BINDING_SYNC_CREATE);
@@ -715,8 +640,6 @@ mapi_backend_create_resource_sync (ECollectionBackend *backend,
 	ESource *parent_source;
 	CamelMapiSettings *settings;
 	ESourceMapiFolder *folder_ext;
-	EMapiBackend *mapi_backend;
-	ENamedParameters *credentials;
 	const gchar *foreign_username;
 	const gchar *cache_dir;
 	const gchar *parent_uid;
@@ -725,31 +648,22 @@ mapi_backend_create_resource_sync (ECollectionBackend *backend,
 		g_set_error (
 			error, G_IO_ERROR,
 			G_IO_ERROR_INVALID_ARGUMENT,
-			_("Data source “%s” does not represent a MAPI folder"),
+			_("Data source '%s' does not represent a MAPI folder"),
 			e_source_get_display_name (source));
 		return FALSE;
 	}
 
-	mapi_backend = E_MAPI_BACKEND (backend);
-	settings = mapi_backend_get_settings (mapi_backend);
+	settings = mapi_backend_get_settings (E_MAPI_BACKEND (backend));
 	g_return_val_if_fail (settings != NULL, FALSE);
 
 	folder_ext = e_source_get_extension (source, E_SOURCE_EXTENSION_MAPI_FOLDER);
 	foreign_username = e_source_mapi_folder_get_foreign_username (folder_ext);
 
-	g_mutex_lock (&mapi_backend->priv->credentials_lock);
-	credentials = mapi_backend->priv->credentials ? e_named_parameters_new_clone (mapi_backend->priv->credentials) : NULL;
-	g_mutex_unlock (&mapi_backend->priv->credentials_lock);
-
 	if (!e_source_mapi_folder_is_public (folder_ext) &&
 	    !(foreign_username && *foreign_username) &&
 	    !e_mapi_backend_authenticator_run (
-		E_BACKEND (backend), settings, credentials, mapi_backend_create_resource_cb, source, cancellable, error)) {
-		e_named_parameters_free (credentials);
+		E_BACKEND (backend), settings, mapi_backend_create_resource_cb, source, cancellable, error))
 		return FALSE;
-	}
-
-	e_named_parameters_free (credentials);
 
 	/* Configure the source as a collection member. */
 	parent_source = e_backend_get_source (E_BACKEND (backend));
@@ -814,73 +728,55 @@ mapi_backend_delete_resource_sync (ECollectionBackend *backend,
 {
 	CamelMapiSettings *settings;
 	ESourceMapiFolder *folder_ext;
-	EMapiBackend *mapi_backend;
 	const gchar *foreign_username;
-	ENamedParameters *credentials;
 
 	if (!e_source_has_extension (source, E_SOURCE_EXTENSION_MAPI_FOLDER)) {
 		g_set_error (
 			error, G_IO_ERROR,
 			G_IO_ERROR_INVALID_ARGUMENT,
-			_("Data source “%s” does not represent a MAPI folder"),
+			_("Data source '%s' does not represent a MAPI folder"),
 			e_source_get_display_name (source));
 		return FALSE;
 	}
 
-	mapi_backend = E_MAPI_BACKEND (backend);
-	settings = mapi_backend_get_settings (mapi_backend);
+	settings = mapi_backend_get_settings (E_MAPI_BACKEND (backend));
 	g_return_val_if_fail (settings != NULL, FALSE);
 
 	folder_ext = e_source_get_extension (source, E_SOURCE_EXTENSION_MAPI_FOLDER);
 	foreign_username = e_source_mapi_folder_get_foreign_username (folder_ext);
 
-	g_mutex_lock (&mapi_backend->priv->credentials_lock);
-	credentials = mapi_backend->priv->credentials ? e_named_parameters_new_clone (mapi_backend->priv->credentials) : NULL;
-	g_mutex_unlock (&mapi_backend->priv->credentials_lock);
-
 	if (!e_source_mapi_folder_is_public (folder_ext) &&
 	    !(foreign_username && *foreign_username) &&
 	    !e_mapi_backend_authenticator_run (
-		E_BACKEND (backend), settings, credentials, mapi_backend_delete_resource_cb, source, cancellable, error)) {
-		e_named_parameters_free (credentials);
+		E_BACKEND (backend), settings, mapi_backend_delete_resource_cb, source, cancellable, error))
 		return FALSE;
-	}
-
-	e_named_parameters_free (credentials);
 
 	return e_source_remove_sync (source, cancellable, error);
 }
 
 static ESourceAuthenticationResult
-mapi_backend_authenticate_sync (EBackend *backend,
-				const ENamedParameters *credentials,
-				gchar **out_certificate_pem,
-				GTlsCertificateFlags *out_certificate_errors,
+mapi_backend_try_password_sync (ESourceAuthenticator *authenticator,
+				const GString *password,
 				GCancellable *cancellable,
 				GError **error)
 {
-	EMapiBackend *mapi_backend;
+	EMapiBackend *backend;
 	EMapiConnection *conn;
 	CamelMapiSettings *settings;
 	GSList *mapi_folders = NULL;
 	GError *mapi_error = NULL;
 
-	g_return_val_if_fail (E_IS_MAPI_BACKEND (backend), E_SOURCE_AUTHENTICATION_ERROR);
-
-	mapi_backend = E_MAPI_BACKEND (backend);
-	settings = mapi_backend_get_settings (mapi_backend);
-
-	if (camel_mapi_settings_get_kerberos (settings))
-		e_mapi_util_trigger_krb_auth_from_settings (settings, NULL);
+	backend = E_MAPI_BACKEND (authenticator);
+	settings = mapi_backend_get_settings (backend);
 
 	conn = e_mapi_connection_new (NULL,
 		camel_mapi_settings_get_profile (settings),
-		credentials, cancellable, &mapi_error);
+		password, cancellable, &mapi_error);
 
 	if (!conn) {
 		ESourceAuthenticationResult res = E_SOURCE_AUTHENTICATION_ERROR;
 
-		mapi_backend->priv->need_update_folders = TRUE;
+		backend->priv->need_update_folders = TRUE;
 
 		if (g_error_matches (mapi_error, E_MAPI_ERROR, MAPI_E_PASSWORD_CHANGE_REQUIRED) ||
 		    g_error_matches (mapi_error, E_MAPI_ERROR, MAPI_E_PASSWORD_EXPIRED))
@@ -897,26 +793,19 @@ mapi_backend_authenticate_sync (EBackend *backend,
 	if (e_mapi_connection_get_folders_list (conn, &mapi_folders, NULL, NULL, cancellable, &mapi_error)) {
 		struct SyndFoldersData *sfd;
 
-		g_mutex_lock (&mapi_backend->priv->credentials_lock);
-		e_named_parameters_free (mapi_backend->priv->credentials);
-		mapi_backend->priv->credentials = credentials ? e_named_parameters_new_clone (credentials) : NULL;
-		g_mutex_unlock (&mapi_backend->priv->credentials_lock);
-
 		sfd = g_new0 (struct SyndFoldersData, 1);
 		sfd->folders = mapi_folders;
-		sfd->backend = g_object_ref (mapi_backend);
+		sfd->backend = g_object_ref (backend);
 		sfd->profile = camel_mapi_settings_dup_profile (settings);
 
 		g_idle_add_full (
 			G_PRIORITY_DEFAULT_IDLE,
 			mapi_backend_sync_folders_idle_cb, sfd,
 			sync_folders_data_free);
-
-		e_collection_backend_authenticate_children (E_COLLECTION_BACKEND (backend), credentials);
 	} else {
-		ESource *source = e_backend_get_source (backend);
+		ESource *source = e_backend_get_source (E_BACKEND (backend));
 
-		mapi_backend->priv->need_update_folders = TRUE;
+		backend->priv->need_update_folders = TRUE;
 
 		g_message ("%s: Failed to get list of user's folders for '%s': %s",
 			G_STRFUNC, e_source_get_display_name (source), mapi_error ? mapi_error->message : "Unknown error");
@@ -932,8 +821,7 @@ static void
 e_mapi_backend_class_init (EMapiBackendClass *class)
 {
 	GObjectClass *object_class;
-	EBackendClass *backend_class;
-	ECollectionBackendClass *collection_backend_class;
+	ECollectionBackendClass *backend_class;
 
 	g_type_class_add_private (class, sizeof (EMapiBackendPrivate));
 
@@ -942,16 +830,13 @@ e_mapi_backend_class_init (EMapiBackendClass *class)
 	object_class->dispose = mapi_backend_dispose;
 	object_class->finalize = mapi_backend_finalize;
 
-	backend_class = E_BACKEND_CLASS (class);
-	backend_class->authenticate_sync = mapi_backend_authenticate_sync;
-
-	collection_backend_class = E_COLLECTION_BACKEND_CLASS (class);
-	collection_backend_class->populate = mapi_backend_populate;
-	collection_backend_class->dup_resource_id = mapi_backend_dup_resource_id;
-	collection_backend_class->child_added = mapi_backend_child_added;
-	collection_backend_class->child_removed = mapi_backend_child_removed;
-	collection_backend_class->create_resource_sync = mapi_backend_create_resource_sync;
-	collection_backend_class->delete_resource_sync = mapi_backend_delete_resource_sync;
+	backend_class = E_COLLECTION_BACKEND_CLASS (class);
+	backend_class->populate = mapi_backend_populate;
+	backend_class->dup_resource_id = mapi_backend_dup_resource_id;
+	backend_class->child_added = mapi_backend_child_added;
+	backend_class->child_removed = mapi_backend_child_removed;
+	backend_class->create_resource_sync = mapi_backend_create_resource_sync;
+	backend_class->delete_resource_sync = mapi_backend_delete_resource_sync;
 
 	/* This generates an ESourceCamel subtype for CamelMapiSettings. */
 	e_source_camel_generate_subtype ("mapi", CAMEL_TYPE_MAPI_SETTINGS);
@@ -960,6 +845,12 @@ e_mapi_backend_class_init (EMapiBackendClass *class)
 static void
 e_mapi_backend_class_finalize (EMapiBackendClass *class)
 {
+}
+
+static void
+e_mapi_backend_authenticator_init (ESourceAuthenticatorInterface *interface)
+{
+	interface->try_password_sync = mapi_backend_try_password_sync;
 }
 
 static void
@@ -976,9 +867,6 @@ e_mapi_backend_init (EMapiBackend *backend)
 	g_signal_connect (
 		backend, "notify::online",
 		G_CALLBACK (mapi_backend_populate), NULL);
-
-	g_mutex_init (&backend->priv->credentials_lock);
-	backend->priv->credentials = NULL;
 }
 
 void

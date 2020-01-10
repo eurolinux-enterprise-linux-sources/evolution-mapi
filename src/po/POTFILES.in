@@ -1,4 +1,3 @@
-org.gnome.Evolution-mapi.metainfo.xml.in
 src/addressbook/e-book-backend-mapi.c
 src/addressbook/e-book-backend-mapi-contacts.c
 src/addressbook/e-book-backend-mapi-gal.c

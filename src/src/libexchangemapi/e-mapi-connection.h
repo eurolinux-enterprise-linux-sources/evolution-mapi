@@ -33,8 +33,6 @@
 #include <libmapi/mapi_nameid.h>
 #include <libedataserver/libedataserver.h>
 
-#include <libexchangemapi/e-mapi-folder.h>
-
 /* Standard GObject macros */
 #define E_MAPI_TYPE_CONNECTION (e_mapi_connection_get_type ())
 #define E_MAPI_CONNECTION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), E_MAPI_TYPE_CONNECTION, EMapiConnection))
@@ -239,12 +237,12 @@ struct _EMapiConnectionClass {
 GType			e_mapi_connection_get_type		(void);
 EMapiConnection *	e_mapi_connection_new			(ESourceRegistry *registry,
 								 const gchar *profile,
-								 const ENamedParameters *credentials,
+								 const GString *password,
 								 GCancellable *cancellable,
 								 GError **perror);
 EMapiConnection *	e_mapi_connection_find			(const gchar *profile);
 gboolean		e_mapi_connection_reconnect		(EMapiConnection *conn,
-								 const ENamedParameters *credentials,
+								 const GString *password,
 								 GCancellable *cancellable,
 								 GError **perror);
 gboolean		e_mapi_connection_disconnect		(EMapiConnection *conn,
@@ -465,14 +463,6 @@ gboolean		e_mapi_connection_copymove_items	(EMapiConnection *conn,
 								 GSList *mids,
 								 GCancellable *cancellable,
 								 GError **perror);
-gboolean		e_mapi_connection_get_subfolders_list	(EMapiConnection *conn,
-								 mapi_object_t *folder,
-								 EMapiFolderCategory folder_hier,
-								 GSList **mapi_folders,
-								 ProgressNotifyCB cb,
-								 gpointer cb_user_data,
-								 GCancellable *cancellable,
-								 GError **perror);
 gboolean		e_mapi_connection_get_folders_list	(EMapiConnection *conn,
 								 GSList **mapi_folders,
 								 ProgressNotifyCB cb,
@@ -535,7 +525,7 @@ gboolean		e_mapi_connection_disable_notifications	(EMapiConnection *conn,
 
 typedef struct {
 	const gchar *username;
-	ENamedParameters *credentials;
+	GString *password;
 	const gchar *domain;
 	const gchar *server;
 	gboolean use_ssl;

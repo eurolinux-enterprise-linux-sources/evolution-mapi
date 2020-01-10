@@ -65,6 +65,7 @@ struct _CamelMapiFolder {
 
 	CamelFolderSearch *search;
 
+	CamelOfflineJournal *journal;
 	CamelDataCache *cache;
 
 	/* copied from CamelMapiStoreInfo */

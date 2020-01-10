@@ -16,7 +16,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gi18n-lib.h>
 
@@ -60,7 +62,7 @@ book_config_mapigal_insert_widgets (ESourceConfigBackend *backend,
 	e_source_config_insert_widget (config, scratch_source, NULL, widget);
 	gtk_widget_show (widget);
 
-	e_binding_bind_property (
+	g_object_bind_property (
 		folder_ext, "allow-partial",
 		widget, "active",
 		G_BINDING_BIDIRECTIONAL |

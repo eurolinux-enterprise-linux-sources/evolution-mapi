@@ -21,7 +21,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <ctype.h>
 #include <errno.h>
@@ -46,6 +48,7 @@ static CamelStoreInfo *store_info_load (CamelStoreSummary *s, FILE *in);
 static gint store_info_save (CamelStoreSummary *s, FILE *out, CamelStoreInfo *mi);
 static void store_info_free (CamelStoreSummary *s, CamelStoreInfo *mi);
 static void store_info_set_string (CamelStoreSummary *s, CamelStoreInfo *mi, gint type, const gchar *str);
+static const gchar *store_info_string (CamelStoreSummary *s, const CamelStoreInfo *mi, gint type);
 
 G_DEFINE_TYPE (CamelMapiStoreSummary, camel_mapi_store_summary, CAMEL_TYPE_STORE_SUMMARY)
 
@@ -55,18 +58,22 @@ camel_mapi_store_summary_class_init (CamelMapiStoreSummaryClass *class)
 	CamelStoreSummaryClass *store_summary_class;
 
 	store_summary_class = CAMEL_STORE_SUMMARY_CLASS (class);
-	store_summary_class->store_info_size = sizeof (CamelMapiStoreInfo);
 	store_summary_class->summary_header_load = summary_header_load;
 	store_summary_class->summary_header_save = summary_header_save;
 	store_summary_class->store_info_load = store_info_load;
 	store_summary_class->store_info_save = store_info_save;
 	store_summary_class->store_info_free = store_info_free;
+	store_summary_class->store_info_string = store_info_string;
 	store_summary_class->store_info_set_string = store_info_set_string;
 }
 
 static void
 camel_mapi_store_summary_init (CamelMapiStoreSummary *mapi_store_summary)
 {
+	CamelStoreSummary *store_summary;
+
+	store_summary = CAMEL_STORE_SUMMARY (mapi_store_summary);
+	store_summary->store_info_size = sizeof (CamelMapiStoreInfo);
 }
 
 static gint
@@ -133,7 +140,7 @@ store_info_load (CamelStoreSummary *s, FILE *in)
 		    || camel_file_util_decode_string (in, &msi->foreign_username) == -1
 		    || !e_mapi_util_mapi_id_from_string (folder_id_str, &msi->folder_id)
 		    || !e_mapi_util_mapi_id_from_string (parent_id_str, &msi->parent_id)) {
-			camel_store_summary_info_unref (s, si);
+			camel_store_summary_info_free (s, si);
 			si = NULL;
 		} else {
 			if (msi->foreign_username && !*msi->foreign_username) {
@@ -194,6 +201,17 @@ store_info_free (CamelStoreSummary *s, CamelStoreInfo *si)
 	CAMEL_STORE_SUMMARY_CLASS (camel_mapi_store_summary_parent_class)->store_info_free (s, si);
 }
 
+static const gchar *
+store_info_string (CamelStoreSummary *s, const CamelStoreInfo *si, gint type)
+{
+	CamelMapiStoreInfo *msi = (CamelMapiStoreInfo *) si;
+
+	if (type == CAMEL_MAPI_STORE_INFO_FOREIGN_USERNAME)
+		return msi->foreign_username;
+
+	return CAMEL_STORE_SUMMARY_CLASS (camel_mapi_store_summary_parent_class)->store_info_string (s, si, type);
+}
+
 static void
 store_info_set_string (CamelStoreSummary *s, CamelStoreInfo *si, gint type, const gchar *str)
 {
@@ -227,7 +245,7 @@ camel_mapi_store_summary_add_from_full (CamelStoreSummary *s,
 
 	si = camel_store_summary_path (s, path);
 	if (si) {
-		camel_store_summary_info_unref (s, si);
+		camel_store_summary_info_free (s, si);
 		return si;
 	}
 
@@ -250,22 +268,20 @@ camel_mapi_store_summary_add_from_full (CamelStoreSummary *s,
 	return si;
 }
 
-/* free the returned pointer with camel_store_summary_info_unref(), if not NULL */
+/* free the returned pointer with camel_store_summary_info_free(), if not NULL */
 CamelStoreInfo *
 camel_mapi_store_summary_get_folder_id (CamelStoreSummary *s, mapi_id_t folder_id)
 {
 	CamelStoreInfo *adept = NULL;
-	GPtrArray *array;
-	guint ii;
+	gint ii, count;
 
-	array = camel_store_summary_array (s);
+	count = camel_store_summary_count (s);
+	for (ii = 0; ii < count; ii++) {
+		CamelStoreInfo *si = camel_store_summary_index (s, ii);
+		CamelMapiStoreInfo *msi = (CamelMapiStoreInfo *) si;
 
-	for (ii = 0; ii < array->len; ii++) {
-		CamelStoreInfo *si;
-		CamelMapiStoreInfo *msi;
-
-		si = g_ptr_array_index (array, ii);
-		msi = (CamelMapiStoreInfo *) si;
+		if (si == NULL)
+			continue;
 
 		if (msi->folder_id == folder_id) {
 			/* public folders can be stored in a summary twice, once as "All Public Folders/..."
@@ -274,21 +290,18 @@ camel_mapi_store_summary_get_folder_id (CamelStoreSummary *s, mapi_id_t folder_i
 			*/
 			if ((msi->mapi_folder_flags & CAMEL_MAPI_STORE_FOLDER_FLAG_PUBLIC_REAL) == 0) {
 				if (adept)
-					camel_store_summary_info_unref (s, adept);
-
-				adept = si;
-				camel_store_summary_info_ref (s, adept);
-				break;
+					camel_store_summary_info_free (s, adept);
+				return si;
 			} else {
 				if (adept)
-					camel_store_summary_info_unref (s, adept);
+					camel_store_summary_info_free (s, adept);
 				adept = si;
 				camel_store_summary_info_ref (s, adept);
 			}
 		}
-	}
 
-	camel_store_summary_array_free (s, array);
+		camel_store_summary_info_free (s, si);
+	}
 
 	return adept;
 }

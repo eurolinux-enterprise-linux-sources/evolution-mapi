@@ -16,7 +16,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <mail/e-mail-config-notebook.h>
 

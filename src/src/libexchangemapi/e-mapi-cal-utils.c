@@ -21,7 +21,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gstdio.h>
 #include <glib/gi18n-lib.h>
@@ -451,6 +453,7 @@ populate_freebusy_data (struct Binary_r *bin, uint32_t month, uint32_t year, GSL
 	uint16_t	event_start;
 	uint16_t	event_end;
 	uint32_t	i;
+	uint32_t	hour;
 	uint32_t	day;
 	const gchar	*month_name;
 	uint32_t	minutes;
@@ -475,47 +478,57 @@ populate_freebusy_data (struct Binary_r *bin, uint32_t month, uint32_t year, GSL
 		event_start = (bin->lpb[i + 1] << 8) | bin->lpb[i];
 		event_end = (bin->lpb[i + 3] << 8) | bin->lpb[i + 2];
 
-		if (event_start <= event_end) {
-			struct icalperiodtype ipt;
-			icalproperty *icalprop;
-			icaltimetype itt;
+		for (hour = 0; hour < 24; hour++) {
+			if (!(((event_start - (60 * hour)) % 1440) && (((event_start - (60 * hour)) % 1440) - 30))) {
+				struct icalperiodtype ipt;
+				icalproperty *icalprop;
+				icaltimetype itt;
 
-			day = 1;
-			minutes = 0;
-			real_month = month - (year * 16);
+				day = ((event_start - (60 * hour)) / 1440) + 1;
+				minutes = (event_start - (60 * hour)) % 1440;
+				real_month = month - (year * 16);
 
-			date_string = g_strdup_printf ("%.2u-%.2u-%.2u", year, real_month, day);
-			start = g_strdup_printf ("%sT%.2u:%.2u:00Z", date_string, 0, minutes);
-			g_free (date_string);
+				date_string = g_strdup_printf ("%.2u-%.2u-%.2u", year, real_month, day);
+				start = g_strdup_printf ("%sT%.2u:%.2u:00Z", date_string, hour + daylight, minutes);
+				g_free (date_string);
 
-			date_string = g_strdup_printf ("%.2u-%.2u-%.2u", year, real_month, day);
-			end = g_strdup_printf ("%sT%.2u:%.2u:00Z", date_string, 0, minutes);
-			g_free (date_string);
+				day = ((event_end - (60 * hour)) / 1440) + 1;
+				minutes = (event_end - (60 * hour)) % 1440;
 
-			start_date = mapi_get_date_from_string (start) + (60 * event_start);
-			end_date = mapi_get_date_from_string (end) + (60 * event_end);
+				if (minutes >= 60) {
+					hour += minutes / 60;
+					minutes %= 60;
+				}
 
-			memset (&ipt, 0, sizeof (struct icalperiodtype));
+				date_string = g_strdup_printf ("%.2u-%.2u-%.2u", year, real_month, day);
+				end = g_strdup_printf ("%sT%.2u:%.2u:00Z", date_string, hour + daylight, minutes);
+				g_free (date_string);
 
-			itt = icaltime_from_timet_with_zone (start_date, 0, icaltimezone_get_utc_timezone ());
-			ipt.start = itt;
+				start_date = mapi_get_date_from_string (start);
+				end_date = mapi_get_date_from_string (end);
 
-			itt = icaltime_from_timet_with_zone (end_date, 0, icaltimezone_get_utc_timezone ());
-			ipt.end = itt;
+				memset (&ipt, 0, sizeof (struct icalperiodtype));
 
-			icalcomp = e_cal_component_get_icalcomponent (comp);
-			icalprop = icalproperty_new_freebusy (ipt);
+				itt = icaltime_from_timet_with_zone (start_date, 0, icaltimezone_get_utc_timezone ());
+				ipt.start = itt;
 
-			if (!strcmp (accept_type, "Busy"))
-				icalproperty_set_parameter_from_string (icalprop, "FBTYPE", "BUSY");
-			else if (!strcmp (accept_type, "Tentative"))
-				icalproperty_set_parameter_from_string (icalprop, "FBTYPE", "BUSY-TENTATIVE");
-			else if (!strcmp (accept_type, "OutOfOffice"))
-				icalproperty_set_parameter_from_string (icalprop, "FBTYPE", "BUSY-UNAVAILABLE");
+				itt = icaltime_from_timet_with_zone (end_date, 0, icaltimezone_get_utc_timezone ());
+				ipt.end = itt;
 
-			icalcomponent_add_property(icalcomp, icalprop);
-			g_free (start);
-			g_free (end);
+				icalcomp = e_cal_component_get_icalcomponent (comp);
+				icalprop = icalproperty_new_freebusy (ipt);
+
+				if (!strcmp (accept_type, "Busy"))
+					icalproperty_set_parameter_from_string (icalprop, "FBTYPE", "BUSY");
+				else if (!strcmp (accept_type, "Tentative"))
+					icalproperty_set_parameter_from_string (icalprop, "FBTYPE", "BUSY-TENTATIVE");
+				else if (!strcmp (accept_type, "OutOfOffice"))
+					icalproperty_set_parameter_from_string (icalprop, "FBTYPE", "BUSY-UNAVAILABLE");
+
+				icalcomponent_add_property(icalcomp, icalprop);
+				g_free (start);
+				g_free (end);
+			}
 		}
 	}
 }
@@ -673,10 +686,11 @@ populate_ical_attendees (EMapiConnection *conn,
 		PidTagNickname,
 		PidTagRecipientDisplayName,
 		PidTagDisplayName,
-		PidTagAddressBookDisplayNamePrintable
+		PidTag7BitDisplayName
 	};
 
 	const uint32_t email_proptags[] = {
+		PidTagPrimarySmtpAddress,
 		PidTagSmtpAddress
 	};
 
@@ -760,27 +774,28 @@ populate_ical_attendees (EMapiConnection *conn,
 static void
 set_attachments_to_comp (EMapiConnection *conn,
 			 EMapiAttachment *attachments,
-			 ECalComponent *comp)
+			 ECalComponent *comp,
+			 const gchar *local_store_path)
 {
+	GSList *comp_attach_list = NULL;
 	EMapiAttachment *attach;
-	icalcomponent *icalcomp;
+	const gchar *uid;
 
 	g_return_if_fail (comp != NULL);
+	g_return_if_fail (local_store_path != NULL);
 
 	if (!attachments)
 		return;
 
-	icalcomp = e_cal_component_get_icalcomponent (comp);
-	g_return_if_fail (icalcomp != NULL);
+	e_cal_component_get_uid (comp, &uid);
 
 	for (attach = attachments; attach; attach = attach->next) {
 		uint64_t data_cb = 0;
 		const uint8_t *data_lpb = NULL;
 		const gchar *filename;
-		icalattach *new_attach;
-		icalparameter *param;
-		gchar *base64;
-		icalproperty *prop;
+		const uint32_t *ui32;
+		gchar *path, *attach_uri;
+		GError *error = NULL;
 
 		if (!e_mapi_attachment_get_bin_prop (attach, PidTagAttachDataBinary, &data_cb, &data_lpb)) {
 			g_debug ("%s: Skipping calendar attachment without data", G_STRFUNC);
@@ -791,28 +806,31 @@ set_attachments_to_comp (EMapiConnection *conn,
 		if (!filename || !*filename)
 			filename = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachFilename);
 
-		base64 = g_base64_encode ((const guchar *) data_lpb, data_cb);
-		new_attach = icalattach_new_from_data (base64, NULL, NULL);
-		g_free (base64);
+		ui32 = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachNumber);
+		path = e_filename_mkdir_encoded (local_store_path, uid, filename, ui32 ? *ui32 : 0);
 
-		prop = icalproperty_new_attach (new_attach);
-		icalattach_unref (new_attach);
-
-		param = icalparameter_new_value (ICAL_VALUE_BINARY);
-		icalproperty_add_parameter (prop, param);
-
-		param = icalparameter_new_encoding (ICAL_ENCODING_BASE64);
-		icalproperty_add_parameter (prop, param);
-
-		if (filename && *filename) {
-			param = icalparameter_new_filename (filename);
-			icalproperty_add_parameter (prop, param);
+		attach_uri = g_filename_to_uri (path, NULL, &error);
+		if (!attach_uri) {
+			g_debug ("%s: Could not get attach_uri from '%s': %s", G_STRFUNC, path, error ? error->message : "Unknown error");
+			g_clear_error (&error);
+			g_free (path);
+			continue;
 		}
 
-		icalcomponent_add_property (icalcomp, prop);
+		if (!g_file_set_contents (path, (const gchar *) data_lpb, data_cb, &error)) {
+			g_debug ("%s: Failed to write attachment content to '%s': %s", G_STRFUNC, path, error ? error->message : "Unknown error");
+			g_free (attach_uri);
+			g_clear_error (&error);
+		} else {
+			comp_attach_list = g_slist_append (comp_attach_list, attach_uri);
+		}
+
+		g_free (path);
 	}
 
-	e_cal_component_rescan (comp);
+	e_cal_component_set_attachment_list (comp, comp_attach_list);
+
+	g_slist_free_full (comp_attach_list, g_free);
 }
 
 ECalComponent *
@@ -820,6 +838,7 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 				EMapiObject *object,
 				icalcomponent_kind kind,
 				gboolean is_reply,
+				const gchar *local_store_uri,
 				const gchar *use_uid,
 				GSList **detached_components)
 {
@@ -862,6 +881,8 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 	}
 
 	utc_zone = icaltimezone_get_utc_timezone ();
+	if (!local_store_uri)
+		local_store_uri = g_get_tmp_dir ();
 
 	str = e_mapi_util_find_array_propval (&object->properties, PidTagSubject);
 	str = str ? str : e_mapi_util_find_array_propval (&object->properties, PidTagNormalizedSubject);
@@ -1226,7 +1247,7 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 			icalcomponent_set_status (ical_comp, get_taskstatus_from_prop (*status));
 			if (*status == olTaskComplete
 			    && e_mapi_util_find_array_datetime_propval (&t, &object->properties, PidLidTaskDateCompleted) == MAPI_E_SUCCESS) {
-				prop = icalproperty_new_completed (icaltime_from_timet_with_zone (t.tv_sec, 0, utc_zone));
+				prop = icalproperty_new_completed (icaltime_from_timet_with_zone (t.tv_sec, 1, utc_zone));
 				icalcomponent_add_property (ical_comp, prop);
 			}
 		}
@@ -1284,7 +1305,7 @@ e_mapi_cal_util_object_to_comp (EMapiConnection *conn,
 		icalcomponent_add_property (ical_comp, prop);
 	}
 
-	set_attachments_to_comp (conn, object->attachments, comp);
+	set_attachments_to_comp (conn, object->attachments, comp, local_store_uri);
 
 	e_cal_component_rescan (comp);
 
@@ -1331,6 +1352,7 @@ e_mapi_cal_utils_add_organizer (EMapiObject *object,
 		set_value (PidTagEmailAddress, email);
 
 		set_value (PidTagSmtpAddress, email);
+		set_value (PidTagPrimarySmtpAddress, email);
 
 		ui32 = 0;
 		set_value (PidTagSendInternetEncoding, &ui32);
@@ -1411,7 +1433,9 @@ e_mapi_cal_utils_add_recipients (EMapiObject *object,
 
 		set_value (PidTagAddressType, "SMTP");
 		set_value (PidTagEmailAddress, email);
+
 		set_value (PidTagSmtpAddress, email);
+		set_value (PidTagPrimarySmtpAddress, email);
 
 		ui32 = 0;
 		set_value (PidTagSendInternetEncoding, &ui32);
@@ -1835,15 +1859,8 @@ e_mapi_cal_utils_comp_to_object (EMapiConnection *conn,
 		/* Start TZ */
 		mapi_tzid = e_mapi_cal_tz_util_get_mapi_equivalent ((dtstart_tz_location && *dtstart_tz_location) ? dtstart_tz_location : "UTC");
 		if (mapi_tzid && *mapi_tzid) {
-			e_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &start_tz, object, FALSE);
+			e_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &start_tz, object);
 			set_value (PidLidAppointmentTimeZoneDefinitionStartDisplay, &start_tz);
-
-			if (e_cal_component_has_recurrences (comp)) {
-				struct SBinary_short recur_tz;
-
-				e_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &recur_tz, object, TRUE);
-				set_value (PidLidAppointmentTimeZoneDefinitionRecur, &recur_tz);
-			}
 		}
 		set_value (PidLidTimeZoneDescription, mapi_tzid ? mapi_tzid : "");
 
@@ -1856,7 +1873,7 @@ e_mapi_cal_utils_comp_to_object (EMapiConnection *conn,
 		/* End TZ */
 		mapi_tzid = e_mapi_cal_tz_util_get_mapi_equivalent ((dtend_tz_location && *dtend_tz_location) ? dtend_tz_location : "UTC");
 		if (mapi_tzid && *mapi_tzid) {
-			e_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &end_tz, object, FALSE);
+			e_mapi_cal_util_mapi_tz_to_bin (mapi_tzid, &end_tz, object);
 			set_value (PidLidAppointmentTimeZoneDefinitionEndDisplay, &end_tz);
 		}
 
@@ -2170,29 +2187,20 @@ e_mapi_cal_utils_comp_to_object (EMapiConnection *conn,
 			prop = icalcomponent_get_first_property (ical_comp, ICAL_COMPLETED_PROPERTY);
 			completed = icalproperty_get_completed (prop);
 
-			completed.hour = completed.minute = completed.second = 0;
-			completed.is_date = 1;
-			completed.zone = utc_zone;
-
+			completed.hour = completed.minute = completed.second = 0; completed.is_date = completed.is_utc = 1;
 			tt = icaltime_as_timet (completed);
 			set_timet_value (PidLidTaskDateCompleted, tt);
 		}
 
 		/* Start */
-		dtstart.hour = dtstart.minute = dtstart.second = 0;
-		dtstart.is_date = 1;
-		dtstart.zone = utc_zone;
-
+		dtstart.hour = dtstart.minute = dtstart.second = 0; dtstart.is_date = dtstart.is_utc = 1;
 		tt = icaltime_as_timet (dtstart);
 		if (!icaltime_is_null_time (dtstart)) {
 			set_timet_value (PidLidTaskStartDate, tt);
 		}
 
 		/* Due */
-		dtend.hour = dtend.minute = dtend.second = 0;
-		dtend.is_date = 1;
-		dtend.zone = utc_zone;
-
+		dtend.hour = dtend.minute = dtend.second = 0; dtend.is_date = dtend.is_utc = 1;
 		tt = icaltime_as_timet (dtend);
 		if (!icaltime_is_null_time (dtend)) {
 			set_timet_value (PidLidTaskDueDate, tt);

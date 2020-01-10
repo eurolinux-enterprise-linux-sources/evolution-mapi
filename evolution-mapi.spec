@@ -1,73 +1,67 @@
-%define openchange_version 2.3
+%define openchange_version 2.0
 %define intltool_version 0.35.5
+
+%define evo_base_version 3.8
 
 %define strict_build_settings 0
 
 ### Abstract ###
 
 Name: evolution-mapi
-Version: 3.28.3
-Release: 2%{?dist}
+Version: 3.8.5
+Release: 6%{?dist}
 Group: Applications/Productivity
 Summary: Evolution extension for MS Exchange 2007 servers
 License: LGPLv2+
-URL: https://wiki.gnome.org/Apps/Evolution
-Source: http://download.gnome.org/sources/%{name}/3.28/%{name}-%{version}.tar.xz
+URL: http://projects.gnome.org/evolution
+Source: http://ftp.gnome.org/pub/gnome/sources/evolution-mapi/3.8/evolution-mapi-%{version}.tar.xz
+BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-Obsoletes: evolution-mapi-devel <= 3.23.1
+# RH bug #619842
+Patch01: evolution-mapi-3.8.5-message-attachment-read.patch
 
-%global eds_evo_version %{version}
-
-Patch01: evolution-mapi-3.28.2-cmake-version.patch
+# RH bug #1019910
+Patch02: evolution-mapi-3.8.5-show-events-owa.patch
 
 ### Dependencies ###
 
-Requires: evolution >= %{eds_evo_version}
-Requires: evolution-data-server >= %{eds_evo_version}
-Requires: %{name}-langpacks = %{version}-%{release}
+Requires: evolution >= %{version}
+Requires: evolution-data-server >= %{version}
 
 ### Build Dependencies ###
 
-BuildRequires: cmake
-BuildRequires: gcc
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: evolution-data-server-devel >= %{version}
+BuildRequires: evolution-devel >= %{version}
 BuildRequires: gettext
+BuildRequires: gnome-common
 BuildRequires: intltool >= %{intltool_version}
-
-BuildRequires: pkgconfig(camel-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(evolution-data-server-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(evolution-mail-3.0) >= %{eds_evo_version}
-BuildRequires: pkgconfig(evolution-shell-3.0) >= %{eds_evo_version}
-BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: pkgconfig(gtk+-3.0)
-BuildRequires: pkgconfig(libebackend-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(libebook-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(libecal-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(libedata-book-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(libedata-cal-1.2) >= %{eds_evo_version}
-BuildRequires: pkgconfig(libemail-engine) >= %{eds_evo_version}
-BuildRequires: pkgconfig(libmapi) >= %{openchange_version}
+BuildRequires: libtalloc-devel
+BuildRequires: libtool >= 1.5
+BuildRequires: openchange-devel >= %{openchange_version}
+BuildRequires: samba4-devel
 
 %description
 This package allows Evolution to interact with MS Exchange 2007 servers.
 
-%package langpacks
-Summary: Translations for %{name}
-BuildArch: noarch
+%package devel
+Summary: Development files for building against %{name}
+Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
+Requires: evolution-data-server-devel >= %{version}
+Requires: evolution-devel >= %{version}
+Requires: openchange-devel >= %{openchange_version}
 
-%description langpacks
-This package contains translations for %{name}.
+%description devel
+Development files needed for building things which link against %{name}.
 
 %prep
 %setup -q
-%patch01 -p1 -b .cmake-version
+%patch01 -p1 -b .message-attachment-read
+%patch02 -p1 -b .show-events-owa
 
 %build
-
-mkdir _build
-cd _build
-
-CFLAGS="$RPM_OPT_FLAGS"
 
 # Add stricter build settings here as the source code gets cleaned up.
 # We want to make sure things like compiler warnings and avoiding deprecated
@@ -88,72 +82,43 @@ CFLAGS="$CFLAGS \
 	-Werror-implicit-function-declaration"
 %endif
 
-export CFLAGS="$CFLAGS -Wno-deprecated-declarations"
+# Regenerate configure to pick up changes
+autoreconf --force --install
 
-%cmake -G "Unix Makefiles" ..
+%configure --disable-maintainer-mode
 
 make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
-cd _build
 make install DESTDIR=$RPM_BUILD_ROOT
+
+find $RPM_BUILD_ROOT/%{_libdir} -name '*.la' -exec rm {} \;
 
 %find_lang %{name}
 
-%files
-%license COPYING
-%doc AUTHORS ChangeLog INSTALL README
-%{_libdir}/evolution/modules/module-mapi-configuration.so
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files -f %{name}.lang
+%defattr(-,root,root,-)
+%doc AUTHORS ChangeLog COPYING INSTALL README
+%{_libdir}/libexchangemapi-1.0.so.*
 %{_libdir}/evolution-data-server/camel-providers/libcamelmapi.so
 %{_libdir}/evolution-data-server/camel-providers/libcamelmapi.urls
 %{_libdir}/evolution-data-server/addressbook-backends/libebookbackendmapi.so
 %{_libdir}/evolution-data-server/calendar-backends/libecalbackendmapi.so
 %{_libdir}/evolution-data-server/registry-modules/module-mapi-backend.so
-%{_libdir}/evolution-mapi/libcamelmapi-priv.so
-%{_libdir}/evolution-mapi/libevolution-mapi.so
-%{_datadir}/metainfo/org.gnome.Evolution-mapi.metainfo.xml
+%{_libdir}/evolution/%{evo_base_version}/modules/module-mapi-configuration.so
 %{_datadir}/evolution-data-server/mapi
 
-%files langpacks -f _build/%{name}.lang
+%files devel
+%defattr(-,root,root,-)
+%{_includedir}/evolution-data-server/mapi
+%{_libdir}/libexchangemapi-1.0.so
+%{_libdir}/pkgconfig/libexchangemapi-1.0.pc
 
 %changelog
-* Tue Oct 02 2018 Milan Crha <mcrha@redhat.com> - 3.28.3-2
-- Add missing Obsoletes for evolution-mapi-devel subpackage (RH bug #1633828)
-
-* Mon Jun 18 2018 Milan Crha <mcrha@redhat.com> - 3.28.3-1
-- Update to 3.28.3
-
-* Wed May 30 2018 Milan Crha <mcrha@redhat.com> - 3.28.2-1
-- Update to 3.28.2
-- Resolves: #1575500
-
-* Thu Apr 26 2018 Milan Crha <mcrha@redhat.com> - 3.22.6-2
-- Add patch for RH bug #1520936 (Unable to authenticate using Kerberos without krb5-auth-dialog package)
-
-* Mon Mar 13 2017 Milan Crha <mcrha@redhat.com> - 3.22.6-1
-- Update to 3.22.6 upstream release
-
-* Thu Feb 16 2017 Milan Crha <mcrha@redhat.com> - 3.22.4-1
-- Rebase to 3.22.4
-
-* Tue Aug 16 2016 Milan Crha <mcrha@redhat.com> - 3.12.10-5
-- Add patch for RH bug #1366206 (Free/Busy Information returns wrong time)
-- Add patch for RH bug #1367455 (No contacts are displayed until search is started)
-
-* Fri Mar 04 2016 Milan Crha <mcrha@redhat.com> - 3.12.10-4
-- Add patch for RH bug #1314261 (Rebuild against OpenChange 2.3)
-
-* Wed Jul 08 2015 Milan Crha <mcrha@redhat.com> - 3.12.10-3
-- Rebuild against updated libical
-
-* Wed Jul 08 2015 Milan Crha <mcrha@redhat.com> - 3.12.10-2
-- Rebuild against updated libical
-
-* Mon May 04 2015 Milan Crha <mcrha@redhat.com> - 3.12.10-1
-- Update to 3.12.10
-
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 3.8.5-6
 - Mass rebuild 2014-01-24
 

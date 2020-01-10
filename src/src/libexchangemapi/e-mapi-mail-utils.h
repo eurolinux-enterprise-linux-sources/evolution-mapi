@@ -20,7 +20,9 @@
 #ifndef E_MAPI_MAIL_UTILS_H
 #define E_MAPI_MAIL_UTILS_H 
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib.h>
 #include <gio/gio.h>

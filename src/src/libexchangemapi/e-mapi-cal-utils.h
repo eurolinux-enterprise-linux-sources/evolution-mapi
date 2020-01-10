@@ -95,6 +95,7 @@ ECalComponent *	e_mapi_cal_util_object_to_comp			(EMapiConnection *conn,
 								 EMapiObject *object,
 								 icalcomponent_kind kind,
 								 gboolean is_reply,
+								 const gchar *local_store_uri,
 								 const gchar *use_uid,
 								 GSList **detached_components);
 

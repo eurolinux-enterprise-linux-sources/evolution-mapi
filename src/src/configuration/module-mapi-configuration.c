@@ -16,7 +16,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gi18n-lib.h>
 
@@ -26,7 +28,6 @@
 #include "e-mail-config-mapi-backend.h"
 #include "e-mail-config-mapi-page.h"
 #include "e-mail-config-mapi-extension.h"
-#include "e-mail-config-mapi-offline-options.h"
 #include "e-mapi-config-ui-extension.h"
 #include "e-source-mapi-folder.h"
 
@@ -48,7 +49,6 @@ e_module_load (GTypeModule *type_module)
 	e_mail_config_mapi_backend_type_register (type_module);
 	e_mail_config_mapi_page_type_register (type_module);
 	e_mail_config_mapi_extension_type_register (type_module);
-	e_mail_config_mapi_offline_options_type_register (type_module);
 	e_mapi_config_ui_extension_type_register (type_module);
 }
 

@@ -21,7 +21,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <sys/types.h>
 #include <string.h>
@@ -47,6 +49,8 @@ static CamelProviderConfEntry mapi_conf_entries[] = {
 
 	{ CAMEL_PROVIDER_CONF_SECTION_START, "generals", NULL,
 	  N_("Options") },
+	{ CAMEL_PROVIDER_CONF_CHECKBOX, "stay-synchronized", NULL,
+	  N_("Automatically synchroni_ze account locally"), "0" },
 	{ CAMEL_PROVIDER_CONF_CHECKBOX, "filter-inbox", NULL,
 	  /* i18n: copy from evolution:camel-imap-provider.c */
 	  N_("_Apply filters to new messages in Inbox on this server"), "0" },
@@ -56,11 +60,8 @@ static CamelProviderConfEntry mapi_conf_entries[] = {
 	  N_("Only check for Junk messag_es in the Inbox folder"), "0" },
 	{ CAMEL_PROVIDER_CONF_CHECKBOX, "listen-notifications", NULL,
 	  N_("Lis_ten for server notifications"), "0" },
-	{ CAMEL_PROVIDER_CONF_CHECKBOX, "stay-synchronized", NULL,
-	  N_("Synchroni_ze remote mail locally in all folders"), "0" },
-	{ CAMEL_PROVIDER_CONF_PLACEHOLDER, "mapi-limit-by-age-placeholder", NULL },
-	{ CAMEL_PROVIDER_CONF_SECTION_END },
 
+	{ CAMEL_PROVIDER_CONF_SECTION_END },
 	{ CAMEL_PROVIDER_CONF_END }
 };
 

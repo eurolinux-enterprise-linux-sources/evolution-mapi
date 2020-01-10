@@ -16,7 +16,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "e-book-config-mapi.h"
 #include "e-mapi-config-utils.h"

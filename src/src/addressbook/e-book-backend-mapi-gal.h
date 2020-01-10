@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef E_BOOK_BACKEND_MAPI_GAL_H
-#define E_BOOK_BACKEND_MAPI_GAL_H
+#ifndef __E_BOOK_BACKEND_MAPI_GAL_H__
+#define __E_BOOK_BACKEND_MAPI_GAL_H__
 
 #include "e-book-backend-mapi.h"
 
@@ -37,7 +37,7 @@ G_BEGIN_DECLS
 typedef struct _EBookBackendMAPIGALPrivate EBookBackendMAPIGALPrivate;
 
 typedef struct {
-	EBookBackendMAPI parent_object;
+	EBookBackendMAPI            parent_object;
 	EBookBackendMAPIGALPrivate *priv;
 } EBookBackendMAPIGAL;
 
@@ -45,8 +45,10 @@ typedef struct {
 	EBookBackendMAPIClass parent_class;
 } EBookBackendMAPIGALClass;
 
+EBookBackend *e_book_backend_mapi_gal_new      (void);
 GType         e_book_backend_mapi_gal_get_type (void);
 
 G_END_DECLS
 
-#endif /* E_BOOK_BACKEND_MAPI_GAL_H */
+#endif /* __E_BOOK_BACKEND_MAPI_GAL_H__ */
+

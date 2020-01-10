@@ -25,9 +25,8 @@
 #define E_MAPI_CAL_TZ_UTILS_H
 
 #include <glib.h>
-#include <libecal/libecal.h>
 
-#include "e-mapi-connection.h"
+#include "e-mapi-cal-utils.h"
 
 G_BEGIN_DECLS
 
@@ -40,8 +39,7 @@ void		e_mapi_cal_tz_util_destroy		(void);
 void		e_mapi_cal_tz_util_dump			(void);
 void		e_mapi_cal_util_mapi_tz_to_bin		(const gchar *mapi_tzid,
 							 struct SBinary_short *bin,
-							 TALLOC_CTX *mem_ctx,
-							 gboolean is_recur);
+							 TALLOC_CTX *mem_ctx);
 int		e_mapi_cal_util_mapi_tz_pidlidtimezone	(icaltimezone *ictz);
 gchar *		e_mapi_cal_util_bin_to_mapi_tz		(const guint8 *lpb, guint32 cb);
 

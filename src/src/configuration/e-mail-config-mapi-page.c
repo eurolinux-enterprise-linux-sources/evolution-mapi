@@ -16,7 +16,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
@@ -46,9 +48,9 @@ enum {
 	PROP_SOURCE_REGISTRY
 };
 
-static void e_mail_config_mapi_page_interface_init (EMailConfigPageInterface *iface);
+static void e_mail_config_mapi_page_interface_init (EMailConfigPageInterface *interface);
 
-G_DEFINE_DYNAMIC_TYPE_EXTENDED (EMailConfigMapiPage, e_mail_config_mapi_page, GTK_TYPE_SCROLLED_WINDOW, 0,
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (EMailConfigMapiPage, e_mail_config_mapi_page, GTK_TYPE_BOX, 0,
 	G_IMPLEMENT_INTERFACE_DYNAMIC (E_TYPE_MAIL_CONFIG_PAGE, e_mail_config_mapi_page_interface_init))
 
 static void
@@ -158,11 +160,6 @@ mail_config_mapi_page_dispose (GObject *object)
 		priv->account_source = NULL;
 	}
 
-	if (priv->registry != NULL) {
-		g_object_unref (priv->registry);
-		priv->registry = NULL;
-	}
-
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (e_mail_config_mapi_page_parent_class)->dispose (object);
 }
@@ -172,19 +169,19 @@ mail_config_mapi_page_constructed (GObject *object)
 {
 	EMailConfigMapiPage *page = E_MAIL_CONFIG_MAPI_PAGE (object);
 	GtkWidget *widget;
-	GtkWidget *main_box;
 	GtkGrid *content_grid;
 	gchar *markup;
 
 	/* Chain up to parent's constructed() method. */
 	G_OBJECT_CLASS (e_mail_config_mapi_page_parent_class)->constructed (object);
 
-	main_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 12);
+	gtk_orientable_set_orientation (GTK_ORIENTABLE (page), GTK_ORIENTATION_VERTICAL);
+	gtk_box_set_spacing (GTK_BOX (page), 12);
 
 	content_grid = GTK_GRID (gtk_grid_new ());
 	gtk_grid_set_row_spacing (content_grid, 6);
 	gtk_grid_set_column_spacing (content_grid, 6);
-	gtk_box_pack_start (GTK_BOX (main_box), GTK_WIDGET (content_grid), FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (page), GTK_WIDGET (content_grid), FALSE, FALSE, 0);
 
 	markup = g_markup_printf_escaped ("<b>%s</b>", _("MAPI Settings"));
 	widget = gtk_label_new (markup);
@@ -200,9 +197,7 @@ mail_config_mapi_page_constructed (GObject *object)
 	g_signal_connect (widget, "clicked", G_CALLBACK (folder_size_clicked_cb), page);
 	gtk_grid_attach (content_grid, widget, 1, 1, 1, 1);
 
-	gtk_widget_show_all (GTK_WIDGET (main_box));
-
-	e_mail_config_page_set_content (E_MAIL_CONFIG_PAGE (page), main_box);
+	gtk_widget_show_all (GTK_WIDGET (page));
 }
 
 static void
@@ -247,10 +242,10 @@ e_mail_config_mapi_page_class_finalize (EMailConfigMapiPageClass *class)
 }
 
 static void
-e_mail_config_mapi_page_interface_init (EMailConfigPageInterface *iface)
+e_mail_config_mapi_page_interface_init (EMailConfigPageInterface *interface)
 {
-	iface->title = _("MAPI Settings");
-	iface->sort_order = E_MAIL_CONFIG_MAPI_PAGE_SORT_ORDER;
+	interface->title = _("MAPI Settings");
+	interface->sort_order = E_MAIL_CONFIG_MAPI_PAGE_SORT_ORDER;
 }
 
 static void

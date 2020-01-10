@@ -18,7 +18,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <libedataserver/libedataserver.h>
 
@@ -93,7 +95,7 @@ static const uint32_t extra_proptags[] = {
 	PidTagStateOrProvince,
 	PidTagPostalCode,
 	PidTagCountry,
-	PidTagSmtpAddress,
+	PidTagPrimarySmtpAddress,
 	PidTagFolderId
 };
 
@@ -369,7 +371,7 @@ e_mapi_book_utils_contact_from_object (EMapiConnection *conn,
 
 	email_1 = e_contact_get (contact, E_CONTACT_EMAIL_1);
 	if (!email_1) {
-		gconstpointer value = get_proptag (PidTagSmtpAddress);
+		gconstpointer value = get_proptag (PidTagPrimarySmtpAddress);
 
 		if (value)
 			e_contact_set (contact, E_CONTACT_EMAIL_1, value);
@@ -1007,7 +1009,7 @@ func_eval_text_compare (struct _ESExp *f,
 				res->res.resOr.cRes = 4;
 				res->res.resOr.res = talloc_zero_array (esp->mem_ctx, struct mapi_SRestriction_or, res->res.resOr.cRes + 1);
 
-				proptag = PidTagSmtpAddress;
+				proptag = PidTagPrimarySmtpAddress;
 				res->res.resOr.res[0].rt = RES_CONTENT;
 				res->res.resOr.res[0].res.resContent.fuzzy = fuzzy | FL_IGNORECASE;
 				res->res.resOr.res[0].res.resContent.ulPropTag = proptag;
@@ -1113,7 +1115,7 @@ func_eval_field_exists (struct _ESExp *f,
 			res->res.resOr.res = talloc_zero_array (esp->mem_ctx, struct mapi_SRestriction_or, res->res.resOr.cRes + 1);
 
 			res->res.resOr.res[0].rt = RES_EXIST;
-			res->res.resOr.res[0].res.resExist.ulPropTag = PidTagSmtpAddress;
+			res->res.resOr.res[0].res.resExist.ulPropTag = PidTagPrimarySmtpAddress;
 
 			for (ii = 1, jj = 0; emails[jj]; jj++) {
 				proptag = get_proptag_from_field_name (emails[jj], TRUE);
@@ -1200,7 +1202,7 @@ mapi_book_utils_sexp_to_restriction (TALLOC_CTX *mem_ctx, const gchar *sexp_quer
 
 	e_sexp_input_text (sexp, sexp_query, strlen (sexp_query));
 	if (e_sexp_parse (sexp) == -1) {
-		g_object_unref (sexp);
+		e_sexp_unref (sexp);
 		return NULL;
 	}
 
@@ -1213,7 +1215,7 @@ mapi_book_utils_sexp_to_restriction (TALLOC_CTX *mem_ctx, const gchar *sexp_quer
 
 	e_sexp_result_free (sexp, r);
 
-	g_object_unref (sexp);
+	e_sexp_unref (sexp);
 	g_ptr_array_free (esp.res_parts, TRUE);
 
 	return restriction;

@@ -21,12 +21,14 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gi18n-lib.h>
 #include <gtk/gtk.h>
 
-#include <libemail-engine/libemail-engine.h>
+#include <libemail-engine/e-mail-session.h>
 
 #include "camel/camel-mapi-store.h"
 #include "camel/camel-mapi-store-summary.h"
@@ -42,7 +44,6 @@
 
 #define STR_USER_NAME_SELECTOR_ENTRY	"e-mapi-name-selector-entry"
 #define STR_FOLDER_NAME_COMBO		"e-mapi-folder-name-combo"
-#define STR_SUBFOLDERS_CHECK		"e-mapi-subfolders-check"
 #define STR_MAPI_CAMEL_SESSION		"e-mapi-camel-session"
 #define STR_MAPI_CAMEL_STORE		"e-mapi-camel-store"
 #define STR_MAPI_DIRECT_USER_NAME	"e-mapi-direct-user-name"
@@ -52,16 +53,14 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 			     const gchar *foreign_username,
 			     mapi_id_t folder_id,
 			     mapi_id_t parent_fid,
-			     gboolean include_subfolders,
 			     const gchar *display_username,
 			     const gchar *display_foldername,
 			     GError **perror)
 {
+	gint ii, sz;
 	gboolean res = TRUE;
 	gchar *parent_path = NULL;
 	CamelStoreInfo *parent_si = NULL;
-	GPtrArray *array;
-	guint ii;
 
 	g_return_val_if_fail (mapi_store != NULL, FALSE);
 	g_return_val_if_fail (mapi_store->summary != NULL, FALSE);
@@ -71,13 +70,14 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 	g_return_val_if_fail (display_username != NULL, FALSE);
 	g_return_val_if_fail (display_foldername != NULL, FALSE);
 
-	array = camel_store_summary_array (mapi_store->summary);
-
-	for (ii = 0; res && ii < array->len; ii++) {
+	sz = camel_store_summary_count (mapi_store->summary);
+	for (ii = 0; res && ii < sz; ii++) {
 		CamelStoreInfo *si;
 		CamelMapiStoreInfo *msi;
 
-		si = g_ptr_array_index (array, ii);
+		si = camel_store_summary_index (mapi_store->summary, ii);
+		if (!si)
+			continue;
 
 		msi = (CamelMapiStoreInfo *) si;
 
@@ -86,7 +86,7 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 			res = FALSE;
 			g_propagate_error (perror,
 				g_error_new (E_MAPI_ERROR, MAPI_E_INVALID_PARAMETER,
-				_("Cannot add folder, folder already exists as “%s”"), camel_store_info_path (mapi_store->summary, si)));
+				_("Cannot add folder, folder already exists as '%s'"), camel_store_info_path (mapi_store->summary, si)));
 		} else if (parent_fid != 0 && msi->folder_id == parent_fid) {
 			if (g_strcmp0 (foreign_username, msi->foreign_username) == 0) {
 				g_free (parent_path);
@@ -98,9 +98,9 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 					G_STRFUNC, camel_store_info_path (mapi_store->summary, si), msi->foreign_username, foreign_username);
 			}
 		}
-	}
 
-	camel_store_summary_array_free (mapi_store->summary, array);
+		camel_store_summary_info_free (mapi_store->summary, si);
+	}
 
 	if (res) {
 		gchar *path;
@@ -109,9 +109,9 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 			gchar *mailbox;
 
 			/* Translators: The '%s' is replaced with user name, to whom the foreign mailbox belongs.
-			   Example result: "Mailbox — John Smith"
+			   Example result: "Mailbox - John Smith"
 			*/
-			mailbox = g_strdup_printf (C_("ForeignFolder", "Mailbox — %s"), display_username);
+			mailbox = g_strdup_printf (C_("ForeignFolder", "Mailbox - %s"), display_username);
 			parent_path = g_strdup_printf ("%s/%s", DISPLAY_NAME_FOREIGN_FOLDERS, mailbox);
 
 			g_free (mailbox);
@@ -124,8 +124,7 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 
 		if (camel_mapi_store_summary_add_from_full (mapi_store->summary, path, folder_id, parent_fid,
 			CAMEL_STORE_INFO_FOLDER_SUBSCRIBED | CAMEL_FOLDER_NOCHILDREN | CAMEL_FOLDER_SUBSCRIBED,
-			CAMEL_MAPI_STORE_FOLDER_FLAG_FOREIGN | CAMEL_MAPI_STORE_FOLDER_FLAG_MAIL |
-			(include_subfolders ? CAMEL_MAPI_STORE_FOLDER_FLAG_FOREIGN_WITH_SUBFOLDERS : 0),
+			CAMEL_MAPI_STORE_FOLDER_FLAG_FOREIGN | CAMEL_MAPI_STORE_FOLDER_FLAG_MAIL,
 			foreign_username)) {
 			if (parent_si) {
 				CamelMapiStoreInfo *msi = (CamelMapiStoreInfo *) parent_si;
@@ -141,14 +140,14 @@ add_foreign_folder_to_camel (CamelMapiStore *mapi_store,
 			res = FALSE;
 			g_propagate_error (perror,
 				g_error_new (E_MAPI_ERROR, MAPI_E_INVALID_PARAMETER,
-				_("Cannot add folder, failed to add to store’s summary")));
+				_("Cannot add folder, failed to add to store's summary")));
 		}
 
 		g_free (path);
 	}
 
 	if (parent_si)
-		camel_store_summary_info_unref (mapi_store->summary, parent_si);
+		camel_store_summary_info_free (mapi_store->summary, parent_si);
 	g_free (parent_path);
 
 	return res;
@@ -175,7 +174,6 @@ name_entry_changed_cb (GObject *dialog)
 struct EMapiCheckForeignFolderData
 {
 	GtkWidget *dialog;
-	gboolean include_subfolders;
 	gchar *username;
 	gchar *direct_username;
 	gchar *user_displayname;
@@ -270,11 +268,6 @@ foreign_folder_get_props_cb (EMapiConnection *conn,
 	cffd->folder_container_class = g_strdup (e_mapi_util_find_array_propval (properties, PidTagContainerClass));
 	cffd->parent_folder_id = pid ? *pid : 0;
 
-	if (!cffd->folder_container_class) {
-		/* Default to mail folder */
-		cffd->folder_container_class = g_strdup (IPF_NOTE);
-	}
-
 	return TRUE;
 }
 
@@ -333,7 +326,7 @@ check_foreign_folder_thread (GObject *with_object,
 		if (g_error_matches (local_error, E_MAPI_ERROR, MAPI_E_NOT_FOUND)) {
 			g_clear_error (&local_error);
 			local_error = g_error_new (E_MAPI_ERROR, MAPI_E_NOT_FOUND,
-				_("Folder “%s” not found. Either it does not exist or you do not have permission to access it."),
+				_("Folder '%s' not found. Either it does not exist or you do not have permission to access it."),
 				cffd->orig_foldername);
 		}
 
@@ -368,7 +361,7 @@ check_foreign_folder_thread (GObject *with_object,
 	g_object_unref (conn);
 
 	if (!cffd->folder_container_class) {
-		g_propagate_error (perror, g_error_new_literal (E_MAPI_ERROR, MAPI_E_CALL_FAILED, _("Cannot add folder, cannot determine folder’s type")));
+		g_propagate_error (perror, g_error_new_literal (E_MAPI_ERROR, MAPI_E_CALL_FAILED, _("Cannot add folder, cannot determine folder's type")));
 		return;
 	}
 
@@ -407,9 +400,9 @@ check_foreign_folder_idle (GObject *with_object,
 	/* Translators: This is used to name foreign folder.
 	   The first '%s' is replaced with user name to whom the folder belongs,
 	   the second '%s' is replaced with folder name.
-	   Example result: "John Smith — Calendar"
+	   Example result: "John Smith - Calendar"
 	*/
-	folder_name = g_strdup_printf (C_("ForeignFolder", "%s — %s"), base_username, base_foldername);
+	folder_name = g_strdup_printf (C_("ForeignFolder", "%s - %s"), base_username, base_foldername);
 
 	mapi_store = CAMEL_MAPI_STORE (with_object);
 
@@ -430,7 +423,6 @@ check_foreign_folder_idle (GObject *with_object,
 		cffd->username,
 		cffd->folder_id,
 		cffd->parent_folder_id,
-		cffd->include_subfolders,
 		base_username,
 		base_foldername,
 		perror)) ||
@@ -460,7 +452,6 @@ subscribe_foreign_response_cb (GObject *dialog,
 	struct EMapiCheckForeignFolderData *cffd;
 	ENameSelectorEntry *entry;
 	GtkComboBoxText *combo_text;
-	GtkToggleButton *subfolders_check;
 	EDestinationStore *dest_store;
 	CamelStore *cstore;
 	gchar *description;
@@ -476,7 +467,6 @@ subscribe_foreign_response_cb (GObject *dialog,
 
 	entry = g_object_get_data (dialog, STR_USER_NAME_SELECTOR_ENTRY);
 	combo_text = g_object_get_data (dialog, STR_FOLDER_NAME_COMBO);
-	subfolders_check = g_object_get_data (dialog, STR_SUBFOLDERS_CHECK);
 	cstore = g_object_get_data (dialog, STR_MAPI_CAMEL_STORE);
 
 	g_return_if_fail (entry != NULL);
@@ -529,9 +519,8 @@ subscribe_foreign_response_cb (GObject *dialog,
 	cffd->use_foldername = use_foldername;
 	cffd->folder_id = 0;
 	cffd->parent_folder_id = 0;
-	cffd->include_subfolders = gtk_toggle_button_get_active (subfolders_check);
 
-	description = g_strdup_printf (_("Testing availability of folder “%s” of user “%s”, please wait..."), cffd->orig_foldername, cffd->username);
+	description = g_strdup_printf (_("Testing availability of folder '%s' of user '%s', please wait..."), cffd->orig_foldername, cffd->username);
 
 	e_mapi_config_utils_run_in_thread_with_feedback (
 		GTK_WINDOW (dialog),
@@ -603,7 +592,7 @@ e_mapi_subscribe_foreign_folder (GtkWindow *parent,
 	ENameSelectorDialog *name_selector_dialog;
 	GObject *dialog;
 	GtkWidget *content;
-	GtkWidget *label, *widget, *entry, *check;
+	GtkWidget *label, *widget, *entry;
 	GtkGrid *grid;
 	GtkComboBoxText *combo_text;
 	gint row;
@@ -723,15 +712,9 @@ e_mapi_subscribe_foreign_folder (GtkWindow *parent,
 	gtk_grid_attach (grid, label, 0, row, 1, 1);
 	gtk_grid_attach (grid, widget, 1, row, 2, 1);
 
-	row++;
-
-	check = gtk_check_button_new_with_mnemonic (_("Include _subfolders"));
-	gtk_grid_attach (grid, check, 1, row, 2, 1);
-
 	/* remember widgets for later use */
 	g_object_set_data (dialog, STR_USER_NAME_SELECTOR_ENTRY, entry);
 	g_object_set_data (dialog, STR_FOLDER_NAME_COMBO, widget);
-	g_object_set_data (dialog, STR_SUBFOLDERS_CHECK, check);
 
 	g_object_set_data_full (dialog, STR_MAPI_CAMEL_SESSION, g_object_ref (session), g_object_unref);
 	g_object_set_data_full (dialog, STR_MAPI_CAMEL_STORE, g_object_ref (store), g_object_unref);

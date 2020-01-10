@@ -23,6 +23,7 @@
 	((obj), E_TYPE_SOURCE_MAPI_FOLDER, ESourceMapiFolderPrivate))
 
 struct _ESourceMapiFolderPrivate {
+	GMutex property_lock;
 	guint64 fid;
 	guint64 parent_fid;
 	gboolean is_public;
@@ -168,6 +169,8 @@ source_mapi_folder_finalize (GObject *object)
 
 	priv = E_SOURCE_MAPI_FOLDER_GET_PRIVATE (object);
 
+	g_mutex_clear (&priv->property_lock);
+
 	g_free (priv->foreign_username);
 
 	/* Chain up to parent's finalize() method. */
@@ -284,6 +287,7 @@ static void
 e_source_mapi_folder_init (ESourceMapiFolder *extension)
 {
 	extension->priv = E_SOURCE_MAPI_FOLDER_GET_PRIVATE (extension);
+	g_mutex_init (&extension->priv->property_lock);
 
 	extension->priv->fid = 0;
 	extension->priv->parent_fid = 0;
@@ -450,11 +454,11 @@ e_source_mapi_folder_dup_foreign_username (ESourceMapiFolder *extension)
 
 	g_return_val_if_fail (E_IS_SOURCE_MAPI_FOLDER (extension), NULL);
 
-	e_source_extension_property_lock (E_SOURCE_EXTENSION (extension));
+	g_mutex_lock (&extension->priv->property_lock);
 
 	duplicate = g_strdup (e_source_mapi_folder_get_foreign_username (extension));
 
-	e_source_extension_property_unlock (E_SOURCE_EXTENSION (extension));
+	g_mutex_unlock (&extension->priv->property_lock);
 
 	return duplicate;
 }
@@ -465,20 +469,20 @@ e_source_mapi_folder_set_foreign_username (ESourceMapiFolder *extension,
 {
 	g_return_if_fail (E_IS_SOURCE_MAPI_FOLDER (extension));
 
-	e_source_extension_property_lock (E_SOURCE_EXTENSION (extension));
+	g_mutex_lock (&extension->priv->property_lock);
 
 	if (foreign_username && !*foreign_username)
 		foreign_username = NULL;
 
 	if (g_strcmp0 (extension->priv->foreign_username, foreign_username) == 0) {
-		e_source_extension_property_unlock (E_SOURCE_EXTENSION (extension));
+		g_mutex_unlock (&extension->priv->property_lock);
 		return;
 	}
 
 	g_free (extension->priv->foreign_username);
 	extension->priv->foreign_username = g_strdup (foreign_username);
 
-	e_source_extension_property_unlock (E_SOURCE_EXTENSION (extension));
+	g_mutex_unlock (&extension->priv->property_lock);
 
 	g_object_notify (G_OBJECT (extension), "foreign-username");
 }

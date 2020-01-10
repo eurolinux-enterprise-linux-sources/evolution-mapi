@@ -22,7 +22,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gi18n-lib.h>
 #include <camel/camel.h>
@@ -47,7 +49,7 @@
 static void register_connection (EMapiConnection *conn);
 static void unregister_connection (EMapiConnection *conn);
 static gboolean mapi_profile_create (struct mapi_context *mapi_ctx, const EMapiProfileData *empd, mapi_profile_callback_t callback, gconstpointer data, GCancellable *cancellable, GError **perror, gboolean use_locking);
-static struct mapi_session *mapi_profile_load (ESourceRegistry *registry, struct mapi_context *mapi_ctx, const gchar *profname, const ENamedParameters *credentials, GCancellable *cancellable, GError **perror);
+static struct mapi_session *mapi_profile_load (ESourceRegistry *registry, struct mapi_context *mapi_ctx, const gchar *profname, const gchar *password, GCancellable *cancellable, GError **perror);
 
 /* GObject foo - begin */
 
@@ -118,7 +120,6 @@ make_mapi_error (GError **perror, const gchar *context, enum MAPISTATUS mapi_sta
 	const gchar *error_msg = NULL, *status_name;
 	gchar *to_free = NULL;
 	GQuark error_domain;
-	gint error_code;
 	GError *error;
 
 	if (!perror)
@@ -140,7 +141,7 @@ make_mapi_error (GError **perror, const gchar *context, enum MAPISTATUS mapi_sta
 	err (MAPI_E_SESSION_LIMIT,			_("Cannot create more sessions, session limit was reached"));
 	err (MAPI_E_USER_CANCEL,			_("User cancelled operation"));
 	err (MAPI_E_UNABLE_TO_ABORT,			_("Unable to abort"));
-	err (ecRpcFailed,				_("Network error"));
+	err (MAPI_E_NETWORK_ERROR,			_("Network error"));
 	err (MAPI_E_DISK_ERROR,				_("Disk error"));
 	err (MAPI_E_PASSWORD_CHANGE_REQUIRED,		_("Password change required"));
 	err (MAPI_E_PASSWORD_EXPIRED,			_("Password expired"));
@@ -165,20 +166,19 @@ make_mapi_error (GError **perror, const gchar *context, enum MAPISTATUS mapi_sta
 	g_return_if_fail (error_msg != NULL);
 
 	error_domain = E_MAPI_ERROR;
-	error_code = mapi_status;
 
 	if (mapi_status == MAPI_E_USER_CANCEL) {
 		error_domain = G_IO_ERROR;
-		error_code = G_IO_ERROR_CANCELLED;
+		mapi_status = G_IO_ERROR_CANCELLED;
 	}
 
 	if (context && *context) {
 		/* Translators: The first '%s' is replaced with an error context,
 		   aka where the error occurred, the second '%s' is replaced with
 		   the error message. */
-		error = g_error_new (error_domain, error_code, C_("EXCHANGEMAPI_ERROR", "%s: %s"), context, error_msg);
+		error = g_error_new (error_domain, mapi_status, C_("EXCHANGEMAPI_ERROR", "%s: %s"), context, error_msg);
 	} else {
-		error = g_error_new_literal (error_domain, error_code, error_msg);
+		error = g_error_new_literal (error_domain, mapi_status, error_msg);
 	}
 
 	g_free (to_free);
@@ -589,7 +589,7 @@ e_mapi_connection_find (const gchar *profile)
 EMapiConnection *
 e_mapi_connection_new (ESourceRegistry *registry,
 		       const gchar *profile,
-		       const ENamedParameters *credentials,
+		       const GString *password,
 		       GCancellable *cancellable,
 		       GError **perror)
 {
@@ -604,7 +604,7 @@ e_mapi_connection_new (ESourceRegistry *registry,
 	if (!e_mapi_utils_create_mapi_context (&mapi_ctx, perror))
 		return NULL;
 
-	session = mapi_profile_load (registry, mapi_ctx, profile, credentials, cancellable, perror);
+	session = mapi_profile_load (registry, mapi_ctx, profile, password ? password->str : NULL, cancellable, perror);
 	if (!session) {
 		e_mapi_utils_destroy_mapi_context (mapi_ctx);
 		return NULL;
@@ -671,7 +671,7 @@ e_mapi_connection_disconnect (EMapiConnection *conn,
 
 gboolean
 e_mapi_connection_reconnect (EMapiConnection *conn,
-			     const ENamedParameters *credentials,
+			     const GString *password,
 			     GCancellable *cancellable,
 			     GError **perror)
 {
@@ -685,7 +685,7 @@ e_mapi_connection_reconnect (EMapiConnection *conn,
 	if (priv->session)
 		e_mapi_connection_disconnect (conn, FALSE, cancellable, perror);
 
-	priv->session = mapi_profile_load (priv->registry, priv->mapi_ctx, priv->profile, credentials, cancellable, perror);
+	priv->session = mapi_profile_load (priv->registry, priv->mapi_ctx, priv->profile, password ? password->str : NULL, cancellable, perror);
 	if (!priv->session) {
 		e_mapi_debug_print ("%s: %s: Login failed ", G_STRLOC, G_STRFUNC);
 		UNLOCK ();
@@ -732,7 +732,7 @@ can_reach_mapi_server (const gchar *server_address,
 
 	g_return_val_if_fail (server_address != NULL, FALSE);
 
-	network_monitor = e_network_monitor_get_default ();
+	network_monitor = g_network_monitor_get_default ();
 	connectable = g_network_address_new (server_address, 135);
 	reachable = g_network_monitor_can_reach (network_monitor, connectable, cancellable, &local_error);
 	g_object_unref (connectable);
@@ -741,7 +741,7 @@ can_reach_mapi_server (const gchar *server_address,
 		if (local_error)
 			g_propagate_error (perror, local_error);
 		else
-			g_set_error (perror, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE, _("Server “%s” cannot be reached"), server_address);
+			g_set_error (perror, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE, _("Server '%s' cannot be reached"), server_address);
 	}
 
 	return reachable;
@@ -869,7 +869,7 @@ e_mapi_connection_test_foreign_folder (EMapiConnection *conn,
 			def_folder_id = olFolderJunk;
 		} else if (!e_mapi_util_mapi_id_from_string (folder_name, &foreign_fid)) {
 			ms = MAPI_E_CALL_FAILED;
-			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder name “%s” is not a known default folder name, nor folder ID."), folder_name));
+			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder name '%s' is not a known default folder name, nor folder ID."), folder_name));
 			goto cleanup;
 		}
 
@@ -1200,7 +1200,7 @@ e_mapi_connection_open_foreign_folder (EMapiConnection *conn,
 	if (!ensure_foreign_store (conn->priv, username, &msg_store, perror)) {
 		ms = MAPI_E_CALL_FAILED;
 		if (perror && !*perror)
-			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Failed to open store for user “%s”"), username));
+			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Failed to open store for user '%s'"), username));
 	} else {
 		ms = MAPI_E_SUCCESS;
 	}
@@ -1208,7 +1208,7 @@ e_mapi_connection_open_foreign_folder (EMapiConnection *conn,
 	if (ms == MAPI_E_SUCCESS) {
 		ms = OpenFolder (msg_store, fid, obj_folder);
 		if (ms == MAPI_E_NOT_FOUND)
-			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder of user “%s” not found"), username));
+			g_propagate_error (perror, g_error_new (E_MAPI_ERROR, ms, _("Folder of user '%s' not found"), username));
 		else if (ms != MAPI_E_SUCCESS)
 			make_mapi_error (perror, "OpenFolder", ms);
 	}
@@ -1523,11 +1523,7 @@ foreach_tablerow (EMapiConnection *conn,
 			break;
 
 		/* Fill the table columns with data from the rows */
-		ms = QueryRows (obj_table, count, TBL_ADVANCE,
-			#ifdef HAVE_QUERYROWS_FORWARDREAD
-			TBL_FORWARD_READ,
-			#endif
-			&SRowSet);
+		ms = QueryRows (obj_table, count, TBL_ADVANCE, &SRowSet);
 		if (ms != MAPI_E_SUCCESS) {
 			make_mapi_error (perror, "QueryRows", ms);
 			break;
@@ -2781,12 +2777,8 @@ e_mapi_connection_fetch_object_internal (EMapiConnection *conn,
 		goto cleanup;
 	}
 
-	if (!object->properties.lpProps) {
-		/* kinf of success, no properties received */
-		goto cleanup;
-	}
-
-	object->properties.lpProps = talloc_steal (object, object->properties.lpProps);
+	if (object->properties.lpProps)
+		object->properties.lpProps = talloc_steal (object, object->properties.lpProps);
 
 	/* to transform named ids to their PidLid or PidName tags, like the fast-transfer does */
 	ms = QueryNamedProperties (obj_message, 0, NULL, &np_count, &np_propID, &np_nameid);
@@ -3087,10 +3079,8 @@ e_mapi_connection_transfer_objects (EMapiConnection *conn,
 		}
 
 		if (g_cancellable_is_cancelled (cancellable)) {
-			if (perror && !*perror) {
-				/* coverity[unchecked_value] */
+			if (perror && !*perror)
 				g_cancellable_set_error_if_cancelled (cancellable, perror);
-			}
 
 			ms = MAPI_E_USER_CANCEL;
 			mapi_id_array_release (&ids);
@@ -3760,7 +3750,7 @@ add_object_recipients (EMapiConnection *conn,
 
 	count = 0;
 	for (recipient = recipients, ii = 0; recipient; recipient = recipient->next, ii++) {
-		if (!e_mapi_util_find_array_propval (&recipient->properties, PidTagSmtpAddress)
+		if (!e_mapi_util_find_array_propval (&recipient->properties, PidTagPrimarySmtpAddress)
 		    && !e_mapi_util_find_array_propval (&recipient->properties, PidTagDisplayName))
 			g_debug ("%s: Cannot get email or display name for a recipient %d, skipping it", G_STRFUNC, ii);
 		else
@@ -3781,7 +3771,7 @@ add_object_recipients (EMapiConnection *conn,
 	}
 
 	for (ii = 0, jj = 0, recipient = recipients; ii < count && recipient != NULL; ii++, recipient = recipient->next) {
-		users[ii] = e_mapi_util_find_array_propval (&recipient->properties, PidTagSmtpAddress);
+		users[ii] = e_mapi_util_find_array_propval (&recipient->properties, PidTagPrimarySmtpAddress);
 		if (!users[ii])
 			users[ii] = e_mapi_util_find_array_propval (&recipient->properties, PidTagDisplayName);
 		if (!users[ii]) {
@@ -3841,10 +3831,7 @@ add_object_recipients (EMapiConnection *conn,
 		goto cleanup;
 	}
 
-	if (count != flagList->cValues) {
-		g_warn_if_reached ();
-		goto cleanup;
-	}
+	g_assert (count == flagList->cValues);
 
 	rows = talloc_zero (mem_ctx, struct SRowSet);
 
@@ -3860,7 +3847,7 @@ add_object_recipients (EMapiConnection *conn,
 			 * However, if we do still get an ambiguous entry, we can't handle it :-( */
 			ms = MAPI_E_AMBIGUOUS_RECIP;
 			/* Translators: %s is replaced with an email address which was found ambiguous on a remote server */
-			g_set_error (perror, E_MAPI_ERROR, ms, _("Recipient “%s” is ambiguous"), users[ii]);
+			g_set_error (perror, E_MAPI_ERROR, ms, _("Recipient '%s' is ambiguous"), users[ii]);
 			goto cleanup;
 		} else if (flagList->aulPropTag[ii] == MAPI_UNRESOLVED) {
 			uint32_t last;
@@ -5670,14 +5657,14 @@ e_mapi_connection_resolve_named_props  (EMapiConnection *conn,
 		uint32_t prop_count = nameid->count;
 		struct PropertyName_r *names = talloc_zero_array (mem_ctx, struct PropertyName_r, prop_count + 1);
 
-		g_return_val_if_fail (names != NULL, FALSE);
+		g_assert (names != NULL);
 
 		SPropTagArray = talloc_zero (mem_ctx, struct SPropTagArray);
-		g_return_val_if_fail (SPropTagArray != NULL, FALSE);
+		g_assert (SPropTagArray != NULL);
 
 		SPropTagArray->cValues = nameid->count;
 		SPropTagArray->aulPropTag = talloc_zero_array (mem_ctx, enum MAPITAGS, SPropTagArray->cValues + 1);
-		g_return_val_if_fail (SPropTagArray->aulPropTag != NULL, FALSE);
+		g_assert (SPropTagArray->aulPropTag != NULL);
 
 		j = 0;
 		for (i = 0; i < nameid->count; i++) {
@@ -5757,8 +5744,7 @@ e_mapi_connection_resolve_named_props  (EMapiConnection *conn,
 
 					if (e_mapi_connection_open_default_folder (conn, olFolderContacts, &obj_contacts, cancellable, NULL)) {
 						/* always keep MAPI_E_NOT_FOUND, thus the later processing on the storing of saved items is skipped */
-						if (!e_mapi_connection_resolve_named_props (conn, &obj_contacts, named_ids_list, named_ids_n_elems, cancellable, NULL))
-							ms = MAPI_E_NOT_FOUND;
+						e_mapi_connection_resolve_named_props (conn, &obj_contacts, named_ids_list, named_ids_n_elems, cancellable, NULL);
 						e_mapi_connection_close_folder (conn, &obj_contacts, cancellable, NULL);
 					}
 				}
@@ -6123,7 +6109,7 @@ get_folder_hierarchy_cb (EMapiConnection *conn,
 			name, klass, *fid, unread ? *unread : 0, total ? *total : 0, folder_size ? *folder_size : 0);
 
 		folder = e_mapi_folder_new (name, klass, gfh->folder_hier, *fid, pid ? *pid : gfh->folder_id,
-						   child ? *child : 0, unread ? *unread : -1, total ? *total : -1);
+						   child ? *child : 0, unread ? *unread : 0, total ? *total : 0);
 
 		folder->size = folder_size ? *folder_size : 0;
 
@@ -6136,27 +6122,46 @@ get_folder_hierarchy_cb (EMapiConnection *conn,
 	return TRUE;
 }
 
-static enum MAPISTATUS
-get_child_folders_of_folder (EMapiConnection *conn,
-			     TALLOC_CTX *mem_ctx,
-			     mapi_object_t *folder,
-			     EMapiFolderCategory folder_hier,
-			     GSList **mapi_folders,
-			     ProgressNotifyCB cb,
-			     gpointer cb_user_data,
-			     GCancellable *cancellable,
-			     GError **perror)
+static gboolean
+get_child_folders (EMapiConnection *conn,
+		   TALLOC_CTX *mem_ctx,
+		   EMapiFolderCategory folder_hier,
+		   mapi_object_t *parent,
+		   mapi_id_t folder_id,
+		   GSList **mapi_folders,
+		   ProgressNotifyCB cb,
+		   gpointer cb_user_data,
+		   GCancellable *cancellable,
+		   GError **perror)
 {
-	enum MAPISTATUS ms;
-	mapi_object_t obj_table;
-	struct SPropTagArray *spropTagArray = NULL;
+	enum MAPISTATUS		ms;
+	mapi_object_t		obj_folder;
+	mapi_object_t		obj_table;
+	struct SPropTagArray	*spropTagArray = NULL;
 	uint32_t row_count = 0;
 	struct GetFolderHierarchyCBData gfh;
 
+	/* sanity check */
+	e_return_val_mapi_error_if_fail (mem_ctx != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+	e_return_val_mapi_error_if_fail (parent != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
+
+	mapi_object_init (&obj_folder);
 	mapi_object_init (&obj_table);
 
+	/* Attempt to open the folder */
+	ms = OpenFolder (parent, folder_id, &obj_folder);
+	if (ms != MAPI_E_SUCCESS) {
+		make_mapi_error (perror, "OpenFolder", ms);
+		goto cleanup;
+	}
+
+	if (g_cancellable_set_error_if_cancelled (cancellable, perror)) {
+		ms = MAPI_E_USER_CANCEL;
+		goto cleanup;
+	}
+
 	/* Get the hierarchy table */
-	ms = GetHierarchyTable (folder, &obj_table, TableFlags_Depth | TableFlags_NoNotifications, &row_count);
+	ms = GetHierarchyTable (&obj_folder, &obj_table, TableFlags_Depth | TableFlags_NoNotifications, &row_count);
 	if (ms != MAPI_E_SUCCESS) {
 		make_mapi_error (perror, "GetHierarchyTable", ms);
 		goto cleanup;
@@ -6189,59 +6194,17 @@ get_child_folders_of_folder (EMapiConnection *conn,
 	}
 
 	gfh.folder_hier = folder_hier;
-	gfh.folder_id = mapi_object_get_id (folder);
+	gfh.folder_id = folder_id;
 	gfh.mapi_folders = mapi_folders;
 	gfh.cb = cb;
 	gfh.cb_user_data = cb_user_data;
 
 	ms = foreach_tablerow (conn, mem_ctx, &obj_table, get_folder_hierarchy_cb, &gfh, cancellable, perror);
 
-	*mapi_folders = g_slist_reverse (*mapi_folders);
-
  cleanup:
 	talloc_free (spropTagArray);
-	mapi_object_release (&obj_table);
-
-	return ms;
-}
-
-static gboolean
-get_child_folders (EMapiConnection *conn,
-		   TALLOC_CTX *mem_ctx,
-		   EMapiFolderCategory folder_hier,
-		   mapi_object_t *parent,
-		   mapi_id_t folder_id,
-		   GSList **mapi_folders,
-		   ProgressNotifyCB cb,
-		   gpointer cb_user_data,
-		   GCancellable *cancellable,
-		   GError **perror)
-{
-	enum MAPISTATUS		ms;
-	mapi_object_t		obj_folder;
-
-	/* sanity check */
-	e_return_val_mapi_error_if_fail (mem_ctx != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
-	e_return_val_mapi_error_if_fail (parent != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
-
-	mapi_object_init (&obj_folder);
-
-	/* Attempt to open the folder */
-	ms = OpenFolder (parent, folder_id, &obj_folder);
-	if (ms != MAPI_E_SUCCESS) {
-		make_mapi_error (perror, "OpenFolder", ms);
-		goto cleanup;
-	}
-
-	if (g_cancellable_set_error_if_cancelled (cancellable, perror)) {
-		ms = MAPI_E_USER_CANCEL;
-		goto cleanup;
-	}
-
-	ms = get_child_folders_of_folder (conn, mem_ctx, &obj_folder, folder_hier, mapi_folders, cb, cb_user_data, cancellable, perror);
-
- cleanup:
 	mapi_object_release (&obj_folder);
+	mapi_object_release (&obj_table);
 
 	return ms == MAPI_E_SUCCESS;
 }
@@ -6514,6 +6477,8 @@ e_mapi_connection_get_folders_list (EMapiConnection *conn,
 	/* FIXME: check status of get_child_folders */
 	result = get_child_folders (conn, mem_ctx, E_MAPI_FOLDER_CATEGORY_PERSONAL, &priv->msg_store, mailbox_id, mapi_folders, cb, cb_user_data, cancellable, perror);
 
+	*mapi_folders = g_slist_reverse (*mapi_folders);
+
 	if (result && !set_default_folders (mem_ctx, &priv->msg_store, mapi_folders, cancellable, perror)) {
 		goto cleanup;
 	}
@@ -6574,11 +6539,12 @@ e_mapi_connection_get_pf_folders_list (EMapiConnection *conn,
 		goto cleanup;
 	}
 
-	folder = e_mapi_folder_new (_("All Public Folders"), IPF_NOTE, 0, mailbox_id, 0, 0, -1, -1);
+	folder = e_mapi_folder_new (_("All Public Folders"), IPF_NOTE, 0, mailbox_id, 0, 0, 0, 0);
 	folder->is_default = TRUE;
 	folder->default_type = olPublicFoldersAllPublicFolders;
 	*mapi_folders = g_slist_prepend (*mapi_folders, folder);
 	result = get_child_folders (conn, mem_ctx, E_MAPI_FOLDER_CATEGORY_PUBLIC, &priv->public_store, mailbox_id, mapi_folders, cb, cb_user_data, cancellable, perror);
+	*mapi_folders = g_slist_reverse (*mapi_folders);
 
  cleanup:
 	talloc_free (mem_ctx);
@@ -6588,48 +6554,6 @@ e_mapi_connection_get_pf_folders_list (EMapiConnection *conn,
 	e_mapi_debug_print("%s: Leaving %s ", G_STRLOC, G_STRFUNC);
 
 	return result;
-}
-
-gboolean
-e_mapi_connection_get_subfolders_list (EMapiConnection *conn,
-				       mapi_object_t *folder,
-				       EMapiFolderCategory folder_hier,
-				       GSList **mapi_folders,
-				       ProgressNotifyCB cb,
-				       gpointer cb_user_data,
-				       GCancellable *cancellable,
-				       GError **perror)
-{
-	enum MAPISTATUS ms;
-	TALLOC_CTX *mem_ctx;
-
-	CHECK_CORRECT_CONN_AND_GET_PRIV (conn, FALSE);
-	e_return_val_mapi_error_if_fail (folder != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
-	e_return_val_mapi_error_if_fail (priv->session != NULL, MAPI_E_INVALID_PARAMETER, FALSE);
-
-	e_mapi_debug_print("%s: Entering %s ", G_STRLOC, G_STRFUNC);
-
-	LOCK (cancellable, perror, FALSE);
-	mem_ctx = talloc_new (priv->session);
-
-	if (g_cancellable_set_error_if_cancelled (cancellable, perror)) {
-		ms = MAPI_E_USER_CANCEL;
-	} else {
-		*mapi_folders = NULL;
-
-		ms = get_child_folders_of_folder (conn, mem_ctx, folder, folder_hier, mapi_folders, cb, cb_user_data, cancellable, perror);
-	}
-
-	talloc_free (mem_ctx);
-
-	if (ms != MAPI_E_SUCCESS)
-		make_mapi_error (perror, "get_subfolders_list", ms);
-
-	UNLOCK ();
-
-	e_mapi_debug_print("%s: Leaving %s ", G_STRLOC, G_STRFUNC);
-
-	return ms == MAPI_E_SUCCESS;
 }
 
 GSList *
@@ -6830,7 +6754,7 @@ e_mapi_connection_resolve_username (EMapiConnection *conn,
 			replace_hash = prepare_maybe_replace_hash (named_ids_list, named_ids_len, FALSE);
 
 		for (qq = 0; qq < rows->cRows; qq++) {
-			struct mapi_SPropValue_array *properties = NULL;
+			struct mapi_SPropValue_array *properties;
 			struct SRow *row;
 
 			row = talloc_zero (mem_ctx, struct SRow);
@@ -6882,10 +6806,10 @@ e_mapi_connection_resolve_username (EMapiConnection *conn,
 	} else if (ms == MAPI_E_SUCCESS) {
 		if (flaglist && flaglist->aulPropTag[0] == MAPI_AMBIGUOUS) {
 			ms = MAPI_E_AMBIGUOUS_RECIP;
-			g_set_error (perror, E_MAPI_ERROR, ms, _("User name “%s” is ambiguous"), to_resolve);
+			g_set_error (perror, E_MAPI_ERROR, ms, _("User name '%s' is ambiguous"), to_resolve);
 		} else {
 			ms = MAPI_E_NOT_FOUND;
-			g_set_error (perror, E_MAPI_ERROR, ms, _("User name “%s” not found"), to_resolve);
+			g_set_error (perror, E_MAPI_ERROR, ms, _("User name '%s' not found"), to_resolve);
 		}
 	}
 
@@ -7083,7 +7007,7 @@ struct tcp_data
 	ESourceRegistry *registry;
 	struct mapi_context *mapi_ctx;
 	const gchar *profname;
-	const ENamedParameters *credentials;
+	const gchar *password;
 	GCancellable *cancellable;
 	GError **perror;
 
@@ -7120,13 +7044,13 @@ try_create_profile_main_thread_cb (struct tcp_data *data)
 		network_settings = CAMEL_NETWORK_SETTINGS (settings);
 
 		empd.server = camel_network_settings_get_host (network_settings);
-		if (data->credentials && e_named_parameters_get (data->credentials, E_SOURCE_CREDENTIAL_USERNAME))
-			empd.username = e_named_parameters_get (data->credentials, E_SOURCE_CREDENTIAL_USERNAME);
-		else
-			empd.username = camel_network_settings_get_user (network_settings);
+		empd.username = camel_network_settings_get_user (network_settings);
 		e_mapi_util_profiledata_from_settings (&empd, CAMEL_MAPI_SETTINGS (settings));
 
-		empd.credentials = (ENamedParameters *) data->credentials;
+		if (data->password)
+			empd.password = g_string_new (data->password);
+		else
+			data->password = NULL;
 
 		if (COMPLETE_PROFILEDATA (&empd)) {
 			gchar *profname = e_mapi_util_profile_name (data->mapi_ctx, &empd, FALSE);
@@ -7137,6 +7061,12 @@ try_create_profile_main_thread_cb (struct tcp_data *data)
 			}
 
 			g_free (profname);
+		}
+
+		if (empd.password) {
+			if (empd.password->len)
+				memset (empd.password->str, 0, empd.password->len);
+			g_string_free (empd.password, TRUE);
 		}
 	}
 
@@ -7151,7 +7081,7 @@ static gboolean
 try_create_profile (ESourceRegistry *registry,
 		    struct mapi_context *mapi_ctx,
 		    const gchar *profname,
-		    const ENamedParameters *credentials,
+		    const gchar *password,
 		    GCancellable *cancellable,
 		    GError **perror)
 {
@@ -7164,7 +7094,7 @@ try_create_profile (ESourceRegistry *registry,
 	data.registry = registry;
 	data.mapi_ctx = mapi_ctx;
 	data.profname = profname;
-	data.credentials = credentials;
+	data.password = password;
 	data.eflag = e_flag_new ();
 	data.has_profile = FALSE;
 	data.cancellable = cancellable;
@@ -7187,7 +7117,7 @@ static struct mapi_session *
 mapi_profile_load (ESourceRegistry *registry,
 		   struct mapi_context *mapi_ctx,
 		   const gchar *profname,
-		   const ENamedParameters *credentials,
+		   const gchar *password,
 		   GCancellable *cancellable,
 		   GError **perror)
 {
@@ -7215,14 +7145,9 @@ mapi_profile_load (ESourceRegistry *registry,
 
 	e_mapi_debug_print("Loading profile %s ", profname);
 
-	if (credentials && e_named_parameters_get (credentials, E_SOURCE_CREDENTIAL_USERNAME)) {
-		mapi_profile_add_string_attr (mapi_ctx, profname, "username", e_named_parameters_get (credentials, E_SOURCE_CREDENTIAL_USERNAME));
-	}
-
-	ms = MapiLogonEx (mapi_ctx, &session, profname, credentials ? e_named_parameters_get (credentials, E_SOURCE_CREDENTIAL_PASSWORD) : NULL);
-	if (ms == MAPI_E_NOT_FOUND && try_create_profile (registry, mapi_ctx, profname, credentials, cancellable, perror))
-		ms = MapiLogonEx (mapi_ctx, &session, profname,
-		credentials ? e_named_parameters_get (credentials, E_SOURCE_CREDENTIAL_PASSWORD) : NULL);
+	ms = MapiLogonEx (mapi_ctx, &session, profname, password);
+	if (ms == MAPI_E_NOT_FOUND && try_create_profile (registry, mapi_ctx, profname, password, cancellable, perror))
+		ms = MapiLogonEx (mapi_ctx, &session, profname, password);
 
 	if (ms != MAPI_E_SUCCESS) {
 		make_mapi_error (perror, "MapiLogonEx", ms);
@@ -7280,7 +7205,7 @@ mapi_profile_create (struct mapi_context *mapi_ctx,
 	}
 
 	/*We need all the params before proceeding.*/
-	e_return_val_mapi_error_if_fail (COMPLETE_PROFILEDATA (empd) && (empd->krb_sso || (empd->credentials)),
+	e_return_val_mapi_error_if_fail (COMPLETE_PROFILEDATA (empd) && (empd->krb_sso || (empd->password && empd->password->len)),
 					 MAPI_E_INVALID_PARAMETER, FALSE);
 
 	if (!can_reach_mapi_server (empd->server, cancellable, perror))
@@ -7300,8 +7225,8 @@ mapi_profile_create (struct mapi_context *mapi_ctx,
 	ms = DeleteProfile (mapi_ctx, profname);
 	/* don't bother to check error - it would be valid if we got an error */
 
-	ms = CreateProfile (mapi_ctx, profname, empd->username, empd->krb_sso ? NULL :
-		e_named_parameters_get (empd->credentials, E_SOURCE_CREDENTIAL_PASSWORD), OC_PROFILE_NOPASSWORD);
+	ms = CreateProfile (mapi_ctx, profname, empd->username,
+			    empd->krb_sso ? NULL : empd->password->str, OC_PROFILE_NOPASSWORD);
 	if (ms != MAPI_E_SUCCESS) {
 		make_mapi_error (perror, "CreateProfile", ms);
 		goto cleanup;
@@ -7333,8 +7258,8 @@ mapi_profile_create (struct mapi_context *mapi_ctx,
 
 	/* Login now */
 	e_mapi_debug_print("Logging into the server... ");
-	ms = MapiLogonProvider (mapi_ctx, &session, profname, empd->krb_sso ? NULL :
-		e_named_parameters_get (empd->credentials, E_SOURCE_CREDENTIAL_PASSWORD), PROVIDER_ID_NSPI);
+	ms = MapiLogonProvider (mapi_ctx, &session, profname, empd->krb_sso ? NULL : empd->password->str,
+				PROVIDER_ID_NSPI);
 	if (ms != MAPI_E_SUCCESS) {
 		make_mapi_error (perror, "MapiLogonProvider", ms);
 		e_mapi_debug_print ("Deleting profile %s ", profname);
@@ -7448,13 +7373,13 @@ e_mapi_recipient_new (TALLOC_CTX *mem_ctx)
 	EMapiRecipient *recipient;
 
 	recipient = talloc_zero (mem_ctx, EMapiRecipient);
-	g_return_val_if_fail (recipient != NULL, NULL);
+	g_assert (recipient != NULL);
 
 	recipient->properties.cValues = 0;
 	recipient->properties.lpProps = talloc_zero_array (mem_ctx, struct mapi_SPropValue, 1);
 	recipient->next = NULL;
 
-	g_return_val_if_fail (recipient->properties.lpProps != NULL, NULL);
+	g_assert (recipient->properties.lpProps != NULL);
 
 	return recipient;
 }
@@ -7475,7 +7400,7 @@ e_mapi_attachment_new (TALLOC_CTX *mem_ctx)
 	EMapiAttachment *attachment;
 
 	attachment = talloc_zero (mem_ctx, EMapiAttachment);
-	g_return_val_if_fail (attachment != NULL, NULL);
+	g_assert (attachment != NULL);
 
 	attachment->properties.cValues = 0;
 	attachment->properties.lpProps = talloc_zero_array (mem_ctx, struct mapi_SPropValue, 1);
@@ -7484,7 +7409,7 @@ e_mapi_attachment_new (TALLOC_CTX *mem_ctx)
 	attachment->embedded_object = NULL;
 	attachment->next = NULL;
 
-	g_return_val_if_fail (attachment->properties.lpProps != NULL, NULL);
+	g_assert (attachment->properties.lpProps != NULL);
 
 	return attachment;
 }
@@ -7597,7 +7522,7 @@ e_mapi_object_new (TALLOC_CTX *mem_ctx)
 	EMapiObject *object;
 
 	object = talloc_zero (mem_ctx, EMapiObject);
-	g_return_val_if_fail (object != NULL, NULL);
+	g_assert (object != NULL);
 
 	object->properties.cValues = 0;
 	object->properties.lpProps = talloc_zero_array (mem_ctx, struct mapi_SPropValue, 1);
@@ -7607,7 +7532,7 @@ e_mapi_object_new (TALLOC_CTX *mem_ctx)
 	object->attachments = NULL;
 	object->parent = NULL;
 
-	g_return_val_if_fail (object->properties.lpProps != NULL, NULL);
+	g_assert (object->properties.lpProps != NULL);
 
 	return object;
 }

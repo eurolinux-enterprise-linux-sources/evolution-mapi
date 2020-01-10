@@ -41,14 +41,14 @@ typedef struct _ECalBackendMAPIClass   ECalBackendMAPIClass;
 typedef struct _ECalBackendMAPIPrivate ECalBackendMAPIPrivate;
 
 struct _ECalBackendMAPI {
-	ECalMetaBackend parent_object;
+	ECalBackend backend;
 
 	/* Private data */
 	ECalBackendMAPIPrivate *priv;
 };
 
 struct _ECalBackendMAPIClass {
-	ECalMetaBackendClass parent_class;
+	ECalBackendClass parent_class;
 };
 
 GType	e_cal_backend_mapi_get_type(void);

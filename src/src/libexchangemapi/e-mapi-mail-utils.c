@@ -17,7 +17,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <camel/camel.h>
 #include <libecal/libecal.h>
@@ -29,6 +31,8 @@
 #include "e-mapi-mail-utils.h"
 
 #define STREAM_SIZE 4000
+
+extern gint camel_application_is_exiting;
 
 void
 e_mapi_mail_utils_decode_email_address (EMapiConnection *conn,
@@ -108,10 +112,11 @@ e_mapi_mail_utils_decode_recipients (EMapiConnection *conn,
 		PidTagNickname,
 		PidTagDisplayName,
 		PidTagRecipientDisplayName,
-		PidTagAddressBookDisplayNamePrintable
+		PidTag7BitDisplayName
 	};
 
 	const uint32_t email_proptags[] = {
+		PidTagPrimarySmtpAddress,
 		PidTagSmtpAddress
 	};
 
@@ -279,40 +284,6 @@ is_apple_attach (EMapiAttachment *attach, guint32 *data_len, guint32 *resource_l
 	return is_apple;
 }
 
-typedef struct {
-	GHashTable *tzids;
-	icalcomponent *icalcomp;
-} ForeachTZIDData;
-
-static void
-add_timezones_cb (icalparameter *param,
-		  gpointer data)
-{
-	ForeachTZIDData *tz_data = data;
-	const gchar *tzid;
-	icaltimezone *zone = NULL;
-	icalcomponent *vtimezone_comp;
-
-	/* Get the TZID string from the parameter. */
-	tzid = icalparameter_get_tzid (param);
-	if (!tzid || g_hash_table_lookup (tz_data->tzids, tzid))
-		return;
-
-	/* Look for the timezone */
-	zone = icaltimezone_get_builtin_timezone_from_tzid (tzid);
-	if (!zone)
-		return;
-
-	/* Convert it to a string and add it to the hash. */
-	vtimezone_comp = icaltimezone_get_component (zone);
-	if (!vtimezone_comp)
-		return;
-
-	icalcomponent_add_component (tz_data->icalcomp, icalcomponent_new_clone (vtimezone_comp));
-
-	g_hash_table_insert (tz_data->tzids, (gchar *) tzid, (gchar *) tzid);
-}
-
 static gchar *
 build_ical_string (EMapiConnection *conn,
 		   EMapiObject *object,
@@ -356,9 +327,9 @@ build_ical_string (EMapiConnection *conn,
 	if (pmid)
 		use_uid = e_mapi_util_mapi_id_to_string (*pmid);
 	else
-		use_uid = e_util_generate_uid ();
+		use_uid = e_cal_component_gen_uid ();
 
-	comp = e_mapi_cal_util_object_to_comp (conn, object, ical_kind, ical_method == ICAL_METHOD_REPLY, use_uid, &detached_components);
+	comp = e_mapi_cal_util_object_to_comp (conn, object, ical_kind, ical_method == ICAL_METHOD_REPLY, NULL, use_uid, &detached_components);
 
 	g_free (use_uid);
 
@@ -366,25 +337,12 @@ build_ical_string (EMapiConnection *conn,
 		return NULL;
 
 	if (ical_method != ICAL_METHOD_NONE || detached_components) {
-		ForeachTZIDData tz_data;
-		icalcomponent *clone;
-
-		clone = icalcomponent_new_clone (e_cal_component_get_icalcomponent (comp));
-
 		icalcomp = e_cal_util_new_top_level ();
 		if (ical_method != ICAL_METHOD_NONE)
 			icalcomponent_set_method (icalcomp, ical_method);
 
-		tz_data.tzids = g_hash_table_new (g_str_hash, g_str_equal);
-		tz_data.icalcomp = icalcomp;
-
-		/* Add timezones first */
-		icalcomponent_foreach_tzid (clone, add_timezones_cb, &tz_data);
-
-		g_hash_table_destroy (tz_data.tzids);
-
-		/* Then the components */
-		icalcomponent_add_component (icalcomp, clone);
+		icalcomponent_add_component (icalcomp,
+			icalcomponent_new_clone (e_cal_component_get_icalcomponent (comp)));
 		for (iter = detached_components; iter; iter = g_slist_next (iter)) {
 			icalcomponent_add_component (icalcomp,
 				icalcomponent_new_clone (e_cal_component_get_icalcomponent (iter->data)));
@@ -424,7 +382,7 @@ classify_attachments (EMapiConnection *conn,
 		const uint32_t *ui32;
 		uint64_t data_cb = 0;
 		const uint8_t *data_lpb = NULL;
-		gboolean is_apple, is_message;
+		gboolean is_apple;
 		guint32 apple_data_len = 0, apple_resource_len = 0;
 
 		if (!e_mapi_attachment_get_bin_prop (attach, PidTagAttachDataBinary, &data_cb, &data_lpb) && !attach->embedded_object) {
@@ -436,14 +394,12 @@ classify_attachments (EMapiConnection *conn,
 
 		/* Content-Type */
 		ui32 = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachMethod);
-		is_message = ui32 && *ui32 == ATTACH_EMBEDDED_MSG;
-		if (is_message) {
+		if (ui32 && *ui32 == ATTACH_EMBEDDED_MSG) {
 			mime_type = "message/rfc822";
 		} else {
 			mime_type = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachMimeTag);
 			if (!mime_type)
 				mime_type = "application/octet-stream";
-			is_message = g_ascii_strcasecmp (mime_type, "message/rfc822") == 0;
 		}
 
 		if (is_apple) {
@@ -458,7 +414,7 @@ classify_attachments (EMapiConnection *conn,
 		if (!filename || !*filename)
 			filename = e_mapi_util_find_array_propval (&attach->properties, PidTagAttachFilename);
 		camel_mime_part_set_filename (part, filename);
-		camel_content_type_set_param (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part)), "name", filename);
+		camel_content_type_set_param (((CamelDataWrapper *) part)->mime_type, "name", filename);
 
 		if (is_apple) {
 			CamelMultipart *mp;
@@ -628,7 +584,7 @@ classify_attachments (EMapiConnection *conn,
 			content_type = camel_mime_part_get_content_type (part);
 			if (content_type && camel_content_type_is (content_type, "text", "*"))
 				camel_mime_part_set_encoding (part, CAMEL_TRANSFER_ENCODING_QUOTEDPRINTABLE);
-			else if (!is_message)
+			else if (!ui32 || *ui32 != ATTACH_EMBEDDED_MSG)
 				camel_mime_part_set_encoding (part, CAMEL_TRANSFER_ENCODING_BASE64);
 		}
 
@@ -778,27 +734,20 @@ e_mapi_mail_utils_object_to_message (EMapiConnection *conn, /* const */ EMapiObj
 		g_object_unref (stream);
 
 		if (camel_mime_part_construct_from_parser_sync (part, parser, NULL, NULL)) {
-			const CamelNameValueArray *headers;
-			CamelMedium *msg_medium = CAMEL_MEDIUM (msg);
-			guint ii, len;
+			struct _camel_header_raw *h;
 
-			headers = camel_medium_get_headers (CAMEL_MEDIUM (part));
-			len = camel_name_value_array_get_length (headers);
-
-			for (ii = 0; ii < len; ii++) {
-				const gchar *header_name = NULL, *header_value = NULL;
+			for (h = part->headers; h; h = h->next) {
+				const gchar *value = h->value;
 
 				/* skip all headers describing content of a message,
 				   because it's overwritten on message decomposition */
-				if (!camel_name_value_array_get (headers, ii, &header_name, &header_value) ||
-				    !header_name ||
-				    g_ascii_strncasecmp (header_name, "Content", 7) == 0)
+				if (g_ascii_strncasecmp (h->name, "Content", 7) == 0)
 					continue;
 
-				while (header_value && camel_mime_is_lwsp (*header_value))
-					header_value++;
+				while (value && camel_mime_is_lwsp (*value))
+					value++;
 
-				camel_medium_add_header (msg_medium, header_name, header_value);
+				camel_medium_add_header (CAMEL_MEDIUM (msg), h->name, value);
 			}
 		}
 
@@ -1036,7 +985,9 @@ e_mapi_mail_add_recipients (EMapiObject *object,
 		if (email && *email) {
 			set_value (PidTagAddressType, "SMTP");
 			set_value (PidTagEmailAddress, email);
+
 			set_value (PidTagSmtpAddress, email);
+			set_value (PidTagPrimarySmtpAddress, email);
 		}
 
 		ui32 = 0;
@@ -1169,24 +1120,6 @@ e_mapi_mail_content_stream_to_bin (CamelStream *content_stream,
 
 	*pcb = cb;
 	*plpb = lpb;
-}
-
-static gboolean
-e_mapi_mail_part_is_attachment (CamelMimePart *part)
-{
-	const CamelContentDisposition *content_disposition;
-
-	g_return_val_if_fail (CAMEL_IS_MIME_PART (part), FALSE);
-
-	content_disposition = camel_mime_part_get_content_disposition (part);
-
-	if (!content_disposition)
-		return FALSE;
-
-	return content_disposition &&
-		content_disposition->disposition && (
-		g_ascii_strcasecmp (content_disposition->disposition, "attachment") == 0 ||
-		g_ascii_strcasecmp (content_disposition->disposition, "inline") == 0);
 }
 
 #define set_attach_value(pt,vl) {						\
@@ -1422,13 +1355,9 @@ e_mapi_mail_do_multipart (EMapiObject *object,
 	CamelStream *content_stream;
 	CamelContentType *type;
 	CamelMimePart *part;
-	gboolean parent_is_alternative;
 	gint nn, ii;
 
 	g_return_val_if_fail (is_first != NULL, FALSE);
-
-	type = camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (mp));
-	parent_is_alternative = type && camel_content_type_is (type, "multipart", "alternative");
 
 	nn = camel_multipart_get_number (mp);
 	for (ii = 0; ii < nn; ii++) {
@@ -1481,9 +1410,7 @@ e_mapi_mail_do_multipart (EMapiObject *object,
 		if (ii == 0 && (*is_first) && camel_content_type_is (type, "text", "plain")) {
 			e_mapi_mail_add_body (object, content_stream, PidTagBody, cancellable);
 			*is_first = FALSE;
-		} else if ((ii == 0 || parent_is_alternative) &&
-			   camel_content_type_is (type, "text", "html") &&
-			   !e_mapi_mail_part_is_attachment (part)) {
+		} else if (camel_content_type_is (type, "text", "html")) {
 			e_mapi_mail_add_body (object, content_stream, PidTagHtml, cancellable);
 		} else {
 			e_mapi_mail_add_attach (object, part, content_stream, cancellable);
@@ -1584,7 +1511,7 @@ e_mapi_mail_utils_message_to_object (struct _CamelMimeMessage *message,
 	if ((create_flags & E_MAPI_CREATE_FLAG_SUBMIT) == 0) {
 		time_t msg_time = 0;
 		gint msg_time_offset = 0;
-		CamelNameValueArray *headers;
+		GArray *headers;
 
 		if (namep && *namep)
 			set_value (PidTagSentRepresentingName, namep);
@@ -1614,24 +1541,20 @@ e_mapi_mail_utils_message_to_object (struct _CamelMimeMessage *message,
 			set_value (PidTagMessageDeliveryTime, &msg_date);
 		}
 
-		headers = camel_medium_dup_headers (CAMEL_MEDIUM (message));
+		headers = camel_medium_get_headers (CAMEL_MEDIUM (message));
 		if (headers) {
 			GString *hstr = g_string_new ("");
-			guint len;
 
-			len = camel_name_value_array_get_length (headers);
+			for (ii = 0; ii < headers->len; ii++) {
+				CamelMediumHeader *h = &g_array_index (headers, CamelMediumHeader, ii);
 
-			for (ii = 0; ii < len; ii++) {
-				const gchar *header_name = NULL, *header_value = NULL;
-
-				if (!camel_name_value_array_get (headers, ii, &header_name, &header_value) ||
-				    !header_name || !*header_name || g_ascii_strncasecmp (header_name, "X-Evolution", 11) == 0)
+				if (!h->name || !*h->name || g_ascii_strncasecmp (h->name, "X-Evolution", 11) == 0)
 					continue;
 
-				g_string_append_printf (hstr, "%s: %s\n", header_name, header_value ? header_value : "");
+				g_string_append_printf (hstr, "%s: %s\n", h->name, h->value ? h->value : "");
 			}
 
-			camel_name_value_array_free (headers);
+			camel_medium_free_headers (CAMEL_MEDIUM (message), headers);
 
 			if (hstr->len && hstr->str)
 				set_value (PidTagTransportMessageHeaders, hstr->str);

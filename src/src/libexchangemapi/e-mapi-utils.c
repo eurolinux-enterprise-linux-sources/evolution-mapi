@@ -21,7 +21,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib.h>
 #include <gio/gio.h>
@@ -99,10 +101,8 @@ e_mapi_cancellable_rec_mutex_lock (EMapiCancellableRecMutex *rec_mutex,
 	}
 
 	if (g_cancellable_is_cancelled (cancellable)) {
-		if (error && !*error) {
-			/* coverity[unchecked_value] */
+		if (error && !*error)
 			g_cancellable_set_error_if_cancelled (cancellable, error);
-		}
 		g_mutex_unlock (&rec_mutex->cond_mutex);
 		return FALSE;
 	}
@@ -183,7 +183,7 @@ e_mapi_util_mapi_id_from_string (const gchar *str, mapi_id_t *id)
 {
 	gint n = 0;
 
-	if (str && *str && strlen (str) <= 16)
+	if (str && *str)
 		n = sscanf (str, "%016" G_GINT64_MODIFIER "X", id);
 
 	return (n == 1);

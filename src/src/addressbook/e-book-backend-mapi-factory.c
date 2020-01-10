@@ -21,7 +21,9 @@
  *
  */
 
-#include "evolution-mapi-config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <glib/gi18n-lib.h>
 
@@ -36,8 +38,6 @@ typedef EBookBackendFactoryClass EBookBackendMapiContactsFactoryClass;
 
 typedef EBookBackendFactory EBookBackendMapiGalFactory;
 typedef EBookBackendFactoryClass EBookBackendMapiGalFactoryClass;
-
-static EModule *e_module;
 
 /* Module Entry Points */
 void e_module_load (GTypeModule *type_module);
@@ -60,12 +60,6 @@ G_DEFINE_DYNAMIC_TYPE (
 static void
 e_book_backend_mapi_contacts_factory_class_init (EBookBackendFactoryClass *class)
 {
-	EBackendFactoryClass *backend_factory_class;
-
-	backend_factory_class = E_BACKEND_FACTORY_CLASS (class);
-	backend_factory_class->e_module = e_module;
-	backend_factory_class->share_subprocess = TRUE;
-
 	class->factory_name = "mapi";
 	class->backend_type = E_TYPE_BOOK_BACKEND_MAPI_CONTACTS;
 }
@@ -83,12 +77,6 @@ e_book_backend_mapi_contacts_factory_init (EBookBackendFactory *factory)
 static void
 e_book_backend_mapi_gal_factory_class_init (EBookBackendFactoryClass *class)
 {
-	EBackendFactoryClass *backend_factory_class;
-
-	backend_factory_class = E_BACKEND_FACTORY_CLASS (class);
-	backend_factory_class->e_module = e_module;
-	backend_factory_class->share_subprocess = TRUE;
-
 	class->factory_name = "mapigal";
 	class->backend_type = E_TYPE_BOOK_BACKEND_MAPI_GAL;
 }
@@ -109,8 +97,6 @@ e_module_load (GTypeModule *type_module)
 	bindtextdomain (GETTEXT_PACKAGE, EXCHANGE_MAPI_LOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 
-	e_module = E_MODULE (type_module);
-
 	e_source_mapi_folder_type_register (type_module);
 
 	e_book_backend_mapi_contacts_factory_register_type (type_module);
@@ -120,6 +106,5 @@ e_module_load (GTypeModule *type_module)
 G_MODULE_EXPORT void
 e_module_unload (GTypeModule *type_module)
 {
-	e_module = NULL;
 }
 
